@@ -13,6 +13,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: var(--primary-bg); font-family: 'Montserrat', sans-serif; color: var(--text-dark); }
 .light-comfort-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: var(--soft-gradient); }
+
 /* --- 2. NAVBAR SECTION --- */
 .navbar { 
     display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; 
@@ -22,7 +23,22 @@ body { background: var(--primary-bg); font-family: 'Montserrat', sans-serif; col
 }
 .nav-left, .nav-center, .nav-right { display: flex; align-items: center; }
 .nav-center { justify-content: center; gap: 10px; }
-.nav-right { justify-content: flex-end; gap: 15px; }
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+@media (max-width: 600px) {
+    .stylish-search {
+        width: 140px; /* Gives more room to tap */
+        z-index: 1001; /* Above other nav elements */
+    }
+    .stylish-search input {
+        width: 100%;
+        display: block !important; /* Forces visibility */
+    }
+}
 
 .menu-btn { background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 12px; }
 .hamburger-icon-stylish { width: 22px; height: 16px; display: flex; flex-direction: column; justify-content: space-between; }
@@ -33,6 +49,78 @@ body { background: var(--primary-bg); font-family: 'Montserrat', sans-serif; col
 .brand-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; }
 .brand-name span { color: var(--accent); }
 .logo-box { width: 30px; height: 30px; background: var(--accent); border-radius: 6px; }
+.cart-glass { 
+    font-size: 0.8rem; 
+    font-weight: 600; 
+    padding: 6px 12px; 
+    border: 1px solid var(--border); 
+    border-radius: 4px; 
+    background: white; 
+    transition: all 0.3s ease; 
+    cursor: pointer; }
+    .cart-glass:hover {
+    background: var(--text-dark);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* --- MENU HOVER & TOUCH EFFECTS --- */
+.category-trigger {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding: 20px 15px !important;
+}
+
+.category-trigger:hover, .category-trigger:active {
+    background: #f0f4ff; /* Light colorful tint */
+    padding-left: 25px !important;
+}
+
+.category-trigger:hover .cat-text {
+    color: var(--accent);
+}
+
+.sub-links li a {
+    transition: all 0.3s ease;
+    padding: 12px 15px !important;
+    border-radius: 6px;
+    display: block;
+}
+
+.sub-links li a:hover {
+    background: var(--accent);
+    color: white !important;
+    transform: translateX(10px);
+}
+
+/* --- CART DESIGN CLEANUP --- */
+/* Removes the old static "Selected Items" title from HTML to prevent duplicates */
+.cart-title { display: none !important; } 
+
+.cart-header-cool {
+    background: linear-gradient(to right, #6366f1, #a855f7); /* Colorful Header */
+    padding: 20px;
+    margin: -10px -25px 20px -25px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cart-header-cool span {
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+/* Close button inside colorful header */
+.cool-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    border: none;
+    color: white;
+}
+
 
 /* --- SEARCH BAR FIX INTEGRATED --- */
 .stylish-search { 
@@ -91,6 +179,60 @@ body { background: var(--primary-bg); font-family: 'Montserrat', sans-serif; col
     letter-spacing: 2px;
 }
 
+/* --- NEW COOL CART CLOSE BUTTON --- */
+.cool-close-btn {
+    width: 35px; 
+    height: 35px; 
+    border-radius: 50%; 
+    border: none;
+    background: #f8fafc; 
+    cursor: pointer; 
+    display: flex;
+    align-items: center; 
+    justify-content: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.cool-close-btn:hover { 
+    background: #000; 
+    transform: rotate(90deg); 
+}
+
+.close-icon-line { 
+    width: 15px; 
+    height: 2px; 
+    background: #000; 
+    transform: rotate(45deg); 
+}
+
+.close-icon-line::before { 
+    content: ''; 
+    width: 15px; 
+    height: 2px; 
+    background: #000; 
+    display: block; 
+    transform: rotate(-90deg); 
+}
+
+.cool-close-btn:hover .close-icon-line, 
+.cool-close-btn:hover .close-icon-line::before { 
+    background: #fff; 
+}
+
+/* Added this to fix the empty cart appearance */
+.empty-cart-ui {
+    padding: 50px 20px;
+    text-align: center;
+}
+
+@keyframes cartBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+.cart-bounce-active {
+    animation: cartBounce 0.4s ease;
+}
 /* --- 4. MENU DRAWER SECTION --- */
 .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; transform: translateX(-100%); transition: 0.5s; }
 .menu-overlay.active { transform: translateX(0); }
@@ -122,6 +264,28 @@ body { background: var(--primary-bg); font-family: 'Montserrat', sans-serif; col
 .buy-btn { background: #f1f5f9; color: #94a3b8; }
 .buy-btn.ready { background: var(--accent); color: white; }
 .cart-btn { background: var(--cart-color); color: white; }
+
+
+/* --- DIGITAL HOVER FOR BUY NOW BUTTON --- */
+.action-btn.buy-btn.ready {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.action-btn.buy-btn.ready:hover {
+    background: var(--accent); /* Changes to your brand color */
+    color: white;
+    transform: translateY(-3px); /* Subtle lift */
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15); /* Digital shadow */
+    letter-spacing: 0.5px; /* Slight expansion for aesthetic feel */
+}
+
+
+/* Optional: Slight press effect when clicked */
+.action-btn.buy-btn.ready:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
 
 /* --- 6. PAGINATION & BACK TO TOP SECTION --- */
 .pagination-footer { display: flex;
@@ -197,7 +361,7 @@ body { background: var(--primary-bg); font-family: 'Montserrat', sans-serif; col
     padding: 10px 25px;
 }
 
-/* List Item with small thumbnail */
+/* List Item with small thumbnail - RESTORED SIZE */
 .serial-item-card {
     display: flex;
     align-items: center;
@@ -207,8 +371,8 @@ body { background: var(--primary-bg); font-family: 'Montserrat', sans-serif; col
 }
 
 .serial-item-card img {
-    width: 55px;
-    height: 65px;
+    width: 55px;   /* Small fixed width */
+    height: 65px;  /* Small fixed height */
     object-fit: cover;
     border-radius: 6px;
     flex-shrink: 0;
