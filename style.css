@@ -13,7 +13,6 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: var(--primary-bg); font-family: 'Montserrat', sans-serif; color: var(--text-dark); }
 .light-comfort-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: var(--soft-gradient); }
-
 /* --- 2. NAVBAR SECTION --- */
 .navbar { 
     display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; 
@@ -35,10 +34,47 @@ body { background: var(--primary-bg); font-family: 'Montserrat', sans-serif; col
 .brand-name span { color: var(--accent); }
 .logo-box { width: 30px; height: 30px; background: var(--accent); border-radius: 6px; }
 
-.stylish-search { border: 1px solid var(--border); border-radius: 4px; padding: 6px 12px; background: white; display: flex; align-items: center; }
-.stylish-search input { border: none; outline: none; width: 100px; font-size: 0.8rem; }
+/* --- SEARCH BAR FIX INTEGRATED --- */
+.stylish-search { 
+    border: 1px solid var(--border); 
+    border-radius: 4px; 
+    padding: 6px 12px; 
+    background: white; 
+    display: flex; 
+    align-items: center;
+    position: relative;
+    z-index: 10; /* Touch fix for mobile */
+}
+.stylish-search input { 
+    border: none; 
+    outline: none; 
+    width: 100%; /* Better focus for mobile */
+    font-size: 0.8rem; 
+    background: transparent;
+}
+
 .mobile-search-icon { display: none; }
 .cart-glass { font-size: 0.8rem; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; background: white; cursor: pointer; }
+
+/* --- CENTERED & DESIGNED TITLE --- */
+.section-title {
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    margin: 40px 0 60px 0; /* Vertical spacing/gap */
+    position: relative;
+    color: var(--text-dark);
+}
+
+.section-title::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 3px;
+    background: var(--accent);
+    margin: 10px auto 0; /* Underline design */
+    border-radius: 2px;
+}
 
 /* --- 3. TOP SPACER SECTION (Designated space for future work) --- */
 .future-design-space {

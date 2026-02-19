@@ -1,7 +1,7 @@
 /* --- 1. CONFIGURATION & DATA --- */
 const SOCIAL_CONFIG = {
-    whatsappNumber: "8801601982509", // Updated with your provided number
-    messengerLink: "https://m.me/mushfikurrm0927" // Updated with your specific FB username link
+    whatsappNumber: "8801601982509", 
+    messengerLink: "https://m.me/mushfikurrm0927" 
 };
 
 let cartArray = [];
@@ -16,7 +16,7 @@ const allProducts = Array.from({ length: 50 }, (_, i) => ({
     img: "tote-bag.jpeg" 
 }));
 
-/* --- 2. MENU & CART UI ACTIONS --- */
+/* --- 2. UI ACTIONS --- */
 function toggleMenu() { 
     document.getElementById('menuOverlay').classList.toggle('active'); 
 }
@@ -36,7 +36,11 @@ function toggleCartDisplay() {
 /* --- 3. CART LOGIC --- */
 function addToCart(id) {
     const product = allProducts.find(p => p.id === id);
-    cartArray.push(product);
+    // Capture the size selected at the time of adding to cart
+    const sizeElem = document.querySelector(`#sizes-prod-${id} span.active`);
+    const selectedSize = sizeElem ? sizeElem.innerText : "Not Specified";
+    
+    cartArray.push({...product, selectedSize: selectedSize});
     document.getElementById('navbarCartCount').innerText = cartArray.length;
 }
 
@@ -61,7 +65,7 @@ function renderSerialItems() {
             <img src="${item.img}" onerror="this.src='https://via.placeholder.com/60x70'">
             <div class="serial-item-details">
                 <p><strong>${item.name}</strong></p>
-                <p>TK ${item.price}</p>
+                <p>Size: ${item.selectedSize} | TK ${item.price}</p>
             </div>
             <button class="remove-item-btn" onclick="removeItem(${index})">✕</button>
         </div>
@@ -80,15 +84,11 @@ function renderSerialItems() {
     listContainer.innerHTML = html;
 }
 
-/* --- 4. BUY NOW & DEEP-LINK REDIRECTION --- */
+/* --- 4. BUY NOW & REDIRECTION LOGIC --- */
 
-function openOrderOptions(productName, productPrice) {
-    const message = `Hello! I want to buy: ${productName} (Total Price: TK ${productPrice})`;
-    const encodedMsg = encodeURIComponent(message);
-
-    // Using WhatsApp API for direct app triggering
+function openOrderOptions(fullMessage) {
+    const encodedMsg = encodeURIComponent(fullMessage);
     const whatsappURL = `https://api.whatsapp.com/send?phone=${SOCIAL_CONFIG.whatsappNumber}&text=${encodedMsg}`;
-    // Using m.me for direct Messenger app triggering
     const messengerURL = SOCIAL_CONFIG.messengerLink;
 
     const modalHtml = `
@@ -96,12 +96,8 @@ function openOrderOptions(productName, productPrice) {
             <div class="social-modal-content">
                 <h3>Order via</h3>
                 <div class="social-options">
-                    <a href="${whatsappURL}" target="_blank" class="social-opt wa">
-                        WhatsApp
-                    </a>
-                    <a href="${messengerURL}" target="_blank" class="social-opt fb">
-                        Messenger
-                    </a>
+                    <a href="${whatsappURL}" target="_blank" class="social-opt wa">WhatsApp</a>
+                    <a href="${messengerURL}" target="_blank" class="social-opt fb">Messenger</a>
                 </div>
                 <button onclick="closeOrderModal()" class="close-modal-btn">Cancel</button>
             </div>
@@ -115,20 +111,32 @@ function closeOrderModal() {
     if(modal) modal.remove();
 }
 
+// Single Item Buy Now
+function handleSingleBuy(card) {
+    const name = card.querySelector('.p-name').innerText;
+    const price = card.querySelector('.p-price').innerText.replace('TK-', '');
+    const color = card.querySelector('.p-meta').innerText.replace('Color: ', '');
+    const sizeElem = card.querySelector('.size-options span.active');
+    const size = sizeElem ? sizeElem.innerText : "Not Specified";
+
+    const message = `Hello! I want to Buy: ${name} (Size: ${size}, Color: ${color}), Total Price: TK ${price}`;
+    openOrderOptions(message);
+}
+
+// Cart Buy Now
 function processCartCheckout() {
     if (cartArray.length === 0) return;
     const total = cartArray.reduce((sum, item) => sum + parseInt(item.price), 0);
-    // Combines all selected products into one string for the chat message
-    const itemNames = cartArray.map(i => i.name).join(', ');
-    openOrderOptions(`Multiple Items: [${itemNames}]`, total);
+    const details = cartArray.map(i => `${i.name} (Size: ${i.selectedSize}, Color: ${i.color})`).join(', ');
+    
+    const message = `Hello! I want to Buy: ${details}, Total Price: TK ${total}`;
+    openOrderOptions(message);
 }
 
 document.addEventListener('click', function(e) {
     if(e.target && e.target.classList.contains('ready')) {
-        const card = e.target.closest('.product-details');
-        const name = card.querySelector('.p-name').innerText;
-        const price = card.querySelector('.p-price').innerText.replace('TK-', '');
-        openOrderOptions(name, price);
+        const card = e.target.closest('.product-card');
+        handleSingleBuy(card);
     }
 });
 
@@ -184,7 +192,7 @@ function displayProducts(page) {
     updatePagination();
 }
 
-/* --- 6. PAGINATION LOGIC --- */
+/* --- 6. PAGINATION --- */
 function updatePagination() {
     const pBar = document.getElementById('paginationBar');
     const totalPages = Math.ceil(allProducts.length / productsPerPage);
