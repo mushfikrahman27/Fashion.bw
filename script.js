@@ -17,9 +17,10 @@ const allProducts = Array.from({ length: 50 }, (_, i) => ({
     img: "tote-bag.jpeg" 
 }));
 
-/* --- 2. SEARCH FUNCTIONALITY --- */
+/* --- 2. SEARCH FUNCTIONALITY (RE-VERIFIED & COMBINED) --- */
 function initSearch() {
     const searchInput = document.querySelector('.stylish-search input');
+    const suggestBox = document.getElementById('searchSuggestions'); 
     if(!searchInput) return;
 
     searchInput.addEventListener('input', (e) => {
@@ -28,6 +29,25 @@ function initSearch() {
         const cards = Array.from(grid.getElementsByClassName('product-card'));
         const pBar = document.getElementById('paginationBar');
 
+        // --- NEW: Live Suggestion Logic (Added) ---
+        if (term.length < 1) {
+            if(suggestBox) suggestBox.style.display = 'none';
+        } else {
+            const matches = allProducts.filter(p => p.name.toLowerCase().includes(term)).slice(0, 5);
+            if(matches.length > 0 && suggestBox) {
+                suggestBox.innerHTML = matches.map(p => `
+                    <div class="suggest-item" onclick="quickView(${p.id})">
+                        <img src="${p.img}" onerror="this.src='https://via.placeholder.com/400x500'">
+                        <span style="font-size:0.8rem; font-weight:600;">${p.name}</span>
+                    </div>
+                `).join('');
+                suggestBox.style.display = 'block';
+            } else if (suggestBox) {
+                suggestBox.style.display = 'none';
+            }
+        }
+
+        // --- ORIGINAL: Grid & Pagination Logic (Preserved exactly) ---
         if (term === "") {
             cards.forEach(card => card.style.display = 'block');
             if(pBar) pBar.style.display = 'flex';
@@ -37,20 +57,24 @@ function initSearch() {
 
         if(pBar) pBar.style.display = 'none';
 
-        const matches = [];
+        const gridMatches = [];
         cards.forEach(card => {
             const productName = card.querySelector('.p-name').innerText.toLowerCase();
             if (productName.includes(term)) {
                 const score = productName.startsWith(term) ? 2 : 1;
-                matches.push({ card, score });
+                gridMatches.push({ card, score });
                 card.style.display = 'block';
             } else {
                 card.style.display = 'none';
             }
         });
 
-        matches.sort((a, b) => b.score - a.score);
-        matches.forEach(match => grid.appendChild(match.card));
+        gridMatches.sort((a, b) => b.score - a.score);
+        gridMatches.forEach(match => grid.appendChild(match.card));
+    });
+
+    document.addEventListener('click', (e) => {
+        if (suggestBox && !e.target.closest('.stylish-search')) suggestBox.style.display = 'none';
     });
 }
 
@@ -78,12 +102,12 @@ function toggleCartDisplay() {
     }
 }
 
-/* --- THE ADD TO CART SYSTEM (RESTORED & FIXED) --- */
+/* --- THE ADD TO CART SYSTEM (RESTORED & MOBILE ENHANCED) --- */
 function addToCart(id) {
     const product = allProducts.find(p => p.id === id);
     const btn = document.querySelector(`button[onclick="addToCart(${id})"]`);
     
-    // 1. Button Feedback
+    // 1. Button Feedback (Original Logic)
     if (btn) {
         const oldText = btn.innerText; 
         btn.innerText = "Added! ✓"; 
@@ -112,6 +136,49 @@ function addToCart(id) {
         cartIcon.classList.add('cart-bounce-active');
         setTimeout(() => cartIcon.classList.remove('cart-bounce-active'), 400);
     }
+
+    // 6. MOBILE-READY TOAST TRIGGER (Added)
+    const productForToast = allProducts.find(p => p.id === id);
+    if (productForToast) {
+        showToast(productForToast.name);
+    }
+}
+
+/* --- HERO PARALLAX LOGIC --- */
+window.addEventListener('scroll', function() {
+    const heroBg = document.querySelector('.hero-bg-image');
+    if (heroBg) {
+        let scrollOffset = window.pageYOffset;
+        // Adjust the 0.5 value to make the move faster or slower
+        heroBg.style.transform = `translateY(${scrollOffset * 0.5}px)`;
+    }
+});
+
+/* --- DYNAMIC TOAST NOTIFICATION LOGIC --- */
+function showToast(productName) {
+    const container = document.getElementById('toastContainer');
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    
+    toast.innerHTML = `
+        <div class="toast-content">
+            <p>Added <span>${productName}</span> to your bag!</p>
+        </div>
+        <button class="toast-view-btn" onclick="toggleCartDisplay()">View Cart</button>
+    `;
+
+    container.appendChild(toast);
+
+    // Trigger animation
+    setTimeout(() => toast.classList.add('active'), 10);
+
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        toast.classList.remove('active');
+        setTimeout(() => toast.remove(), 400);
+    }, 4000);
 }
 
 function removeItem(index) {
@@ -208,12 +275,14 @@ document.addEventListener('click', (e) => {
     if(e.target && e.target.classList.contains('ready')) handleSingleBuy(e.target.closest('.product-card'));
 });
 
-/* --- 5. PRODUCT RENDERING --- */
+/* --- 5. PRODUCT RENDERING (ENHANCED WITH SKELETON) --- */
 function renderSingleCard(container, p) {
     const uniqueId = `prod-${p.id}`;
     container.innerHTML += `
         <div class="product-card">
-            <div class="product-img-holder"><img src="${p.img}" onerror="this.src='https://via.placeholder.com/400x500'"></div>
+            <div class="product-img-holder skeleton">
+                <img src="${p.img}" onload="this.parentElement.classList.remove('skeleton')" onerror="this.src='https://via.placeholder.com/400x500'">
+            </div>
             <div class="product-details">
                 <h3 class="p-name">${p.name}</h3>
                 <p class="p-meta">Color: ${p.color}</p>
@@ -235,6 +304,29 @@ function renderSingleCard(container, p) {
         </div>`;
 }
 
+/* --- ADDED: PILL FILTER LOGIC --- */
+function filterByCategory(category, btn) {
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const grid = document.getElementById('productGrid');
+    grid.innerHTML = "";
+    
+    // Filters based on product name; keeps your 10-item limit per view
+    const filtered = category === 'All' ? allProducts : allProducts.filter(p => p.name.includes(category));
+    filtered.slice(0, 10).forEach(p => renderSingleCard(grid, p));
+}
+
+/* --- ADDED: QUICK VIEW FOR SEARCH --- */
+function quickView(id) {
+    const grid = document.getElementById('productGrid');
+    grid.innerHTML = "";
+    const p = allProducts.find(prod => prod.id === id);
+    renderSingleCard(grid, p);
+    
+    // Closes suggestion box after selection
+    const suggestBox = document.getElementById('searchSuggestions');
+    if(suggestBox) suggestBox.style.display = 'none';
+}
 function selectSize(prodId, element) {
     const options = document.querySelectorAll(`#sizes-${prodId} span`);
     options.forEach(opt => opt.classList.remove('active'));
