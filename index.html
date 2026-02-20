@@ -9,68 +9,40 @@
 </head>
 <body>
 
-    <div class="light-comfort-bg"></div>
+<nav class="navbar">
+    <div class="nav-left">
+        <button class="menu-btn" onclick="toggleMenu()">
+            <div class="hamburger-icon-stylish">
+                <span class="line-top"></span>
+                <span class="line-mid"></span>
+                <span class="line-bottom"></span>
+            </div>
+            <span class="menu-text">MENU</span>
+        </button>
+    </div>
 
-    <div class="menu-overlay" id="menuOverlay">
-        <div class="menu-scroll-container">
-            <button class="close-btn" onclick="toggleMenu()">✕</button>
-            <nav class="drawer-nav">
-                <ul class="main-links">
-                    <li class="nested">
-                        <button class="category-trigger" onclick="toggleSub(this)">
-                            <span class="cat-text">Men</span>
-                            <span class="plus-icon">+</span>
-                        </button>
-                        <ul class="sub-links">
-                            <li><a href="#">Sneakers</a></li>
-                            <li><a href="#">Bags</a></li>
-                            <li><a href="#">Sunglasses</a></li>
-                        </ul>
-                    </li>
-                    <li class="nested">
-                        <button class="category-trigger" onclick="toggleSub(this)">
-                            <span class="cat-text">Women</span>
-                            <span class="plus-icon">+</span>
-                        </button>
-                        <ul class="sub-links">
-                            <li><a href="#">Sneakers</a></li>
-                            <li><a href="#">Bags</a></li>
-                            <li><a href="#">Sunglasses</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </nav>
+    <div class="nav-center">
+        <div class="logo-box"></div>
+        <div class="brand-name">POLI<span>CIA</span></div>
+    </div>
+
+    <div class="nav-right">
+        <div class="cart-glass" onclick="toggleCartDisplay()">
+            🛒 (<span id="navbarCartCount">0</span>)
         </div>
     </div>
 
-    <nav class="navbar">
-        <div class="nav-left">
-            <button class="menu-btn" onclick="toggleMenu()">
-                <div class="hamburger-icon-stylish">
-                    <span class="line-top"></span>
-                    <span class="line-mid"></span>
-                    <span class="line-bottom"></span>
-                </div>
-                <span class="menu-text">MENU</span>
-            </button>
-        </div>
-        <div class="nav-center">
-            <div class="logo-box"></div>
-            <div class="brand-name">POLI<span>CIA</span></div>
-        </div>
-        <div class="nav-right">
-            <div class="stylish-search">
-                <input type="text" placeholder="Search...">
-                <span class="search-line"></span>
-                <div id="searchSuggestions" class="search-suggestions-popup"></div>
-                <svg class="mobile-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            </div>
-            <div class="cart-glass" onclick="toggleCartDisplay()">
-                🛒 (<span id="navbarCartCount">0</span>)
-            </div>
-        </div>
-    </nav>
-
+    <!-- Move search OUTSIDE nav-right -->
+    <div class="stylish-search">
+        <input type="text" placeholder="Search...">
+        <span class="search-line"></span>
+        <div id="searchSuggestions" class="search-suggestions-popup"></div>
+        <svg class="mobile-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </div>
+</nav>
 <section class="hero-parallax">
     <div class="hero-bg-image" style="background-image: url('policia-hero-bg.jpeg');"></div>
     <div class="hero-overlay"></div>

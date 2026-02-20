@@ -1,12 +1,12 @@
 /* --- 1. GLOBAL VARIABLES & RESET --- */
 :root {
-    --primary-navy: #0a1128;      /* Deep Navy */
-    --charcoal-dark: #121212;     /* Urban Charcoal */
-    --accent-gold: #d4af37;       /* Premium Gold */
+    --primary-navy: #0a1128;
+    --charcoal-dark: #121212;
+    --accent-gold: #d4af37;
     --stark-white: #ffffff;
-    --comfort-bg: #f4f7f9;        /* Soft gray-blue background */
+    --comfort-bg: #f4f7f9;
     --border: rgba(0, 0, 0, 0.08);
-    --accent: #d4af37;            /* Linking accent for consistency */
+    --accent: #d4af37;
 }
 
 html, body {
@@ -25,7 +25,7 @@ html, body {
     grid-template-columns: 1fr 1fr 1fr; 
     align-items: center; 
     padding: 15px 5%; 
-    background: var(--primary-navy) !important; /* FORCED NAVY */
+    background: var(--primary-navy) !important;
     color: var(--stark-white) !important;
     backdrop-filter: blur(15px); 
     border-bottom: 1px solid rgba(255,255,255,0.1); 
@@ -36,15 +36,30 @@ html, body {
 
 .nav-left, .nav-center, .nav-right { display: flex; align-items: center; }
 .nav-center { justify-content: center; gap: 10px; }
-.nav-right { justify-content: flex-end; gap: 10px; }
 
-/* FORCED SEARCH VISIBILITY FIX - BOLD BLACK TEXT & ICON */
+/* KEEP CART BESIDE SEARCH */
+.nav-right{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:flex-end !important;
+    gap:10px !important;
+    flex-wrap:nowrap !important;
+}
+
+/* SEARCH CONTAINER (needed so icon stays inside) */
+.stylish-search{
+    position:relative !important;
+    display:flex !important;
+    align-items:center !important;
+}
+
+/* FORCED SEARCH VISIBILITY FIX */
 .navbar input[type="text"], 
 .stylish-search input {
-    color: #000000 !important; /* Bold Black Text */
+    color: #000000 !important;
     font-weight: 700 !important;
     -webkit-text-fill-color: #000000 !important; 
-    background-color: #ffffff !important; /* White background */
+    background-color: #ffffff !important;
     border: 1px solid #ccc !important;
     padding: 8px 12px 8px 35px !important; 
     border-radius: 6px !important;
@@ -54,18 +69,19 @@ html, body {
     visibility: visible !important;
 }
 
-/* SEARCH ICON COLOR FIX */
+/* SEARCH ICON INSIDE FIELD */
 .stylish-search .search-icon, 
 .navbar .search-icon-inside,
-.stylish-search i {
-    color: #000000 !important; /* Bold Black Icon */
+.stylish-search i,
+.stylish-search svg {
+    color: #000000 !important;
     position: absolute;
     left: 10px;
     z-index: 1001;
+    pointer-events: none;
 }
 
-/* --- DROPDOWN RESULTS FIX: STRUCTURED PRODUCT LAYOUT --- */
-/* Hides the dropdown if input is empty */
+/* --- DROPDOWN RESULTS FIX --- */
 .navbar input:placeholder-shown ~ [class*="results"],
 .navbar input:placeholder-shown ~ [id*="results"],
 .navbar input:placeholder-shown ~ .search-dropdown,
@@ -74,7 +90,6 @@ html, body {
     display: none !important;
 }
 
-/* Container Styling */
 [class*="results"], [id*="results"], .search-dropdown, .search-results-container, .search-suggestions-popup {
     background-color: #ffffff !important;
     display: block;
@@ -85,7 +100,7 @@ html, body {
     top: 100%;
     left: 0;
     width: 100%;
-    min-width: 300px; /* Ensures it doesn't get too narrow */
+    min-width: 300px;
     max-height: 450px; 
     overflow-y: auto;
     z-index: 9999;
@@ -93,17 +108,14 @@ html, body {
     border-radius: 0 0 8px 8px;
 }
 
-/* Structured Item Layout (Image + Text) */
 .suggest-item, [class*="results-item"], .search-dropdown li, .search-results-container div {
     display: flex !important;
     align-items: center !important;
     gap: 15px !important;
     padding: 12px 20px !important;
     border-bottom: 1px solid #f9f9f9;
-    transition: background 0.2s;
 }
 
-/* Image inside dropdown */
 .suggest-item img, [class*="results-item"] img {
     width: 50px !important;
     height: 55px !important;
@@ -112,14 +124,12 @@ html, body {
     background: #f4f4f4;
 }
 
-/* Text Content Container */
 .suggest-details {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
 
-/* Bold Black Text & Price Style */
 [class*="results"] *, [id*="results"] *, .search-dropdown *, .search-results-container *, .suggest-item * {
     color: #000000 !important; 
     -webkit-text-fill-color: #000000 !important;
@@ -129,7 +139,6 @@ html, body {
     text-align: left;
 }
 
-/* Subtle Hover Effect */
 .suggest-item:hover, [class*="results-item"]:hover {
     background-color: #f8f9fa !important; 
     cursor: pointer;
@@ -151,22 +160,17 @@ html, body {
     background-color: var(--stark-white) !important;
 }
 
-.menu-text, .brand-name {
-    color: var(--stark-white) !important;
-}
+.menu-text, .brand-name { color: var(--stark-white) !important; }
+.brand-name span { color: var(--accent-gold) !important; }
 
-.brand-name span {
-    color: var(--accent-gold) !important;
-}
-
-/* --- 3. TYPOGRAPHY --- */
+/* TYPOGRAPHY */
 h1, h2, .section-title, .hero-title {
     font-family: 'Playfair Display', serif !important;
     font-weight: 700;
     color: var(--primary-navy);
 }
 
-/* --- 4. BUTTONS & PRICES --- */
+/* BUTTONS */
 .p-price, .action-btn, .pill, .buy-btn, .cart-btn, .hero-cta {
     font-family: 'Montserrat', sans-serif !important;
     font-weight: 600;
@@ -184,7 +188,7 @@ h1, h2, .section-title, .hero-title {
     background: transparent;
 }
 
-/* --- 5. BACK TO TOP VISIBILITY --- */
+/* BACK TO TOP */
 .back-to-top, #backToTop {
     background-color: var(--accent-gold) !important;
     color: var(--primary-navy) !important;
@@ -199,7 +203,7 @@ h1, h2, .section-title, .hero-title {
     border-radius: 50%;
 }
 
-/* --- 6. MOBILE WIDTH & OVERFLOW FIX --- */
+/* MOBILE FIX */
 @media (max-width: 768px) {
     .container, .section, .products-grid {
         width: 100% !important;
@@ -208,17 +212,14 @@ h1, h2, .section-title, .hero-title {
         padding: 0 15px;
         box-sizing: border-box;
     }
-    .stylish-search {
-        width: 110px; 
-        position: relative;
-    }
-    /* TWO PRODUCTS PER GRID FIX */
+    .stylish-search { width: 110px; position: relative; }
     .product-grid {
         grid-template-columns: 1fr 1fr !important;
         gap: 10px !important;
     }
-} 
+}
 
+/* --- REMAINING ORIGINAL STYLES (UNCHANGED) --- */
 .menu-btn { background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 12px; }
 .hamburger-icon-stylish { width: 22px; height: 16px; display: flex; flex-direction: column; justify-content: space-between; }
 .hamburger-icon-stylish span { display: block; height: 2px; background: var(--text-dark); border-radius: 10px; transition: 0.3s; }
@@ -228,6 +229,7 @@ h1, h2, .section-title, .hero-title {
 .brand-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; }
 .brand-name span { color: var(--accent); }
 .logo-box { width: 30px; height: 30px; background: var(--accent); border-radius: 6px; }
+
 .cart-glass { 
     font-size: 0.8rem; 
     font-weight: 600; 
@@ -236,15 +238,18 @@ h1, h2, .section-title, .hero-title {
     border-radius: 4px; 
     background: white; 
     transition: all 0.3s ease; 
-    cursor: pointer; }
-    .cart-glass:hover {
+    cursor: pointer; 
+    flex-shrink:0 !important;
+}
+
+.cart-glass:hover {
     background: var(--text-dark);
     color: white;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-/* --- MENU HOVER & TOUCH EFFECTS --- */
+/* MENU EFFECTS */
 .category-trigger {
     transition: all 0.3s ease;
     border-radius: 8px;
@@ -252,13 +257,11 @@ h1, h2, .section-title, .hero-title {
 }
 
 .category-trigger:hover, .category-trigger:active {
-    background: #f0f4ff; /* Light colorful tint */
+    background: #f0f4ff;
     padding-left: 25px !important;
 }
 
-.category-trigger:hover .cat-text {
-    color: var(--accent);
-}
+.category-trigger:hover .cat-text { color: var(--accent); }
 
 .sub-links li a {
     transition: all 0.3s ease;
@@ -273,11 +276,11 @@ h1, h2, .section-title, .hero-title {
     transform: translateX(10px);
 }
 
-/* --- CART DESIGN CLEANUP --- */
-.cart-title { display: none !important; } 
+/* CART HEADER */
+.cart-title { display: none !important; }
 
 .cart-header-cool {
-    background: linear-gradient(to right, #6366f1, #a855f7); /* Colorful Header */
+    background: linear-gradient(to right, #6366f1, #a855f7);
     padding: 20px;
     margin: -10px -25px 20px -25px;
     color: white;
@@ -286,10 +289,7 @@ h1, h2, .section-title, .hero-title {
     align-items: center;
 }
 
-.cart-header-cool span {
-    font-weight: 700;
-    letter-spacing: 1px;
-}
+.cart-header-cool span { font-weight: 700; letter-spacing: 1px; }
 
 .cool-close-btn {
     background: rgba(255, 255, 255, 0.2);
@@ -298,31 +298,7 @@ h1, h2, .section-title, .hero-title {
     color: white;
 }
 
-
-/* --- SEARCH BAR FIX INTEGRATED --- */
-.stylish-search { 
-    border: 1px solid var(--border); 
-    border-radius: 4px; 
-    padding: 6px 12px; 
-    background: white; 
-    display: flex; 
-    align-items: center;
-    position: relative;
-    z-index: 10; 
-}
-.stylish-search input { 
-    border: none; 
-    outline: none; 
-    width: 100%; 
-    font-size: 0.8rem; 
-    background: transparent;
-}
-
-.mobile-search-icon { display: none; }
-.cart-glass { font-size: 0.8rem; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; background: white; 
-    cursor: pointer; }
-
-/* --- CENTERED & DESIGNED TITLE --- */
+/* TITLE DESIGN */
 .section-title {
     text-align: center;
     font-family: 'Playfair Display', serif;
@@ -342,7 +318,7 @@ h1, h2, .section-title, .hero-title {
     border-radius: 2px;
 }
 
-/* --- FIXED PILL/OPTION TRANSPARENCY --- */
+/* PILLS */
 .pill.active { 
     background: var(--accent) !important; 
     color: #ffffff !important; 
@@ -449,3 +425,162 @@ h1, h2, .section-title, .hero-title {
 .social-opt:hover { transform: scale(1.05); }
 .close-modal-btn { margin-top: 20px; background: none; border: none; color: #64748b; cursor: pointer; font-weight: 600; }
 @keyframes modalPop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+
+/* ================================
+  /* ===============================
+   MOBILE SEARCH BELOW NAVBAR FIX
+   =============================== */
+@media (max-width:768px){
+
+/* make navbar act as anchor */
+.navbar{
+    position:sticky;
+    top:0;
+}
+
+/* move search OUTSIDE navbar visually */
+.stylish-search{
+    position:absolute !important;
+    top:100% !important;          /* puts it below navbar */
+    left:0 !important;
+    width:100% !important;
+    padding:10px 15px !important;
+    background:var(--primary-navy);   /* keeps same design feel */
+    box-sizing:border-box;
+    z-index:999;
+}
+
+/* full width search field */
+.stylish-search input{
+    width:100% !important;
+}
+
+/* make space so banner doesn't hide under it */
+.banner-section,
+.hero,
+.hero-section{
+    margin-top:70px !important;
+}
+
+/* dropdown aligns with full width */
+.search-dropdown,
+.search-results-container{
+    left:0 !important;
+    width:100% !important;
+}
+
+}
+
+/* ================================
+   PAGE BOTTOM SPACE FIX
+   ================================ */
+
+/* ensures footer/back-to-top not cut */
+body{
+    padding-bottom:120px;
+}
+
+/* ensures scroll height enough */
+main, .container, .section{
+    min-height:auto;
+}
+
+/* prevents last section from sticking */
+footer{
+    margin-bottom:40px;
+}
+
+@media (max-width:768px){
+
+/* move search icon slightly right */
+.stylish-search .search-icon,
+.stylish-search i,
+.stylish-search svg,
+.navbar .search-icon-inside{
+    left:19px !important;   /* adjust value if needed */
+}
+
+
+/* === Desktop: search below navbar, full-width, banner ke push down === */
+@media (min-width:769px){
+    .navbar{
+        display: grid !important;
+        grid-template-columns: 1fr 1fr 1fr !important;
+        grid-template-rows: auto auto !important;
+        align-items: center;
+        padding: 15px 5%;
+        position: relative;
+        z-index: 1000;
+    }
+
+    /* Search bar full-width below navbar */
+    .stylish-search{
+        position: relative !important;
+        grid-column: 1 / -1 !important;
+        grid-row: 2 !important;
+        width: 100% !important;
+        padding: 12px 5% !important;
+        box-sizing: border-box;
+        background: var(--primary-navy);
+        z-index: 1000;
+    }
+
+    .stylish-search input{
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .banner-section,
+    .hero,
+    .hero-section{
+        margin-top: 20px !important; /* enough space for search bar */
+    }
+
+    /* search icon adjustment */
+    .stylish-search .search-icon,
+    .stylish-search i,
+    .stylish-search svg,
+    .navbar .search-icon-inside{
+        left: 15px !important;
+    }
+}
+
+/* === Mobile: absolute below navbar === */
+@media (max-width:768px){
+    .stylish-search{
+        position: absolute !important;
+        top: 100% !important;
+        left: 0 !important;
+        width: 100% !important;
+        padding: 10px 15px !important;
+        box-sizing: border-box;
+        background: var(--primary-navy);
+        z-index: 999;
+    }
+
+    .stylish-search input{
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Push banner down on mobile so search doesn't overlap */
+    .banner-section,
+    .hero,
+    .hero-section{
+        margin-top: 70px !important;
+    }
+
+    .stylish-search .search-icon,
+    .stylish-search i,
+    .stylish-search svg,
+    .navbar .search-icon-inside{
+        left: 19px !important;
+    }
+}
+
+/* === Ensure initial load width fix === */
+.stylish-search input{
+    min-width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+}
