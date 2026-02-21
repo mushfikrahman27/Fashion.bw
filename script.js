@@ -5,11 +5,11 @@ const SOCIAL_CONFIG = {
 };
 
 let cartArray = [];
-const productsPerPage = 10;
+const productsPerPage = window.innerWidth <= 768 ? 10 : 12;
 let currentPage = 1;
 let filteredProducts = [];
 
-const allProducts = Array.from({ length: 50 }, (_, i) => ({
+const allProducts = Array.from({ length: 52 }, (_, i) => ({
     id: i + 1,
     name: i % 2 === 0 ? "Women Tote Bag" : "Premium Handbag",
     color: i % 2 === 0 ? "Black" : "Brown",
@@ -17,11 +17,27 @@ const allProducts = Array.from({ length: 50 }, (_, i) => ({
     img: "tote-bag.jpeg" 
 }));
 
-/* --- 2. SEARCH FUNCTIONALITY (RE-VERIFIED & COMBINED) --- */
+//* --- 2. SEARCH FUNCTIONALITY (RE-VERIFIED & COMBINED) --- */
 function initSearch() {
     const searchInput = document.querySelector('.stylish-search input');
-    const suggestBox = document.getElementById('searchSuggestions'); 
+    const suggestBox = document.getElementById('searchSuggestions');
+    const clearBtn = document.getElementById('clearSearchBtn'); // Stylish X button
+    
     if(!searchInput) return;
+
+    // --- LOGIC: ONE-CLICK CLEAR BUTTON ---
+    if(clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            searchInput.value = ""; 
+            if(suggestBox) {
+                suggestBox.innerHTML = "";
+                suggestBox.style.display = 'none';
+            }
+            // Trigger the input event manually to reset the product grid
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.focus();
+        });
+    }
 
     searchInput.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase().trim();
@@ -29,9 +45,12 @@ function initSearch() {
         const cards = Array.from(grid.getElementsByClassName('product-card'));
         const pBar = document.getElementById('paginationBar');
 
-        // --- NEW: Live Suggestion Logic (Added) ---
+        // --- NEW: Live Suggestion & Auto-Clear Logic ---
         if (term.length < 1) {
-            if(suggestBox) suggestBox.style.display = 'none';
+            if(suggestBox) {
+                suggestBox.innerHTML = ""; // Clear content
+                suggestBox.style.display = 'none'; // Hide dropdown
+            }
         } else {
             const matches = allProducts.filter(p => p.name.toLowerCase().includes(term)).slice(0, 5);
             if(matches.length > 0 && suggestBox) {
@@ -51,7 +70,7 @@ function initSearch() {
         if (term === "") {
             cards.forEach(card => card.style.display = 'block');
             if(pBar) pBar.style.display = 'flex';
-            displayProducts(currentPage); 
+            if (typeof displayProducts === "function") displayProducts(currentPage); 
             return;
         }
 
@@ -341,7 +360,10 @@ function displayProducts(page) {
     const grid = document.getElementById('productGrid');
     if (!grid) return;
     grid.innerHTML = "";
+    
+    // Now uses 10 items for mobile and 12 for desktop dynamically
     const items = allProducts.slice((page - 1) * productsPerPage, page * productsPerPage);
+    
     items.forEach(p => renderSingleCard(grid, p));
     updatePagination();
 }
@@ -349,13 +371,37 @@ function displayProducts(page) {
 function updatePagination() {
     const pBar = document.getElementById('paginationBar');
     if(!pBar) return;
+    
+    // Total pages now calculates based on 10 or 12 items per page
     const totalPages = Math.ceil(allProducts.length / productsPerPage);
+    
     pBar.innerHTML = "";
     for (let i = 1; i <= totalPages; i++) {
         const btn = document.createElement('button');
         btn.innerText = i;
         btn.className = `page-num ${i === currentPage ? 'active' : ''}`;
-        btn.onclick = () => { currentPage = i; displayProducts(i); window.scrollTo({top:0, behavior:'smooth'}); };
+        
+        btn.onclick = () => { 
+            currentPage = i; 
+            displayProducts(i); 
+            updatePagination(); // Refresh active state of buttons
+
+            // --- FIXED SCROLL LOGIC ---
+            const target = document.getElementById('productGrid');
+            if (target) {
+                const offset = 100; // Adjust this if your navbar is taller/shorter
+                const bodyRect = document.body.getBoundingClientRect().top;
+                const elementRect = target.getBoundingClientRect().top;
+                const elementPosition = elementRect - bodyRect;
+                const offsetPosition = elementPosition - offset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        };
+        
         pBar.appendChild(btn);
     }
 }
