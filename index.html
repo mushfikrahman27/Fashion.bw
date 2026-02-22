@@ -6,8 +6,22 @@
     <title>FashionForAll | Premium Shop</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* --- DESKTOP Z-INDEX FIX (IMPORTANT) --- */
+        #productDetailsPage {
+            position: fixed !important;
+            z-index: 99999999 !important; /* Force to be above everything */
+            background-color: #0a0a0a !important;
+            inset: 0 !important;
+            display: none; /* Controlled by JS */
+        }
+        #productDetailsPage.active {
+            display: block !important;
+        }
+    </style>
 </head>
 <body>
+
 <nav class="navbar">
     <div class="nav-left">
         <button class="menu-btn" onclick="toggleMenu()">
@@ -25,71 +39,64 @@
         <div class="brand-name">POLI<span>CIA</span></div>
     </div>
 
- <div class="nav-right">
-    <div class="stylish-search">
-        <svg class="mobile-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        
-        <input type="text" id="searchInput" placeholder="Search...">
-        
-        <button id="clearSearchBtn" class="clear-search-btn" aria-label="Clear search">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                <path d="M18 6L6 18M6 6l12 12"></path>
+    <div class="nav-right">
+        <div class="stylish-search">
+            <svg class="mobile-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-        </button>
-
-        <div id="searchSuggestions" class="search-suggestions-popup"></div>
+            <input type="text" id="searchInput" placeholder="Search...">
+            <button id="clearSearchBtn" class="clear-search-btn" aria-label="Clear search">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M18 6L6 18M6 6l12 12"></path>
+                </svg>
+            </button>
+            <div id="searchSuggestions" class="search-suggestions-popup"></div>
+        </div>
+        <div class="cart-glass" onclick="toggleCartDisplay()">
+            🛒 (<span id="navbarCartCount">0</span>)
+        </div>
     </div>
-
-    <div class="cart-glass" onclick="toggleCartDisplay()">
-        🛒 (<span id="navbarCartCount">0</span>)
-    </div>
-</div>
 
     <div id="menuOverlay" class="menu-overlay">
-       <div class="menu-header">
-    <button class="menu-back-btn" onclick="toggleMenu()" aria-label="Close Menu">
-        <div class="back-icon-wrapper">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
+        <div class="menu-header">
+            <button class="menu-back-btn" onclick="toggleMenu()" aria-label="Close Menu">
+                <div class="back-icon-wrapper">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </div>
+                <span class="back-text">CLOSE</span>
+            </button>
         </div>
-        <span class="back-text">CLOSE</span>
-    </button>
-</div>
-
-    <div class="menu-scroll-container">
-    <div class="nested">
-        <button class="category-trigger" onclick="toggleSub(this)">
-            <span class="cat-text">MEN</span>
-            <span class="plus-icon">+</span>
-        </button>
-        <ul class="sub-links">
-            <li><a href="#" onclick="handleCategoryClick(event, 'Men', 'Bags')">Bags</a></li>
-            <li><a href="#" onclick="handleCategoryClick(event, 'Men', 'Sunglasses')">Sunglasses</a></li>
-            <li><a href="#" onclick="handleCategoryClick(event, 'Men', 'Sneakers')">Sneakers</a></li>
-        </ul>
-    </div>
-
-    <div class="nested">
-        <button class="category-trigger" onclick="toggleSub(this)">
-            <span class="cat-text">WOMEN</span>
-            <span class="plus-icon">+</span>
-        </button>
-        <ul class="sub-links">
-            <li><a href="#" onclick="handleCategoryClick(event, 'Women', 'Bags')">Handbags</a></li>
-            <li><a href="#" onclick="handleCategoryClick(event, 'Women', 'Sunglasses')">Sunglasses</a></li>
-            <li><a href="#" onclick="handleCategoryClick(event, 'Women', 'Sneakers')">Sneakers</a></li>
-        </ul>
-    </div>
-</div>
-            
+        <div class="menu-scroll-container">
+            <div class="nested">
+                <button class="category-trigger" onclick="toggleSub(this)">
+                    <span class="cat-text">MEN</span>
+                    <span class="plus-icon">+</span>
+                </button>
+                <ul class="sub-links">
+                    <li><a href="#" onclick="handleCategoryClick(event, 'Men', 'Bags')">Bags</a></li>
+                    <li><a href="#" onclick="handleCategoryClick(event, 'Men', 'Sunglasses')">Sunglasses</a></li>
+                    <li><a href="#" onclick="handleCategoryClick(event, 'Men', 'Sneakers')">Sneakers</a></li>
+                </ul>
+            </div>
+            <div class="nested">
+                <button class="category-trigger" onclick="toggleSub(this)">
+                    <span class="cat-text">WOMEN</span>
+                    <span class="plus-icon">+</span>
+                </button>
+                <ul class="sub-links">
+                    <li><a href="#" onclick="handleCategoryClick(event, 'Women', 'Bags')">Handbags</a></li>
+                    <li><a href="#" onclick="handleCategoryClick(event, 'Women', 'Sunglasses')">Sunglasses</a></li>
+                    <li><a href="#" onclick="handleCategoryClick(event, 'Women', 'Sneakers')">Sneakers</a></li>
+                </ul>
+            </div>
             <div style="height: 150px; width: 100%;"></div>
         </div>
     </div>
 </nav>
+
 <section class="hero-parallax">
     <div class="hero-bg-image" style="background-image: url('policia-hero-bg.jpeg');"></div>
     <div class="hero-overlay"></div>
@@ -101,48 +108,90 @@
         </button>
     </div>
 </section>
-</section>
 
-    <div id="cartSerialOverlay" class="cart-serial-overlay">
-        <div class="cart-serial-content">
-            <button class="close-btn" onclick="toggleCartDisplay()">✕</button>
-            <h3 class="cart-title">Selected Items</h3>
-            <div id="serialItemList"></div>
+<div id="cartSerialOverlay" class="cart-serial-overlay">
+    <div class="cart-serial-content">
+        <button class="close-btn" onclick="toggleCartDisplay()">✕</button>
+        <h3 class="cart-title">Selected Items</h3>
+        <div id="serialItemList"></div>
+    </div>
+</div>
+
+<section class="products-section">
+    <h2 class="section-title">Our Products</h2>
+    <div class="filter-pill-container">
+        <div class="filter-pills">
+            <button class="pill active" onclick="filterByCategory('All', this)">All</button>
+            <button class="pill" onclick="filterByCategory('Tote', this)">Tote</button>
+            <button class="pill" onclick="filterByCategory('Handbag', this)">Handbags</button>
+            <button class="pill" onclick="filterByCategory('Premium', this)">Premium</button>
         </div>
     </div>
+    <div class="product-grid" id="productGrid"></div>
+    <div class="pagination-footer">
+        <div class="pagination-column" id="paginationBar"></div>
+        <button class="scroll-top-btn" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            <span>Back to Top</span>
+        </button>
+    </div>
+</section>
 
-    <section class="products-section">
-        <h2 class="section-title">Our Products</h2>
+<footer class="main-footer">
+    <div class="footer-content">
+        <div class="brand-name">Fashion<span>ForAll</span></div>
+        <p>&copy; 2026 Premium Shop. All rights reserved.</p>
+    </div>
+</footer>
 
-        <div class="filter-pill-container">
-            <div class="filter-pills">
-                <button class="pill active" onclick="filterByCategory('All', this)">All</button>
-                <button class="pill" onclick="filterByCategory('Tote', this)">Tote</button>
-                <button class="pill" onclick="filterByCategory('Handbag', this)">Handbags</button>
-                <button class="pill" onclick="filterByCategory('Premium', this)">Premium</button>
+<div id="toastContainer" class="toast-container"></div> 
+<div class="light-comfort-bg"></div>
+
+<div id="productDetailsPage" class="details-overlay">
+    <div class="details-container">
+        <button class="cool-back-btn" onclick="closeProductDetails()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            <span>BACK</span>
+        </button>
+
+        <div class="details-content-wrapper">
+            <div class="details-gallery">
+                <div class="main-img-box">
+                    <img id="mainDetailImg" src="" alt="Product">
+                </div>
+                <div id="thumbnailStrip" class="thumbnail-strip"></div>
+            </div>
+
+            <div class="details-info">
+                <h1 id="detName"></h1>
+                <div class="det-price-row">
+                    <span id="detPrice" class="det-price"></span>
+                </div>
+                <p id="detDesc" class="det-description"></p>
+                <div id="sizeSection" class="det-option-section">
+                    <label>SELECT SIZE</label>
+                    <div id="detSizes" class="det-pills"></div>
+                </div>
+                <div id="careSection" class="det-extra-section">
+                    <h3>CARE INSTRUCTIONS</h3>
+                    <p id="detCare"></p>
+                </div>
+                <div class="det-actions">
+                    <button class="det-btn buy-now" onclick="handleDirectBuy()">BUY NOW</button>
+                    <button class="det-btn add-cart" onclick="handleAddToCartFromDetails()">ADD TO CART</button>
+                </div>
             </div>
         </div>
 
-        <div class="product-grid" id="productGrid"></div>
-
-        <div class="pagination-footer">
-            <div class="pagination-column" id="paginationBar"></div>
-            <button class="scroll-top-btn" onclick="window.scrollTo({top:0, behavior:'smooth'})">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                <span>Back to Top</span>
-            </button>
+        <div class="related-section">
+            <h2 class="related-title">YOU MIGHT ALSO LIKE</h2>
+            <div id="relatedGrid" class="product-grid"></div>
         </div>
-    </section>
+    </div>
+</div>
 
-    <footer class="main-footer">
-        <div class="footer-content">
-            <div class="brand-name">Fashion<span>ForAll</span></div>
-            <p>&copy; 2026 Premium Shop. All rights reserved.</p>
-        </div>
-    </footer>
-
-<div id="toastContainer" class="toast-container"></div> 
-    <div class="light-comfort-bg"></div>
-    <script src="script.js"></script> 
+<script src="script.js"></script> 
 </body>
 </html>

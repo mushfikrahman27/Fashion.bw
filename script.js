@@ -330,39 +330,48 @@ document.addEventListener('click', (e) => {
     if(e.target && e.target.classList.contains('ready')) handleSingleBuy(e.target.closest('.product-card'));
 });
 
-/* --- 8. PRODUCT RENDERING & PAGINATION --- */
+/* --- 8. PRODUCT RENDERING & PAGINATION (UPDATED WITH DETAILS TRIGGER) --- */
+
 function renderSingleCard(container, p) {
     const uniqueId = `prod-${p.id}`;
+    
+    // Nicher template e card-er main div-e onclick add kora hoyeche
     container.innerHTML += `
         <div class="product-card">
-            <div class="product-img-holder skeleton">
+            <div class="product-img-holder skeleton" onclick="openProductDetails(${p.id})" style="cursor: pointer;">
                 <img src="${p.img}" onload="this.parentElement.classList.remove('skeleton')" onerror="this.src='https://via.placeholder.com/400x500'">
             </div>
+            
             <div class="product-details">
-                <h3 class="p-name">${p.name}</h3>
+                <h3 class="p-name" onclick="openProductDetails(${p.id})" style="cursor: pointer;">${p.name}</h3>
+                
                 <p class="p-meta">Color: ${p.color}</p>
                 <p class="p-price">TK-${p.price}</p>
+                
                 <div class="size-container">
                     <label class="size-label">Select Size:</label>
                     <div class="size-options" id="sizes-${uniqueId}">
-                        <span onclick="selectSize('${uniqueId}', this)">S</span>
-                        <span onclick="selectSize('${uniqueId}', this)">M</span>
-                        <span onclick="selectSize('${uniqueId}', this)">L</span>
-                        <span onclick="selectSize('${uniqueId}', this)">XL</span>
+                        <span onclick="event.stopPropagation(); selectSize('${uniqueId}', this)">S</span>
+                        <span onclick="event.stopPropagation(); selectSize('${uniqueId}', this)">M</span>
+                        <span onclick="event.stopPropagation(); selectSize('${uniqueId}', this)">L</span>
+                        <span onclick="event.stopPropagation(); selectSize('${uniqueId}', this)">XL</span>
                     </div>
                 </div>
+                
                 <div class="button-group">
                     <button class="action-btn buy-btn" id="btn-${uniqueId}" disabled>Choose Size</button>
-                    <button class="action-btn cart-btn" onclick="addToCart(${p.id})">Add to Cart</button>
+                    <button class="action-btn cart-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Add to Cart</button>
                 </div>
             </div>
         </div>`;
 }
 
 function selectSize(prodId, element) {
+    // Stop propagation jate size select korle details page na khule jay
     const options = document.querySelectorAll(`#sizes-${prodId} span`);
     options.forEach(opt => opt.classList.remove('active'));
     element.classList.add('active');
+    
     const btn = document.getElementById(`btn-${prodId}`);
     btn.innerText = "Buy Now";
     btn.classList.add('ready');
@@ -475,6 +484,118 @@ function filterByCategory(mainCat, subCat = 'All') {
     displayProducts(1);
 }
 
+/* --- FINAL MERGED PRODUCT DETAILS LOGIC --- */
+
+function openProductDetails(id) {
+    const p = allProducts.find(item => item.id === id);
+    if (!p) return;
+
+    // 1. Basic Info Load
+    document.getElementById('detName').innerText = p.name;
+    document.getElementById('detPrice').innerText = `TK-${p.price}`; 
+    document.getElementById('mainDetailImg').src = p.img;
+    
+    // 2. Description & Care Instructions
+    document.getElementById('detDesc').innerText = p.description || `Experience premium quality with this ${p.name}. Crafted for comfort and designed to make a statement in every step.`;
+    document.getElementById('detCare').innerText = p.care || "Dry clean only. Store in a cool, dry place. Handle with care to maintain its luxury finish and longevity.";
+
+    // 3. Gallery / Thumbnails Logic
+    const thumbContainer = document.getElementById('thumbnailStrip');
+    thumbContainer.innerHTML = '';
+    
+    const gallery = p.gallery || [p.img, p.img, p.img]; 
+    gallery.forEach(imgSrc => {
+        const thumb = document.createElement('img');
+        thumb.src = imgSrc;
+        thumb.onclick = () => {
+            document.getElementById('mainDetailImg').src = imgSrc;
+        };
+        thumbContainer.appendChild(thumb);
+    });
+
+    // 4. Dynamic Size Section
+    const sizeSection = document.getElementById('sizeSection');
+    const sizeContainer = document.getElementById('detSizes');
+    sizeContainer.innerHTML = '';
+    
+    const needSize = ['Sneakers', 'Shoes', 'Shirts', 'Pants'].includes(p.subCategory) || ['Men', 'Women'].includes(p.category);
+    
+    if (needSize) {
+        sizeSection.style.display = 'block';
+        ['S', 'M', 'L', 'XL'].forEach(s => {
+            const span = document.createElement('span');
+            span.innerText = s;
+            span.onclick = function() {
+                sizeContainer.querySelectorAll('span').forEach(el => el.classList.remove('active'));
+                this.classList.add('active');
+            };
+            sizeContainer.appendChild(span);
+        });
+    } else {
+        sizeSection.style.display = 'none';
+    }
+
+    // 5. Related Products Logic
+    const relatedGrid = document.getElementById('relatedGrid');
+    relatedGrid.innerHTML = '';
+    const related = allProducts.filter(item => item.subCategory === p.subCategory && item.id !== p.id).slice(0, 4);
+    
+    if(related.length > 0) {
+        related.forEach(rp => {
+            relatedGrid.innerHTML += `
+                <div class="product-card" onclick="openProductDetails(${rp.id})">
+                    <div class="product-img-holder">
+                        <img src="${rp.img}">
+                    </div>
+                    <div class="p-info">
+                        <h3 class="p-name">${rp.name}</h3>
+                        <p class="p-price">TK-${rp.price}</p>
+                    </div>
+                </div>`;
+        });
+    }
+
+    // 6. Show the Overlay Page
+    const detailsPage = document.getElementById('productDetailsPage');
+    detailsPage.classList.add('active');
+    document.body.style.overflow = 'hidden'; 
+    detailsPage.scrollTop = 0;
+}
+
+// 7. Action Button Handlers (Eigulo nouton add kora hoyeche)
+function handleAddToCartFromDetails() {
+    const productName = document.getElementById('detName').innerText;
+    const p = allProducts.find(item => item.name === productName);
+    if (p) {
+        // Tumi tomar existing addToCart function ta eikhane call korbe
+        if (typeof addToCart === "function") {
+            addToCart(p.id);
+            alert(`${p.name} added to cart!`);
+        } else {
+            console.error("addToCart function not found!");
+        }
+    }
+}
+
+function handleDirectBuy() {
+    const productName = document.getElementById('detName').innerText;
+    const p = allProducts.find(item => item.name === productName);
+    if (p) {
+        if (typeof addToCart === "function") {
+            addToCart(p.id);
+            // Buy Now logic: Cart open kora ba Checkout e niye jawa
+            closeProductDetails();
+            alert("Proceeding to Checkout with " + p.name);
+        }
+    }
+}
+
+// 8. Close Function
+function closeProductDetails() {
+    const detailsPage = document.getElementById('productDetailsPage');
+    detailsPage.classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
 /* --- INITIAL RUN --- */
 displayProducts(1);
 initSearch();
