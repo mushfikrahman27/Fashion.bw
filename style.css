@@ -1086,17 +1086,13 @@ footer{
     } 
 }
 
-
-//* ===== FINAL OVERRIDE: MOBILE CART REAL FIX ===== */
+/* ===== FINAL OVERRIDE: MOBILE CART REAL FIX ===== */
 @media (max-width:768px){
 
     /* lock page when cart open */
     body.cart-open{
-        overflow:hidden !important;
-        position:fixed !important;
-        width:100% !important;
+        overflow:hidden !important;position:fixed !important;width:100% !important;
     }
-
     /* cart panel = full screen flex column */
     .cart-serial-content{
         position:fixed !important;
@@ -1130,8 +1126,6 @@ footer{
     }
 
 }
-
-
 
 
 /* --- ULTIMATE WHITE-GHOSTING FIX --- */
@@ -1534,4 +1528,198 @@ footer{
         grid-template-columns: repeat(4, 1fr) !important;
         gap: 25px !important;
     }
+}
+
+
+.advanced-filter-bar {
+    display: flex;
+    gap: 30px;
+    background: #111;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    align-items: center;
+    border: 1px solid #222;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-group label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: #888;
+    text-transform: uppercase;
+}
+
+input[type="range"] {
+    accent-color: #d4af37;
+    cursor: pointer;
+}
+
+#sizeFilter {
+    background: #000;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 8px 15px;
+    outline: none;
+    cursor: pointer;
+}
+
+#priceValue {
+    color: #d4af37;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* --- ADVANCED FILTER UI --- */
+.filter-pill-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.advanced-filter-row {
+    display: flex;
+    gap: 25px;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 15px 25px;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.adv-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.adv-filter-item label {
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #888;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+#priceLabel {
+    color: #d4af37;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+}
+
+input[type="range"] {
+    accent-color: #d4af37;
+    height: 4px;
+    background: #333;
+    border-radius: 5px;
+}
+
+/* Select Box Styling */
+#sizeFilter {
+    background: transparent;
+    color: #fff;
+    border: none;
+    border-bottom: 1px solid #444;
+    font-size: 12px;
+    padding: 5px;
+    outline: none;
+    cursor: pointer;
+}
+
+#sizeFilter option {
+    background: #0a0a0a;
+}
+
+/* Mobile Responsive Filter */
+@media (max-width: 768px) {
+    .advanced-filter-row {
+        flex-direction: column;
+        align-items: flex-start;
+        border-radius: 15px;
+        gap: 15px;
+    }
+    input[type="range"] { width: 100%; }
+}
+
+
+
+/* --- PREMIUM TRANSITIONS & ANIMATIONS --- */
+
+/* 1. Card Entrance Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.product-card {
+    animation: fadeInUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    transition: transform 0.4s ease, box-shadow 0.4s ease !important;
+}
+
+/* 2. Premium Card Hover Effect */
+/* 2. Premium Card Hover Effect */
+.product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+}
+
+.product-card img {
+    transition: transform 0.8s cubic-bezier(0.2, 1, 0.3, 1) !important;
+}
+
+.product-card:hover img {
+    transform: scale(1.05); /* Very subtle zoom */
+}
+
+/* 3. Button Micro-interactions */
+.det-btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease !important;
+}
+
+.buy-now::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: 0.5s;
+}
+
+.buy-now:hover::after {
+    left: 100% !important;
+}
+
+/* 4. Filter Pill Smooth Active State */
+.pill {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative;
+}
+
+.pill.active {
+    background: #d4af37 !important;
+    transform: scale(1.05);
+
+}
+
+/* 2. end of Premium Card Hover Effect */
+.details-overlay {
+    /* Agei transition chilo, eita arektu refine kora */
+    transition: transform 0.7s cubic-bezier(0.85, 0, 0.15, 1) !important;
+    backdrop-filter: blur(10px); /* Premium Glass effect for background */
 }

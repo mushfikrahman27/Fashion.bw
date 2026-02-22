@@ -6,6 +6,23 @@
     <title>FashionForAll | Premium Shop</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.sync=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', 'YOUR_PIXEL_ID_HERE'); // Tomar Pixel ID eikhane hobe
+  fbq('track', 'PageView');
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=YOUR_GA4_ID_HERE"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'YOUR_GA4_ID_HERE'); // Tomar GA4 ID eikhane hobe
+</script>
     <style>
         /* --- DESKTOP Z-INDEX FIX (IMPORTANT) --- */
         #productDetailsPage {
@@ -119,6 +136,7 @@
 
 <section class="products-section">
     <h2 class="section-title">Our Products</h2>
+    
     <div class="filter-pill-container">
         <div class="filter-pills">
             <button class="pill active" onclick="filterByCategory('All', this)">All</button>
@@ -126,12 +144,33 @@
             <button class="pill" onclick="filterByCategory('Handbag', this)">Handbags</button>
             <button class="pill" onclick="filterByCategory('Premium', this)">Premium</button>
         </div>
+
+        <div class="advanced-filter-row">
+            <div class="adv-filter-item">
+                <label>Price: <span id="priceLabel">৳5000</span></label>
+                <input type="range" id="priceRange" min="0" max="5000" step="100" value="5000" oninput="updateFilters()">
+            </div>
+
+            <div class="adv-filter-item">
+                <select id="sizeFilter" onchange="updateFilters()">
+                  <option value="All">All Sizes</option>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
+                </select>
+            </div>
+        </div>
     </div>
+
     <div class="product-grid" id="productGrid"></div>
+    
     <div class="pagination-footer">
         <div class="pagination-column" id="paginationBar"></div>
         <button class="scroll-top-btn" onclick="window.scrollTo({top:0, behavior:'smooth'})">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
             <span>Back to Top</span>
         </button>
     </div>

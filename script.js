@@ -89,7 +89,7 @@ const allProducts = [
 
 // Default filtered list
 let filteredProducts = [...allProducts];
-/* --- 2. SEARCH FUNCTIONALITY --- */
+/* --- 2. SEARCH FUNCTIONALITY (UPDATED WITH SUB-CATEGORY PRIORITY & DETAILS TRIGGER) --- */
 function initSearch() {
     const searchInput = document.querySelector('.stylish-search input');
     const suggestBox = document.getElementById('searchSuggestions');
@@ -121,12 +121,26 @@ function initSearch() {
                 suggestBox.style.display = 'none'; 
             }
         } else {
-            const matches = allProducts.filter(p => p.name.toLowerCase().includes(term)).slice(0, 5);
+            /* --- SUB-CATEGORY PRIORITY LOGIC --- */
+            const matches = allProducts.filter(p => 
+                p.name.toLowerCase().includes(term) || 
+                (p.subCategory && p.subCategory.toLowerCase().includes(term))
+            ).sort((a, b) => {
+                // Check if search term matches sub-category
+                const aSub = a.subCategory ? a.subCategory.toLowerCase().includes(term) : false;
+                const bSub = b.subCategory ? b.subCategory.toLowerCase().includes(term) : false;
+                return bSub - aSub; // Sub-category matches come first
+            }).slice(0, 6); // Showing top 6 results
+
             if(matches.length > 0 && suggestBox) {
                 suggestBox.innerHTML = matches.map(p => `
-                    <div class="suggest-item" onclick="quickView(${p.id})">
+                    <div class="suggest-item" onclick="openProductDetails(${p.id})">
                         <img src="${p.img}" onerror="this.src='https://via.placeholder.com/400x500'">
-                        <span style="font-size:0.8rem; font-weight:600;">${p.name}</span>
+                        <div class="sugg-info" style="display: flex; flex-direction: column; gap: 2px;">
+                            <span style="font-size:0.85rem; font-weight:600; color:#fff;">${p.name}</span>
+                            <span style="font-size:0.7rem; color:#d4af37; text-transform:uppercase; letter-spacing:1px;">${p.subCategory || ''}</span>
+                        </div>
+                        <span style="font-size:0.8rem; color:#888; margin-left:auto;">TK ${p.price}</span>
                     </div>
                 `).join('');
                 suggestBox.style.display = 'block';
@@ -147,6 +161,7 @@ function initSearch() {
         const gridMatches = [];
         cards.forEach(card => {
             const productName = card.querySelector('.p-name').innerText.toLowerCase();
+            // Also checking against sub-category if needed for grid filtering
             if (productName.includes(term)) {
                 const score = productName.startsWith(term) ? 2 : 1;
                 gridMatches.push({ card, score });
@@ -195,6 +210,36 @@ function toggleCartDisplay() {
 /* --- 4. THE ADD TO CART SYSTEM --- */
 function addToCart(id) {
     const product = allProducts.find(p => p.id === id);
+    if (!product) return;
+
+    // --- TRACKING START: FB Pixel & GA4 AddToCart ---
+    const numericPrice = parseFloat(product.price.toString().replace(/[^0-9.]/g, ''));
+
+    // Facebook Pixel Event
+    if (typeof fbq === 'function') {
+        fbq('track', 'AddToCart', {
+            content_name: product.name,
+            content_ids: [product.id.toString()],
+            content_type: 'product',
+            value: numericPrice,
+            currency: 'BDT'
+        });
+    }
+
+    // Google Analytics Event
+    if (typeof gtag === 'function') {
+        gtag('event', 'add_to_cart', {
+            currency: 'BDT',
+            value: numericPrice,
+            items: [{
+                item_id: product.id,
+                item_name: product.name,
+                price: numericPrice
+            }]
+        });
+    }
+    // --- TRACKING END ---
+
     const btn = document.querySelector(`button[onclick="addToCart(${id})"]`);
     
     if (btn) {
@@ -293,15 +338,33 @@ function renderSerialItems() {
 }
 
 /* --- 7. ORDER LOGIC --- */
+/* --- ORDER LOGIC WITH FB TRACKING & MESSENGER COPY --- */
+
 function openOrderOptions(fullMessage) {
+    // 1. FB Pixel Tracking: InitiateCheckout
+    if (typeof fbq === 'function') {
+        fbq('track', 'InitiateCheckout', {
+            content_name: 'Order Modal Open',
+            currency: 'BDT'
+        });
+    }
+
     const encodedMsg = encodeURIComponent(fullMessage);
+    
+    // Message-e single quote (') handle korar jonno escape logic
+    const escapedMessage = fullMessage.replace(/'/g, "\\'");
+
     const modalHtml = `
         <div id="orderModal" class="social-modal-overlay">
             <div class="social-modal-content">
                 <h3>Order via</h3>
                 <div class="social-options">
-                    <a href="https://api.whatsapp.com/send?phone=${SOCIAL_CONFIG.whatsappNumber}&text=${encodedMsg}" target="_blank" class="social-opt wa">WhatsApp</a>
-                    <a href="${SOCIAL_CONFIG.messengerLink}" target="_blank" class="social-opt fb">Messenger</a>
+                    <a href="https://api.whatsapp.com/send?phone=${SOCIAL_CONFIG.whatsappNumber}&text=${encodedMsg}" 
+                       target="_blank" class="social-opt wa">WhatsApp</a>
+                    
+                    <a href="javascript:void(0)" 
+                       onclick="copyAndRedirectMessenger('${escapedMessage}')" 
+                       class="social-opt fb">Messenger</a>
                 </div>
                 <button onclick="closeOrderModal()" class="close-modal-btn">Cancel</button>
             </div>
@@ -309,6 +372,34 @@ function openOrderOptions(fullMessage) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
+// Messenger Redirect & Clipboard Logic
+function copyAndRedirectMessenger(message) {
+    // Clipboard-e text copy kora
+    navigator.clipboard.writeText(message).then(() => {
+        // Notification dekhano
+        if (typeof showToast === "function") {
+            showToast("Order details copied! Please paste it in Messenger.");
+        } else {
+            alert("Order details copied! Please paste it in our Messenger inbox.");
+        }
+        
+        // 1.2 second delay jate user toast-ta dekhte pay, tarpore redirect
+        setTimeout(() => {
+            window.open(SOCIAL_CONFIG.messengerLink, '_blank');
+            closeOrderModal();
+        }, 1200);
+    }).catch(err => {
+        console.error('Could not copy text: ', err);
+        // Fallback: Jodi clipboard access na thake, direct redirect hobe
+        window.open(SOCIAL_CONFIG.messengerLink, '_blank');
+        closeOrderModal();
+    });
+}
+
+function closeOrderModal() { 
+    const modal = document.getElementById('orderModal');
+    if (modal) modal.remove();
+}
 function closeOrderModal() { document.getElementById('orderModal')?.remove(); }
 
 function handleSingleBuy(card) {
@@ -490,6 +581,19 @@ function openProductDetails(id) {
     const p = allProducts.find(item => item.id === id);
     if (!p) return;
 
+    // --- TRACKING START: Facebook Pixel ViewContent ---
+    if (typeof fbq === 'function') {
+        fbq('track', 'ViewContent', {
+            content_name: p.name,
+            content_category: p.category || p.subCategory,
+            content_ids: [p.id.toString()],
+            content_type: 'product',
+            value: parseFloat(p.price.toString().replace(/[^0-9.]/g, '')),
+            currency: 'BDT'
+        });
+    }
+    // --- TRACKING END ---
+
     // 1. Basic Info Load
     document.getElementById('detName').innerText = p.name;
     document.getElementById('detPrice').innerText = `TK-${p.price}`; 
@@ -596,6 +700,65 @@ function closeProductDetails() {
     detailsPage.classList.remove('active');
     document.body.style.overflow = 'auto';
 }
+
+
+/* --- ADVANCED FILTER LOGIC (TK & S/M/L/XL CONNECTED) --- */
+
+// Global states for filters
+let currentCategory = 'All'; // Eta age thekei thakar kotha
+let currentMaxPrice = 5000;
+let currentSize = 'All';
+
+// Price Slider update function
+function updatePriceLabel(val) {
+    // UI-te Taka symbol show kora
+    const label = document.getElementById('priceLabel'); // HTML-e id="priceLabel" thakle
+    if(label) label.innerText = `৳${val}`;
+    
+    currentMaxPrice = parseInt(val);
+    applyAdvancedFilters();
+}
+
+// Main Filter Function
+function applyAdvancedFilters() {
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : "";
+    
+    const sizeSelect = document.getElementById('sizeFilter');
+    currentSize = sizeSelect ? sizeSelect.value : "All";
+
+    const filteredProducts = allProducts.filter(product => {
+        // 1. Price Connection: String (TK) hole number-e convert korbe
+        const productPriceNum = typeof product.price === 'string' 
+            ? parseInt(product.price.replace(/[^0-9]/g, '')) 
+            : product.price;
+
+        // 2. Filter Conditions
+        const matchesCategory = currentCategory === 'All' || product.category === currentCategory;
+        const matchesSearch = product.name.toLowerCase().includes(searchTerm);
+        const matchesPrice = productPriceNum <= currentMaxPrice;
+        
+        // 3. Size Connection (S, M, L, XL)
+        // Ensure koro product object-e sizes: ["S", "M"] ei bhabe data ache
+        const matchesSize = currentSize === 'All' || (product.sizes && product.sizes.includes(currentSize));
+        
+        return matchesCategory && matchesSearch && matchesPrice && matchesSize;
+    });
+
+    // Pagination reset kora bhalo jate filter korle 1st page theke dekhay
+    currentPage = 1; 
+    renderProducts(filteredProducts); 
+}
+
+// Navbar search bar connectivity
+const searchBar = document.getElementById('searchInput');
+if (searchBar) {
+    searchBar.addEventListener('input', applyAdvancedFilters);
+}
+
+// Category filter button gulo ke update kora (Existing function-er sathe sync)
+// Tomar existing filterByCategory function-er bhetore 'applyAdvancedFilters()' call kore dio
+
 /* --- INITIAL RUN --- */
 displayProducts(1);
 initSearch();
