@@ -18,9 +18,9 @@ const allProducts = [
     { id: 7, name: "Mini Party Clutch", price: "640", color: "Gold", img: "bag4.jpg", category: "Women", subCategory: "Bags",img: "images/pic-4.jpg" },
     { id: 8, name: "Casual Canvas Bag", price: "520", color: "Cream", img: "bag5.jpg", category: "Women", subCategory: "Bags" ,img: "images/pic-5.jpeg"},
 
-    { id: 9, name: "Premium Abaya", price: "1400", color: "Pink", img: "dress1.jpg", category: "Women", subCategory: "Dress",img: "images/pic-6.jpg" },
+    { id: 9, name: "Premium Abaya", price: "1400", color: "Pink", img: "dress1.jpg", category: "Women", subCategory: "Most Viewed",img: "images/pic-6.jpg" },
     { id: 10, name: "premium borkha", price: "2600", color: "Maroon", img: "dress2.jpg", category: "Women", subCategory: "Dress",img: "images/pic-7.jpg" },
-    { id: 11, name: "Casual Women Watch", price: "980", color: "Sky Blue", img: "dress3.jpg", category: "Women", subCategory: "Dress",img: "images/pic-8.webp" },
+    { id: 11, name: "Casual Women Watch", price: "980", color: "Sky Blue", img: "dress3.jpg", category: "Women", subCategory: "Trending",img: "images/pic-8.webp" },
 
     // MEN CATEGORY
     { id: 3, name: "Urban Street Sneaker", price: "1800", color: "White/Grey", img: "sneaker1.jpg", category: "Men", subCategory: "Sneakers",img: "images/pic-9.webp" },
@@ -281,7 +281,7 @@ function showToast(productName) {
     toast.className = 'toast-notification';
     toast.innerHTML = `
         <div class="toast-content">
-            <p>Added <span>${productName}</span> to your bag!</p>
+            <p>Added <span>${productName}</span> to your Cart!</p>
         </div>
         <button class="toast-view-btn" onclick="toggleCartDisplay()">View Cart</button>
     `;
@@ -472,19 +472,49 @@ function selectSize(prodId, element) {
 function displayProducts(page) {
     const grid = document.getElementById('productGrid');
     if (!grid) return;
-    grid.innerHTML = "";
     
-    const start = (page - 1) * productsPerPage;
-    const end = start + productsPerPage;
+    // Grid clear kora
+    grid.innerHTML = "";
+
+    // Screen size onujayi productsPerPage update kora (Mobile: 10, Desktop: 12)
+    const currentLimit = window.innerWidth <= 768 ? 10 : 12;
+    
+    const start = (page - 1) * currentLimit;
+    const end = start + currentLimit;
     const itemsToShow = filteredProducts.slice(start, end);
     
     if (itemsToShow.length === 0) {
         grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--muted-foreground); padding: 40px;">No products found in this category.</p>`;
     } else {
-        itemsToShow.forEach(p => renderSingleCard(grid, p));
+        // Eikhane amra tomar existing 'renderSingleCard' use korbo 
+        // Jate Toast notification ebong Add to Cart ager motoi kaj kore
+        itemsToShow.forEach(p => {
+            if (typeof renderSingleCard === 'function') {
+                renderSingleCard(grid, p);
+            } else {
+                // Jodi renderSingleCard na thake, tobe backup template (Jate details kaj kore)
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.onclick = () => openProductDetails(p.id);
+                card.innerHTML = `
+                    <div class="product-img-holder">
+                        <img src="${p.img}" alt="${p.name}">
+                    </div>
+                    <div class="p-info">
+                        <h3 class="p-name">${p.name}</h3>
+                        <p class="p-price">TK-${p.price}</p>
+                    </div>
+                    <button class="cart-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Add to Cart</button>
+                `;
+                grid.appendChild(card);
+            }
+        });
     }
     
-    updatePagination();
+    // Pagination button gulo setup kora
+    if (typeof setupPagination === 'function') {
+        setupPagination(filteredProducts.length, currentLimit);
+    }
 }
 
 function updatePagination() {
@@ -542,37 +572,44 @@ function handleCategoryClick(event, mainCat, subCat) {
 }
 
 // 2. Updated Filter Logic (Pill active color change shoho)
-function filterByCategory(mainCat, subCat = 'All') {
-    currentPage = 1;
-    
-    // Main Filtering logic
+function filterByCategory(mainCat, subCat = 'All', element) {
+    // 0. Smart Parameter Fix: Jodi 2nd parameter-e bhul kore 'element' chole ashe
+    if (subCat && typeof subCat !== 'string') {
+        element = subCat;
+        subCat = 'All';
+    }
+
+    // 1. Current page reset
+    if (typeof currentPage !== 'undefined') currentPage = 1;
+
+    // 2. Active class logic (Button color highlight)
+    if (element && element.classList) {
+        const allPills = document.querySelectorAll('.pill');
+        allPills.forEach(pill => pill.classList.remove('active'));
+        element.classList.add('active');
+    }
+
+    // 3. Filtering logic (Main Category + Sub Category check)
     if (mainCat === 'All') {
         filteredProducts = [...allProducts];
     } else {
-        filteredProducts = allProducts.filter(p => 
-            p.category === mainCat && (subCat === 'All' || p.subCategory === subCat)
-        );
-    }
-
-    // Scroll to products
-    const grid = document.getElementById('productGrid');
-    if (grid) {
-        window.scrollTo({
-            top: grid.offsetTop - 120,
-            behavior: 'smooth'
+        // "Our Products" section er button click korle (subCat='All') sob sub-category dekhabe
+        // Ar Menu theke specific kichu dile sudhu shetai dekhabe
+        filteredProducts = allProducts.filter(p => {
+            const matchCategory = p.category === mainCat;
+            const matchSubCategory = (subCat === 'All' || p.subCategory === subCat);
+            return matchCategory && matchSubCategory;
         });
     }
 
-    // Filter pills (All, Tote, Handbag) er active class update kora
-    const pills = document.querySelectorAll('.pill');
-    pills.forEach(pill => {
-        pill.classList.remove('active');
-        if(pill.innerText.toLowerCase() === mainCat.toLowerCase()) {
-            pill.classList.add('active');
-        }
-    });
+    // 4. Grid update kora (Pagination logic shoho)
+    displayProducts(currentPage);
 
-    displayProducts(1);
+    // 5. Scroll to grid
+    const gridDiv = document.getElementById('productGrid');
+    if (gridDiv && filteredProducts.length > 0) {
+        gridDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 /* --- FINAL MERGED PRODUCT DETAILS LOGIC --- */
@@ -581,7 +618,7 @@ function openProductDetails(id) {
     const p = allProducts.find(item => item.id === id);
     if (!p) return;
 
-    // --- TRACKING START: Facebook Pixel ViewContent ---
+    // --- TRACKING START ---
     if (typeof fbq === 'function') {
         fbq('track', 'ViewContent', {
             content_name: p.name,
@@ -592,7 +629,6 @@ function openProductDetails(id) {
             currency: 'BDT'
         });
     }
-    // --- TRACKING END ---
 
     // 1. Basic Info Load
     document.getElementById('detName').innerText = p.name;
@@ -606,14 +642,11 @@ function openProductDetails(id) {
     // 3. Gallery / Thumbnails Logic
     const thumbContainer = document.getElementById('thumbnailStrip');
     thumbContainer.innerHTML = '';
-    
     const gallery = p.gallery || [p.img, p.img, p.img]; 
     gallery.forEach(imgSrc => {
         const thumb = document.createElement('img');
         thumb.src = imgSrc;
-        thumb.onclick = () => {
-            document.getElementById('mainDetailImg').src = imgSrc;
-        };
+        thumb.onclick = () => { document.getElementById('mainDetailImg').src = imgSrc; };
         thumbContainer.appendChild(thumb);
     });
 
@@ -621,7 +654,6 @@ function openProductDetails(id) {
     const sizeSection = document.getElementById('sizeSection');
     const sizeContainer = document.getElementById('detSizes');
     sizeContainer.innerHTML = '';
-    
     const needSize = ['Sneakers', 'Shoes', 'Shirts', 'Pants'].includes(p.subCategory) || ['Men', 'Women'].includes(p.category);
     
     if (needSize) {
@@ -639,18 +671,15 @@ function openProductDetails(id) {
         sizeSection.style.display = 'none';
     }
 
-    // 5. Related Products Logic
+  // 5. Related Products
     const relatedGrid = document.getElementById('relatedGrid');
     relatedGrid.innerHTML = '';
     const related = allProducts.filter(item => item.subCategory === p.subCategory && item.id !== p.id).slice(0, 4);
-    
     if(related.length > 0) {
         related.forEach(rp => {
             relatedGrid.innerHTML += `
                 <div class="product-card" onclick="openProductDetails(${rp.id})">
-                    <div class="product-img-holder">
-                        <img src="${rp.img}">
-                    </div>
+                    <div class="product-img-holder"><img src="${rp.img}"></div>
                     <div class="p-info">
                         <h3 class="p-name">${rp.name}</h3>
                         <p class="p-price">TK-${rp.price}</p>
@@ -659,13 +688,48 @@ function openProductDetails(id) {
         });
     }
 
-    // 6. Show the Overlay Page
-    const detailsPage = document.getElementById('productDetailsPage');
-    detailsPage.classList.add('active');
-    document.body.style.overflow = 'hidden'; 
-    detailsPage.scrollTop = 0;
-}
+  // --- FINAL REPAIR: Buy Now Only (Add to Cart Removed) ---
+    const rawOrderMsg = `Hello! I want to order: ${p.name} (ID: ${p.id}, Price: ${p.price})`;
+    const encodedOrderMsg = encodeURIComponent(rawOrderMsg);
+    const wpNumber = "8801601982509";
+    const msgrLink = "https://m.me/mushfikurrm0927";
 
+    const dPage = document.getElementById('productDetailsPage');
+    const bBtn = dPage.getElementsByClassName('buy-now-btn')[0] || dPage.getElementsByClassName('buy-now')[0];
+    const aBtn = dPage.getElementsByClassName('add-to-cart-btn')[0] || dPage.getElementsByClassName('add-cart')[0];
+
+    // 1. Add to Cart button-ta purapuri muche fela ba hide kora
+    if (aBtn) {
+        aBtn.style.display = 'none'; // Button-ta details page theke gayeb hoye jabe
+    }
+
+    // 2. Buy Now logic (WhatsApp & Messenger Chooser)
+    if (bBtn) {
+        bBtn.style.width = '100%'; // Ekta button thakay eta full width hobe jate dekhte bhalo lage
+        bBtn.onclick = () => {
+            const modalHtml = `
+                <div id="socialOrderModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100000001; display:flex; align-items:center; justify-content:center; padding:20px; font-family:sans-serif;">
+                    <div style="background:#111; padding:30px; border-radius:20px; text-align:center; max-width:350px; width:100%; border:1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                        <h3 style="color:#fff; margin-bottom:20px; font-size:1.2rem;">Complete Your Order</h3>
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            <a href="https://wa.me/${wpNumber}?text=${encodedOrderMsg}" target="_blank" 
+                               style="background:#25D366; color:#fff; padding:14px; border-radius:10px; text-decoration:none; font-weight:bold; display:block;">WhatsApp Order</a>
+                            
+                            <a href="javascript:void(0)" onclick="navigator.clipboard.writeText('${rawOrderMsg.replace(/'/g, "\\'")}').then(() => { alert('Order details copied! Now paste it in Messenger.'); window.open('${msgrLink}', '_blank'); document.getElementById('socialOrderModal').remove(); })" 
+                               style="background:#0084FF; color:#fff; padding:14px; border-radius:10px; text-decoration:none; font-weight:bold; display:block;">Messenger Order</a>
+                        </div>
+                        <button onclick="document.getElementById('socialOrderModal').remove()" style="margin-top:20px; background:none; border:none; color:#777; cursor:pointer; font-size:0.9rem; text-decoration:underline;">Cancel</button>
+                    </div>
+                </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        };
+    }
+
+    // 3. Show the Overlay Page
+    dPage.classList.add('active');
+    document.body.style.overflow = 'hidden'; 
+    dPage.scrollTop = 0;
+}
 // 7. Action Button Handlers (Eigulo nouton add kora hoyeche)
 function handleAddToCartFromDetails() {
     const productName = document.getElementById('detName').innerText;
@@ -759,6 +823,108 @@ if (searchBar) {
 // Category filter button gulo ke update kora (Existing function-er sathe sync)
 // Tomar existing filterByCategory function-er bhetore 'applyAdvancedFilters()' call kore dio
 
+//  trending and viewed section//
+function filterBySubCategory(subCatName) {
+
+    const filtered = allProducts.filter(p => p.subCategory === subCatName);
+
+    const grid = document.getElementById('productGrid');
+
+    if (!grid) return;
+
+    // Optional: Product section-er title change kora (jodi title-er id 'sectionTitle' hoy)
+
+    const title = document.getElementById('sectionTitle');
+
+    if(title) title.innerText = subCatName + " Selection";
+
+    grid.innerHTML = '';
+
+ if (filtered.length > 0) {
+
+        filtered.forEach(p => {
+
+            grid.innerHTML += `
+
+                <div class="product-card" onclick="openProductDetails(${p.id})">
+
+                    <div class="product-img-holder">
+
+                        <img src="${p.img}">
+
+                    </div>
+
+                    <div class="p-info">
+
+                        <h3 class="p-name">${p.name}</h3>
+
+                        <p class="p-price">TK-${p.price}</p>
+
+                    </div>
+
+                    <button class="cart-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Add to Cart</button>
+
+                </div>`;
+
+        });
+
+        grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } else {
+
+        grid.innerHTML = `<p style="color:white; text-align:center; width:100%; padding: 50px 0;">No products found in ${subCatName}!</p>`;
+
+    }
+
+} 
+
+ /* --- NEW HIGHLIGHT FILTER LOGIC (SAFE VERSION) --- */
+function filterBySubCategory(subCatName) {
+    // 1. Current page reset kora jate 1st page theke shuru hoy
+    if (typeof currentPage !== 'undefined') currentPage = 1;
+
+    // 2. Pill button gulo theke active class shore fela
+    const allPills = document.querySelectorAll('.pill');
+    allPills.forEach(pill => pill.classList.remove('active'));
+
+    // 3. Filter logic: global filteredProducts update kora
+    if (typeof allProducts !== 'undefined') {
+        filteredProducts = allProducts.filter(p => p.subCategory === subCatName);
+    }
+
+    // 4. Products display kora (Eita pagination logic shoho grid update korbe)
+    displayProducts(currentPage);
+
+    // 5. Scroll to grid
+    const gridDiv = document.getElementById('productGrid');
+    if (gridDiv && filteredProducts.length > 0) {
+        gridDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function setupPagination(totalItems, itemsPerPage) {
+    const paginationContainer = document.getElementById('pagination');
+    if (!paginationContainer) return;
+
+    paginationContainer.innerHTML = '';
+    const pageCount = Math.ceil(totalItems / itemsPerPage);
+
+    if (pageCount <= 1) return; 
+
+    for (let i = 1; i <= pageCount; i++) {
+        const btn = document.createElement('button');
+        btn.innerText = i;
+        // Current page active style dewa
+        btn.className = (i === currentPage) ? 'page-btn active' : 'page-btn';
+        
+        btn.onclick = () => {
+            currentPage = i;
+            displayProducts(currentPage); // Current page onujayi products dekhabe
+            window.scrollTo({ top: document.getElementById('productGrid').offsetTop - 100, behavior: 'smooth' });
+        };
+        paginationContainer.appendChild(btn);
+    }
+}
 /* --- INITIAL RUN --- */
 displayProducts(1);
 initSearch();

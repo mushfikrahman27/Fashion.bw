@@ -126,6 +126,32 @@
     </div>
 </section>
 
+<section class="aesthetic-highlight-zone">
+    <div class="aesthetic-container">
+        <div class="aesthetic-card trending-card" onclick="filterBySubCategory('Trending')">
+            <div class="card-inner">
+                <div class="card-icon">🔥</div>
+                <div class="card-text">
+                    <span class="card-subtitle">Hot Picks</span>
+                    <h3 class="card-title">TRENDING PRODUCTS</h3>
+                </div>
+            </div>
+            <div class="flowing-border"></div>
+        </div>
+
+        <div class="aesthetic-card viewed-card" onclick="filterBySubCategory('Most Viewed')">
+            <div class="card-inner">
+                <div class="card-icon">✨</div>
+                <div class="card-text">
+                    <span class="card-subtitle">Popular Now</span>
+                    <h3 class="card-title">MOST VIEWED</h3>
+                </div>
+            </div>
+            <div class="flowing-border"></div>
+        </div>
+    </div>
+</section>
+
 <div id="cartSerialOverlay" class="cart-serial-overlay">
     <div class="cart-serial-content">
         <button class="close-btn" onclick="toggleCartDisplay()">✕</button>
@@ -135,15 +161,22 @@
 </div>
 
 <section class="products-section">
-    <h2 class="section-title">Our Products</h2>
-    
+    <div class="products-header-zone">
+    <div class="glitch-wrapper">
+        <span class="top-line"></span>
+        <h2 class="dynamic-title" data-text="OUR PRODUCTS">
+            OUR <span class="cyan-glow">PRODUCTS</span>
+            <span class="live-dot"></span>
+        </h2>
+        <p class="sub-heading">Explore the best of premium quality</p>
+    </div>
+</div>
     <div class="filter-pill-container">
-        <div class="filter-pills">
-            <button class="pill active" onclick="filterByCategory('All', this)">All</button>
-            <button class="pill" onclick="filterByCategory('Tote', this)">Tote</button>
-            <button class="pill" onclick="filterByCategory('Handbag', this)">Handbags</button>
-            <button class="pill" onclick="filterByCategory('Premium', this)">Premium</button>
-        </div>
+      <div class="filter-pills">
+    <button class="pill active" onclick="filterByCategory('All', this)">All</button>
+    <button class="pill" onclick="filterByCategory('Men', this)">Men</button>
+    <button class="pill" onclick="filterByCategory('Women', this)">Women</button>
+</div>
 
         <div class="advanced-filter-row">
             <div class="adv-filter-item">

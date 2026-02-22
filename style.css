@@ -537,6 +537,198 @@ html, body {
 .hero-cta:hover { background: #d4af37; color: white; letter-spacing: 4px; }
 @keyframes heroFadeIn { to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 480px) { .hero-parallax { height: 50vh; min-height: 300px; } .hero-bg-image { background-size: contain; background-position: center top; width: 100%; height: 100%; top: 0; } .hero-content { padding-top: 120px; } .hero-title { font-size: 2.2rem; } }
+
+/* trending and most viewd section */
+
+/* --- AESTHETIC HIGHLIGHT ZONE (SMART RESPONSIVE) --- */
+.aesthetic-highlight-zone {
+    padding: 60px 5%;
+    display: flex;
+    justify-content: center;
+    background: transparent;
+}
+
+.aesthetic-container {
+    display: flex;
+    gap: 30px;
+    width: 100%;
+    max-width: 1200px;
+    justify-content: center;
+}
+
+.aesthetic-card {
+    position: relative;
+    flex: 1;
+    max-width: 450px; /* Desktop width limit */
+    height: 160px; 
+    background: linear-gradient(135deg, #bde0fe 0%, #a2d2ff 100%);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 10px 30px rgba(162, 210, 255, 0.3);
+}
+
+/* DESKTOP CONTENT: Icon and Text side-by-side */
+.card-inner {
+    position: relative;
+    z-index: 5;
+    background: rgba(255, 255, 255, 0.7); 
+    width: 95%;
+    height: 90%;
+    border-radius: 17px;
+    display: flex;
+    align-items: center;
+    padding: 0 25px;
+    gap: 20px;
+    backdrop-filter: blur(8px);
+}
+
+.card-icon {
+    font-size: 2.2rem;
+    background: white;
+    width: 55px;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.card-text { text-align: left; }
+.card-subtitle { font-size: 0.75rem; font-weight: 700; color: #444; text-transform: uppercase; letter-spacing: 1.5px; }
+.card-title { font-size: 1.3rem; font-weight: 900; color: #1a1a1a; margin: 0; }
+
+/* FLOWING BORDER ANIMATION */
+.flowing-border {
+    position: absolute;
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    background: conic-gradient(transparent, rgba(255, 255, 255, 1), transparent 20%);
+    animation: flowRotate 3.5s linear infinite;
+    z-index: 1;
+}
+
+@keyframes flowRotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* --- MOBILE SPECIFIC CHANGES --- */
+@media (max-width: 768px) {
+    .aesthetic-highlight-zone {
+        padding: 20px 10px; /* Space komano hoyeche */
+    }
+    
+    .aesthetic-container {
+        gap: 10px; /* Dui card er majhe ektu gap */
+    }
+
+    .aesthetic-card {
+        height: 140px; /* Mobile height */
+        border-radius: 15px;
+    }
+
+    .card-inner {
+        flex-direction: column; /* Icon er niche text */
+        justify-content: center;
+        text-align: center;
+        padding: 10px 5px;
+        gap: 8px;
+    }
+
+    .card-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.5rem;
+    }
+
+    .card-text { text-align: center; }
+    .card-subtitle { font-size: 0.55rem; letter-spacing: 1px; }
+    .card-title { font-size: 0.8rem; letter-spacing: 0.5px; }
+}
+
+/* end of trending and most viewd section */
+
+/* our prducts design */
+.products-header-zone {
+    text-align: center;
+    padding: 50px 0 20px;
+    background: transparent;
+}
+
+.glitch-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+/* Red Pulsing Dot - Live Animation */
+.live-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background-color: #EA2F14; /* Tomar dewa Red */
+    border-radius: 50%;
+    margin-left: 8px;
+    position: relative;
+    box-shadow: 0 0 10px #EA2F14;
+    animation: pulseRed 1.5s infinite;
+}
+
+@keyframes pulseRed {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 47, 20, 0.7); }
+    70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(234, 47, 20, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(234, 47, 20, 0); }
+}
+
+/* Premium Dynamic Title */
+.dynamic-title {
+    font-size: 2.8rem;
+    font-weight: 900;
+    color: #ADEED9; /* Lightest Teal */
+    letter-spacing: 2px;
+    margin: 0;
+    text-transform: uppercase;
+    position: relative;
+}
+
+/* Cyan Glow Animation */
+.cyan-glow {
+    color: #0ABAB5;
+    text-shadow: 0 0 15px rgba(10, 186, 181, 0.4);
+    background: linear-gradient(90deg, #0ABAB5, #56DFCF, #ADEED9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% auto;
+    animation: shimmerTitle 3s linear infinite;
+}
+
+@keyframes shimmerTitle {
+    to { background-position: 200% center; }
+}
+
+/* Sub-heading logic */
+.sub-heading {
+    color: #cb4b2b;
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 10px;
+    font-weight: 200;
+    opacity: 0.4;
+}
+
+/* Mobile Friendly */
+@media (max-width: 768px) {
+    .dynamic-title {
+        font-size: 1.8rem;
+    }
+    .live-dot {
+        width: 8px;
+        height: 8px;
+    }
+}
+/* our prducts design */
+
 .action-btn.buy-btn.ready { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .action-btn.buy-btn.ready:hover { background: var(--accent); color: white; transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15); letter-spacing: 0.5px; }
 .action-btn.buy-btn.ready:active { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
