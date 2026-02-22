@@ -60,41 +60,31 @@
     </button>
 </div>
 
-        <div class="menu-scroll-container">
-            <div class="nested">
-                <button class="category-trigger" onclick="toggleSub(this)">
-                    <span class="cat-text">MEN</span>
-                    <span class="plus-icon">+</span>
-                </button>
-                <ul class="sub-links">
-                    <li><a href="#" onclick="filterByCategory('Premium'); toggleMenu()">Bags</a></li>
-                    <li><a href="#" onclick="filterByCategory('All'); toggleMenu()">Sunglasses</a></li>
-                    <li><a href="#" onclick="filterByCategory('Premium'); toggleMenu()">Sneakers</a></li>
-                </ul>
-            </div>
+    <div class="menu-scroll-container">
+    <div class="nested">
+        <button class="category-trigger" onclick="toggleSub(this)">
+            <span class="cat-text">MEN</span>
+            <span class="plus-icon">+</span>
+        </button>
+        <ul class="sub-links">
+            <li><a href="#" onclick="handleCategoryClick(event, 'Men', 'Bags')">Bags</a></li>
+            <li><a href="#" onclick="handleCategoryClick(event, 'Men', 'Sunglasses')">Sunglasses</a></li>
+            <li><a href="#" onclick="handleCategoryClick(event, 'Men', 'Sneakers')">Sneakers</a></li>
+        </ul>
+    </div>
 
-            <div class="nested">
-                <button class="category-trigger" onclick="toggleSub(this)">
-                    <span class="cat-text">WOMEN</span>
-                    <span class="plus-icon">+</span>
-                </button>
-                <ul class="sub-links">
-                    <li><a href="#" onclick="filterByCategory('Handbag'); toggleMenu()">Handbags</a></li>
-                    <li><a href="#" onclick="filterByCategory('Tote'); toggleMenu()">Sunglasses</a></li>
-                    <li><a href="#" onclick="filterByCategory('Premium'); toggleMenu()">Accessories</a></li>
-                </ul>
-            </div>
-
-            <div class="nested">
-                <button class="category-trigger" onclick="toggleSub(this)">
-                    <span class="cat-text">COLLECTIONS</span>
-                    <span class="plus-icon">+</span>
-                </button>
-                <ul class="sub-links">
-                    <li><a href="#" onclick="filterByCategory('All'); toggleMenu()">New Arrivals</a></li>
-                    <li><a href="#" onclick="filterByCategory('Premium'); toggleMenu()">Best Sellers</a></li>
-                </ul>
-            </div>
+    <div class="nested">
+        <button class="category-trigger" onclick="toggleSub(this)">
+            <span class="cat-text">WOMEN</span>
+            <span class="plus-icon">+</span>
+        </button>
+        <ul class="sub-links">
+            <li><a href="#" onclick="handleCategoryClick(event, 'Women', 'Bags')">Handbags</a></li>
+            <li><a href="#" onclick="handleCategoryClick(event, 'Women', 'Sunglasses')">Sunglasses</a></li>
+            <li><a href="#" onclick="handleCategoryClick(event, 'Women', 'Sneakers')">Sneakers</a></li>
+        </ul>
+    </div>
+</div>
             
             <div style="height: 150px; width: 100%;"></div>
         </div>

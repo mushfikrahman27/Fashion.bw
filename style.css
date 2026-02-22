@@ -1,12 +1,27 @@
 /* --- 1. GLOBAL VARIABLES & RESET --- */
 :root {
-    --primary-navy: #0a1128;
-    --charcoal-dark: #121212;
-    --accent-gold: #d4af37;
+    /* Luxury Palette */
+    --background: #0a0a0a;          /* Deep soft black */
+    --foreground: #e5e5e5;          /* Silver/White text */
+    --card: #141414;                /* Soft charcoal card */
+    --primary-navy: #0a0a0a;        /* Replaces navy with luxury black */
+    --charcoal-dark: #e5e5e5;       /* Primary text color */
+    --accent-gold: #ffffff;         /* Silver accent (as per reference white) */
     --stark-white: #ffffff;
-    --comfort-bg: #f4f7f9;
-    --border: rgba(0, 0, 0, 0.08);
-    --accent: #d4af37;
+    --comfort-bg: #0a0a0a;          /* Page background */
+    --border: #2a2a2a;              /* Subtle dark gray border */
+    --accent: #ffffff;              /* Premium silver/white */
+    --input-background: #1a1a1a;
+    
+    /* Layout Preservations */
+    --radius: 0.625rem;
+}
+
+/* --- BASE OVERRIDES --- */
+body {
+    background-color: var(--background);
+    color: var(--foreground);
+    transition: background 0.3s ease;
 }
 
 html, body {
@@ -20,7 +35,13 @@ html, body {
 }
 
 /* --- 2. NAVBAR SECTION (RESTORED DESKTOP POSITION) --- */
+
+ .navbar {
+    background: var(--background) !important;
+    border-bottom: 1px solid var(--border) !important;
+}
 .navbar {
+    
     display: grid; 
     grid-template-columns: 1fr 1fr 1fr; 
     align-items: center; 
@@ -211,8 +232,11 @@ html, body {
 /* --- BRANDING & ICONS --- */
 .hamburger-icon-stylish span { background-color: var(--stark-white) !important; height: 2px; width: 22px; display: block; margin: 4px 0; }
 .menu-text, .brand-name { color: var(--stark-white) !important; }
-.brand-name span { color: var(--accent-gold) !important; }
-.brand-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; }
+.brand-name span {
+    color: #a0a0a0; /* Policia-er CIA part-ta ektu subtle thakbe */
+}
+.brand-name {  color: #ffffff !important;
+    font-weight: 700; font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; }
 .logo-box { width: 30px; height: 30px; background: var(--accent-gold); border-radius: 6px; }
 
 /* CART DESIGN */
@@ -239,9 +263,17 @@ html, body {
 
 /* MENU EFFECTS */
 .category-trigger {
+    color: #e0e0e0 !important;
+    transition: 0.3s;
     transition: all 0.3s ease;
     border-radius: 8px;
     padding: 20px 15px !important;
+}
+
+.category-trigger:hover {
+    background: rgba(255, 255, 255, 0.05) !important; /* Subtle highlight */
+    color: #ffffff !important;
+    letter-spacing: 1px; /* Premium feel */
 }
 
 .category-trigger:hover, .category-trigger:active {
@@ -252,6 +284,7 @@ html, body {
 .category-trigger:hover .cat-text { color: var(--accent); }
 
 .sub-links li a {
+    color: #888 !important;
     transition: all 0.3s ease;
     padding: 12px 15px !important;
     border-radius: 6px;
@@ -260,7 +293,8 @@ html, body {
 
 .sub-links li a:hover {
     background: var(--accent);
-    color: white !important;
+  color: #ffffff !important; /* Bright white on hover */
+    padding-left: 5px; 
     transform: translateX(10px);
 }
 
@@ -352,6 +386,11 @@ html, body {
 }
 
 .menu-header {
+    background: #141414 !important; /* Slightly lighter charcoal */
+    border-bottom: 1px solid var(--border);
+}
+
+.menu-header {
     padding: 25px 8%;
     display: flex;
     align-items: center;
@@ -368,6 +407,11 @@ html, body {
     cursor: pointer;
     padding: 8px 0;
     transition: all 0.3s ease;
+}
+
+.back-icon-wrapper {
+    background: #1a1a1a !important;
+    color: var(--foreground) !important;
 }
 
 .back-icon-wrapper {
@@ -390,6 +434,9 @@ html, body {
     color: #1a1a1a;
     text-transform: uppercase;
 }
+.back-text, .cat-text {
+    color: var(--foreground) !important;
+}
 
 /* Modern Hover States */
 .menu-back-btn:hover .back-icon-wrapper {
@@ -401,6 +448,11 @@ html, body {
 .menu-back-btn:hover .back-text {
     color: #000;
     letter-spacing: 0.2em; /* Smooth tracking expansion */
+}
+
+.menu-overlay {
+    background: var(--background) !important;
+    color: var(--foreground);
 }
 
 .menu-overlay {
@@ -425,18 +477,13 @@ html, body {
     overflow-y: auto;
 }
 
-/* .hamburger-icon-stylish {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+.category-trigger {
+    border-bottom: 1px solid var(--border) !important;
 }
 
-.hamburger-icon-stylish span {
-    display: block;
-    width: 22px;
-    height: 2px;
-    background-color: var(--stark-white) !important;
-} */
+.category-trigger:hover {
+    background: #1a1a1a !important;
+} 
 
 .category-trigger { width: 100%; background: none; border: none; border-bottom: 1px solid #f1f5f9; padding: 25px 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
 .cat-text { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; }
@@ -493,6 +540,27 @@ html, body {
 .action-btn.buy-btn.ready { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .action-btn.buy-btn.ready:hover { background: var(--accent); color: white; transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15); letter-spacing: 0.5px; }
 .action-btn.buy-btn.ready:active { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+
+.filter-pills .pill {
+    background: #1a1a1a; /* Dark background */
+    color: #a0a0a0;      /* Gray text */
+    border: 1px solid #333;
+    padding: 8px 20px;
+    transition: all 0.3s ease;
+}
+
+.filter-pills .pill.active {
+    background: #ffffff !important; /* White for high contrast */
+    color: #000000 !important;      /* Black text on white */
+    border-color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+.filter-pills .pill:hover {
+    color: #ffffff;
+    border-color: #666;
+}
+
+
 .filter-pill-container { width: 100%; overflow-x: auto; white-space: nowrap; padding: 10px 0 25px; scrollbar-width: none; }
 .filter-pill-container::-webkit-scrollbar { display: none; }
 .filter-pills { display: inline-flex; gap: 12px; }
@@ -500,48 +568,86 @@ html, body {
 @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 .pagination-footer { display: flex; flex-direction: column; align-items: center; gap: 30px; padding: 40px 0; }
 .pagination-column { display: flex; flex-direction: row; gap: 12px; align-items: center; }
-.page-num { width: 40px; height: 40px; border: 1px solid var(--border); background: white; font-weight: 700; cursor: pointer; }
-.page-num.active { background: var(--accent); color: white; border-color: var(--accent); }
-.scroll-top-btn { display: flex; align-items: center; gap: 10px; background: transparent; border: 1px solid var(--text-dark); padding: 10px 20px; cursor: pointer; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
+
+.page-num { width: 40px; height: 40px; border: 1px solid var(--border);
+background: #1a1a1a !important;
+color: #ffffff !important;
+border: 2px solid #333 !important;
+font-weight: 700; cursor: pointer; }
+
+.page-num.active { background: #ffffff !important;
+    color: #000000 !important;
+    border-color: #ffffff !important; }
+
+.scroll-top-btn { display: flex; align-items: center; gap: 10px;
+   background: #ffffff !important;
+   color: #000000 !important;
+      border: 1px solid var(--text-dark); 
+      padding: 10px 20px; cursor: pointer;
+       font-size: 0.7rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 1px;
+         transition: 0.3s; }
+
 .scroll-top-btn:hover { background: var(--text-dark); color: white; }
+
+
+body.cart-open {
+    overflow: hidden !important;
+    height: 100vh !important;
+}
 
 .cart-serial-overlay {
     position: fixed;
     top: 0;
-    right: 0;
+    left: 0;
     width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(8px);
-    z-index: 3000;
-    visibility: hidden;
-    opacity: 0;
-    transition: 0.4s ease;
+    height: 100vh;          /* Full viewport height */
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    display: none;           /* Hidden by default */
+    overflow: hidden;        /* Prevent body scroll */
+    touch-action: none;      /* Prevent touch scroll leak */
 }
 
 .cart-serial-overlay.active {
-    visibility: visible;
-    opacity: 1;
+    display: block;
 }
-.cart-serial-content {
-    position: absolute;
-    right: -100%;
-    top: 0;
-    width: 380px;
-    height: 100%;
-    background: white;
-    transition: 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+
+ 
+.cart-serial-content{
+    position:absolute;
+    right:-100%;
+    top:0;
+    width:380px;
+    max-width:100%;
+    height:100vh;                 /* force full viewport height */
+    background:white;
+    display:flex;                 /* IMPORTANT */
+    flex-direction:column;        /* IMPORTANT */
+    transition:0.4s cubic-bezier(0.25,1,0.5,1);
+    box-shadow:-10px 0 30px rgba(0,0,0,0.1);
+     overflow: hidden;
 }
+
 .cart-serial-overlay.active .cart-serial-content {
     right: 0;
 }
-#serialItemList { flex: 1; overflow-y: auto; padding: 10px 25px; }
+#serialItemList{
+    flex:1;                       /* fills available space */
+    overflow-y:auto;              /* scroll inside cart */
+    min-height:0;                 /* prevents flex overflow bug */
+    padding:10px 25px;
+}
 .serial-item-card { display: flex; align-items: center; gap: 15px; padding: 15px 0; border-bottom: 1px solid #f8fafc; }
 .serial-item-card img { width: 55px; height: 65px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
 .serial-item-details { flex: 1; }
 .serial-item-details p { font-size: 0.9rem; margin: 0; color: #1e293b; }
 .remove-item-btn { background: #fff1f2; color: #f43f5e; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
-.cart-checkout-footer { padding: 25px; background: #fff; border-top: 1px solid #f1f5f9; }
+.cart-checkout-footer{
+    padding:25px;
+    background:#fff;
+    border-top:1px solid #f1f5f9;
+}
 .cart-total-row { display: flex; justify-content: space-between; font-weight: 700; font-size: 1.1rem; margin-bottom: 20px; color: #0f172a; }
 .checkout-buy-btn { width: 100%; padding: 16px; background: #6366f1; color: white; border: none; font-weight: 700; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
 .main-footer { width: 100%; padding: 60px 5%; background: var(--footer-bg); border-top: 1px solid var(--border); text-align: center; }
@@ -556,8 +662,106 @@ html, body {
 .social-opt:hover { transform: scale(1.05); }
 .close-modal-btn { margin-top: 20px; background: none; border: none; color: #64748b; cursor: pointer; font-weight: 600; }
 @keyframes modalPop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+ 
+/* --- PRODUCT GRID & CARDS --- */
+/* --- PRODUCT GRID & CARDS --- */
+.product-card {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+}
 
-/* ================================
+.p-name, .p-meta {
+    color: var(--foreground) !important;
+}
+
+.p-price {
+    color: var(--stark-white) !important; /* Silver/White price */
+}
+
+.size-options span {
+    border: 1px solid var(--border) !important;
+    color: var(--foreground);
+}
+
+.size-options span.active {
+    background: var(--stark-white) !important;
+    color: #000 !important;
+}
+
+.buy-btn {
+    background: #1a1a1a !important;
+    color: #a3a3a3 !important;
+}
+
+.buy-btn.ready {
+    background: var(--stark-white) !important;
+    color: #000 !important;
+}
+
+.cart-btn {
+    background: #2a2a2a !important;
+    border: 1px solid #404040 !important;
+}
+
+/* --- SEARCH REFINEMENT --- */
+.stylish-search input {
+    background-color: var(--input-background) !important;
+    color: var(--foreground) !important;
+    border: 1px solid var(--border) !important;
+}
+
+.stylish-search .mobile-search-icon {
+    color: #a3a3a3 !important;
+}
+
+.search-suggestions-popup {
+    background-color: #1a1a1a !important;
+    border: 1px solid var(--border) !important;
+}
+
+.suggest-item {
+    border-bottom: 1px solid var(--border) !important;
+}
+
+.suggest-item span {
+    color: var(--foreground) !important;
+}
+
+/* --- CART OVERLAY LUXURY --- */
+.cart-serial-content {
+    background: #0f0f0f !important;
+}
+
+.cart-header-cool {
+    background: linear-gradient(to right, #1a1a1a, #2a2a2a) !important;
+    border-bottom: 1px solid var(--border);
+}
+
+.serial-item-card {
+    border-bottom: 1px solid var(--border) !important;
+}
+
+.serial-item-details p {
+    color: var(--foreground) !important;
+}
+
+.cart-checkout-footer {
+    background: #141414 !important;
+    border-top: 1px solid var(--border) !important;
+}
+
+/* --- HERO SECTION --- */
+.hero-parallax {
+    background-color: #000 !important;
+}
+
+.hero-cta {
+    background: var(--stark-white) !important;
+    color: #000 !important;
+}
+
+/* --- end of PRODUCT GRID & CARDS --- */
+
   /* ===============================
    MOBILE SEARCH BELOW NAVBAR FIX
    =============================== */
@@ -571,6 +775,8 @@ html, body {
 
 /* move search OUTSIDE navbar visually */
 .stylish-search{
+    background: var(--background) !important;
+        border-bottom: 1px solid var(--border);
     position:absolute !important;
     top:100% !important;          /* puts it below navbar */
     left:0 !important;
@@ -580,6 +786,25 @@ html, body {
     box-sizing:border-box;
     z-index:999;
 }
+
+/* Better contrast for pills on mobile */
+    .pill {
+        background: #1a1a1a !important;
+        color: #a3a3a3 !important;
+        border: 1px solid var(--border) !important;
+    }
+
+    .pill.active {
+        background: var(--stark-white) !important;
+        color: #000 !important;
+    }
+
+    /* Darker toast for mobile luxury */
+    .toast-notification {
+        background: rgba(20, 20, 20, 0.95) !important;
+        border: 1px solid var(--border) !important;
+        border-left: 3px solid var(--stark-white) !important;
+    }
 
 /* full width search field */
 .stylish-search input{
@@ -687,7 +912,7 @@ footer{
 
 
 /* === Mobile: absolute below navbar === */
-/* 🔴 UNTOUCHED as you requested */
+ 
 @media (max-width:768px){
     .stylish-search{
         position: absolute !important;
@@ -813,4 +1038,146 @@ footer{
         width: 40px;
         height: 40px; /* Slightly larger for mobile thumbs */
     }
+}
+
+/* --- CORRECTED TOAST NOTIFICATION MOBILE CENTERING --- */
+ 
+@media (max-width: 480px) { 
+    .toast-container { 
+        /* Reset desktop's 'left: 40px' */
+        left: 0 !important;
+        right: 0 !important;
+        bottom: auto !important;
+        top: 20px !important;
+        
+        /* Make the container span the whole screen width */
+        width: 100vw !important; 
+        max-width: 100% !important;
+        
+        /* Use flex to force the child (.toast-notification) to the center */
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        
+        /* Clear any left-side movement from desktop */
+        transform: none !important; 
+        padding: 0 !important;
+        margin: 0 !important;
+    } 
+
+    .toast-notification { 
+        /* Reset horizontal position so it follows the container's flex-center */
+        position: relative !important;
+        left: auto !important;
+        right: auto !important;
+        margin: 0 auto !important;
+        
+        /* Keep only the vertical animation */
+        transform: translateY(-150%) !important; 
+        
+        width: 90% !important; 
+        max-width: 340px !important;
+        min-width: 280px !important;
+    } 
+
+    .toast-notification.active { 
+        /* Slide down to center */
+        transform: translateY(0) !important; 
+    } 
+}
+
+
+//* ===== FINAL OVERRIDE: MOBILE CART REAL FIX ===== */
+@media (max-width:768px){
+
+    /* lock page when cart open */
+    body.cart-open{
+        overflow:hidden !important;
+        position:fixed !important;
+        width:100% !important;
+    }
+
+    /* cart panel = full screen flex column */
+    .cart-serial-content{
+        position:fixed !important;
+        top:0 !important;
+        right:0 !important;
+        width:100% !important;
+        height:100vh !important;
+        display:flex !important;
+        flex-direction:column !important;
+        background:#fff !important;
+        overflow:hidden !important;
+    }
+
+    /* header natural height */
+    .cart-header-cool{
+        flex:0 0 auto !important;
+    }
+
+    /* footer locked bottom */
+    .cart-checkout-footer{
+        flex:0 0 auto !important;
+    }
+
+    /* THIS is the only scrolling area */
+    #serialItemList{
+        flex:1 1 auto !important;
+        overflow-y:auto !important;
+        height:auto !important;
+        min-height:0 !important;
+        display:block !important;
+    }
+
+}
+
+
+
+
+/* --- ULTIMATE WHITE-GHOSTING FIX --- */
+
+/* 1. Category Trigger Hover Fix (MEN, WOMEN) */
+.category-trigger:hover, 
+.category-trigger:active,
+.nested.open .category-trigger {
+    background: #141414 !important; /* Force Charcoal, No White */
+    color: #ffffff !important;
+    padding-left: 20px !important;
+}
+
+/* 2. Sub-links Link Hover Fix (Bags, Sneakers) */
+.sub-links li a:hover {
+    background: #1a1a1a !important; /* Force Dark Background */
+    color: #ffffff !important;      /* Force White Text */
+    padding-left: 15px !important;
+}
+
+/* 3. Back/Close Button Fix */
+.menu-header {
+    background: #0a0a0a !important; /* Force Black Header */
+    border-bottom: 1px solid #2a2a2a !important;
+}
+
+.back-text {
+    color: #ffffff !important; /* Force Silver/White Text */
+}
+
+.back-icon-wrapper {
+    background: #1a1a1a !important;
+    color: #ffffff !important;
+}
+
+.menu-back-btn:hover .back-icon-wrapper {
+    background: #ffffff !important;
+    color: #000000 !important;
+}
+
+/* 4. Menu Scroll Container background */
+.menu-scroll-container {
+    background: #0a0a0a !important;
+}
+
+/* 5. Any remaining White Boxes Fix */
+.nested {
+    background: transparent !important;
 }
