@@ -130,6 +130,14 @@
                     </ul>
                 </div>
                 <div style="height: 150px; width: 100%;"></div>
+
+                <!-- 🎲 New Randomizer Button -->
+                <div class="randomizer-menu-btn-container">
+                    <button class="menu-randomizer-btn" onclick="spinForRandomProduct()">
+                        <span class="dice-icon">🎲</span>
+                        <span class="btn-text">I Don't Know What I Want</span>
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
@@ -233,6 +241,19 @@
     <div id="toastContainer" class="toast-container"></div>
     <div class="light-comfort-bg"></div>
 
+    <!-- 🎲 ROULETTE OVERLAY (Hidden by default) -->
+    <div id="rouletteOverlay" class="roulette-overlay">
+        <div class="roulette-content">
+            <h2 class="roulette-title">Discovering Luxury...</h2>
+            <div class="roulette-window">
+                <div id="rouletteSpinner" class="roulette-spinner">
+                    <!-- Images will be injected here by JS -->
+                </div>
+            </div>
+            <p id="rouletteResultText" class="roulette-result-text"></p>
+        </div>
+    </div>
+
     <div id="productDetailsPage" class="details-overlay">
         <div class="details-container">
             <button class="cool-back-btn" onclick="closeProductDetails()">
@@ -277,80 +298,97 @@
             </div>
         </div>
     </div>
-<div class="support-floating-icons">
-    <a href="https://wa.me/8801601982509" target="_blank" class="support-icon wp-real" title="Chat on WhatsApp">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp">
-    </a>
-    
-    <a href="https://m.me/mushfikurrm0927" target="_blank" class="support-icon msgr-real" title="Chat on Messenger">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/b/be/Facebook_Messenger_logo_2020.svg" alt="Messenger">
-    </a>
-</div>
+    <div class="support-floating-icons">
+        <a href="https://wa.me/8801601982509" target="_blank" class="support-icon wp-real" title="Chat on WhatsApp">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp">
+        </a>
 
-<style>
-/* Container Setup */
-.support-floating-icons {
-    position: fixed;
-    top: 110px; /* Navbar theke safe distance */
-    right: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px; /* Icons spacing */
-    z-index: 10000; /* Shobar upore thakbe */
-}
+        <a href="https://m.me/mushfikurrm0927" target="_blank" class="support-icon msgr-real" title="Chat on Messenger">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/b/be/Facebook_Messenger_logo_2020.svg"
+                alt="Messenger">
+        </a>
+    </div>
 
-/* Icon Size & Look */
-.support-icon {
-    width: 38px;  /* Chhoto kora hoyeche */
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: white;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-    transition: transform 0.3s ease;
-}
+    <style>
+        /* Container Setup */
+        .support-floating-icons {
+            position: fixed;
+            top: 110px;
+            /* Navbar theke safe distance */
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            /* Icons spacing */
+            z-index: 10000;
+            /* Shobar upore thakbe */
+        }
 
-.support-icon img {
-    width: 100%;
-    height: 100%;
-}
+        /* Icon Size & Look */
+        .support-icon {
+            width: 38px;
+            /* Chhoto kora hoyeche */
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
 
-.support-icon:hover {
-    transform: scale(1.1);
-}
+        .support-icon img {
+            width: 100%;
+            height: 100%;
+        }
 
-/* Slower Pulse Animation (3 seconds) */
-@keyframes slowPulse {
-    0% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2); }
-    70% { box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
-}
+        .support-icon:hover {
+            transform: scale(1.1);
+        }
 
-.wp-real {
-    animation: slowPulse 1s infinite; /* Slowed down to 3s */
-}
+        /* Slower Pulse Animation (3 seconds) */
+        @keyframes slowPulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
+            }
 
-.msgr-real {
-    animation: slowPulse 3s infinite; /* Slowed down to 3s */
-    animation-delay: 1.5s; /* Alada shomoy pulse hobe dekhle bhalo lage */
-}
+            70% {
+                box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+            }
 
-/* Mobile Tweak */
-@media (max-width: 600px) {
-    .support-floating-icons {
-        top: 125px;
-        right: 10px;
-    }
-    .support-icon {
-        width: 21px;
-        height: 21px;
-    }
-}
-</style>
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+            }
+        }
 
-    <script src="script.js"></script>
+        .wp-real {
+            animation: slowPulse 1s infinite;
+            /* Slowed down to 3s */
+        }
+
+        .msgr-real {
+            animation: slowPulse 3s infinite;
+            /* Slowed down to 3s */
+            animation-delay: 1.5s;
+            /* Alada shomoy pulse hobe dekhle bhalo lage */
+        }
+
+        /* Mobile Tweak */
+        @media (max-width: 600px) {
+            .support-floating-icons {
+                top: 125px;
+                right: 10px;
+            }
+
+            .support-icon {
+                width: 21px;
+                height: 21px;
+            }
+        }
+    </style>
+
+    <script src="script.js" defer></script>
 </body>
 
 </html>

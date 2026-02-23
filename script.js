@@ -1082,7 +1082,7 @@ function pushNewState() {
 }
 
 // 2. Browser-er back button click event listen kora
-window.onpopstate = function(event) {
+window.onpopstate = function (event) {
     const menu = document.getElementById('menuOverlay');
     const detailsPage = document.getElementById('productDetailsPage');
     const cartOverlay = document.getElementById('cartSerialOverlay');
@@ -1091,7 +1091,7 @@ window.onpopstate = function(event) {
     // Jodi kono overlay open thake, tobe sheta bondho korbe (site theke ber hobe na)
     if (menu && menu.classList.contains('active')) {
         toggleMenu();
-    } 
+    }
     else if (detailsPage && detailsPage.classList.contains('active')) {
         closeProductDetails();
     }
@@ -1106,13 +1106,13 @@ window.onpopstate = function(event) {
 // 3. Tomar existing function-gulo te state push kora
 // Eigulo shudhu niche add koro, main function edit korar dorkar nai
 const originalOpenDetails = openProductDetails;
-openProductDetails = function(id) {
+openProductDetails = function (id) {
     pushNewState();
     originalOpenDetails(id);
 };
 
 const originalToggleMenu = toggleMenu;
-toggleMenu = function() {
+toggleMenu = function () {
     if (!document.getElementById('menuOverlay').classList.contains('active')) {
         pushNewState();
     }
@@ -1120,12 +1120,81 @@ toggleMenu = function() {
 };
 
 const originalToggleCart = toggleCartDisplay;
-toggleCartDisplay = function() {
+toggleCartDisplay = function () {
     if (!document.getElementById('cartSerialOverlay').classList.contains('active')) {
         pushNewState();
     }
     originalToggleCart();
 };
+
+/* --- I DON'T KNOW WHAT I WANT (ROULETTE FEATURE) --- */
+function spinForRandomProduct() {
+    const menu = document.getElementById('menuOverlay');
+    if (menu) {
+        menu.classList.remove('active');
+        document.body.classList.remove('menu-open');
+    }
+
+    const overlay = document.getElementById('rouletteOverlay');
+    const spinner = document.getElementById('rouletteSpinner');
+    const resultText = document.getElementById('rouletteResultText');
+
+    if (!overlay || !spinner || !resultText) return;
+
+    // Reset UI
+    resultText.classList.remove('show');
+    resultText.innerText = '';
+
+    // Generate an array of random product images to act as the "tape"
+    const spinItems = [];
+    const numSpins = 15; // Number of items it spins past before stopping
+
+    for (let i = 0; i < numSpins; i++) {
+        const randomP = allProducts[Math.floor(Math.random() * allProducts.length)];
+        spinItems.push(randomP);
+    }
+
+    // The final winning product ensures it exists
+    const winningProduct = spinItems[spinItems.length - 1];
+
+    // Inject HTML into spinner
+    spinner.innerHTML = spinItems.map(p => `<img src="${p.img}" alt="${p.name}">`).join('');
+
+    // Reset spin position
+    spinner.style.transition = 'none';
+    spinner.style.transform = 'translateY(0)';
+
+    // Show overlay
+    overlay.classList.add('active');
+
+    // Force reflow
+    void spinner.offsetWidth;
+
+    // Trigger spin animation
+    const imageHeights = 300; // Expected from CSS
+
+    spinner.style.transition = 'transform 2.5s cubic-bezier(0.15, 0.85, 0.3, 1)'; // Decelerating spin
+    spinner.classList.add('spinning-blur');
+
+    // Stop at the very last image
+    const finalOffset = -1 * imageHeights * (numSpins - 1);
+    spinner.style.transform = `translateY(${finalOffset}px)`;
+
+    // Wait for spin to finish
+    setTimeout(() => {
+        spinner.classList.remove('spinning-blur');
+        resultText.innerText = `You Discovered: ${winningProduct.name}`;
+        resultText.classList.add('show');
+
+        // Wait 1 second to let them read it, then open product
+        setTimeout(() => {
+            overlay.classList.remove('active');
+            openProductDetails(winningProduct.id);
+        }, 1200);
+
+    }, 2500); // Must match transition time
+}
+
 /* --- INITIAL RUN --- */
 displayProducts(1);
 initSearch();
