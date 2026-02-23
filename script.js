@@ -6,6 +6,42 @@ if ('scrollRestoration' in history) {
 }
 window.scrollTo(0, 0);
 
+// Hardware Back Button Fix for Overlays
+window.addEventListener('popstate', function (event) {
+    const orderModal = document.getElementById('orderModal');
+    if (orderModal) {
+        orderModal.remove();
+        return;
+    }
+
+    const socialOrderModal = document.getElementById('socialOrderModal');
+    if (socialOrderModal) {
+        socialOrderModal.remove();
+        return;
+    }
+
+    const menu = document.getElementById('menuOverlay');
+    if (menu && menu.classList.contains('active')) {
+        menu.classList.remove('active');
+        document.body.classList.remove('menu-open');
+        return;
+    }
+
+    const cartOverlay = document.getElementById('cartSerialOverlay');
+    if (cartOverlay && cartOverlay.classList.contains('active')) {
+        cartOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+        return;
+    }
+
+    const detailsPage = document.getElementById('productDetailsPage');
+    if (detailsPage && detailsPage.classList.contains('active')) {
+        detailsPage.classList.remove('active');
+        document.body.style.overflow = 'auto'; // Restore scroll
+        return;
+    }
+});
+
 const SOCIAL_CONFIG = {
     whatsappNumber: "8801601982509",
     messengerLink: "https://m.me/mushfikurrm0927"
@@ -194,7 +230,17 @@ function initSearch() {
 /* --- 3. UI & CART ACTIONS --- */
 function toggleMenu() {
     const menu = document.getElementById('menuOverlay');
-    if (menu) menu.classList.toggle('active');
+    if (!menu) return;
+    if (menu.classList.contains('active')) {
+        if (history.state && history.state.overlay) {
+            history.back();
+        } else {
+            menu.classList.remove('active');
+        }
+    } else {
+        history.pushState({ overlay: true }, "");
+        menu.classList.add('active');
+    }
 }
 
 function toggleSub(btn) {
@@ -213,9 +259,20 @@ function toggleSub(btn) {
 function toggleCartDisplay() {
     const cartOverlay = document.getElementById('cartSerialOverlay');
     if (!cartOverlay) return;
-    const isActive = cartOverlay.classList.toggle('active');
-    document.body.style.overflow = isActive ? 'hidden' : '';
-    if (isActive) renderSerialItems();
+
+    if (cartOverlay.classList.contains('active')) {
+        if (history.state && history.state.overlay) {
+            history.back();
+        } else {
+            cartOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    } else {
+        history.pushState({ overlay: true }, "");
+        cartOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        renderSerialItems();
+    }
 }
 
 /* --- 4. THE ADD TO CART SYSTEM --- */
@@ -315,12 +372,23 @@ function addToCart(id) {
     showToast(product.name);
 }
 
-/* --- 5. HERO & NOTIFICATIONS --- */
+/* --- 5. HERO, NAVBAR & NOTIFICATIONS --- */
 window.addEventListener('scroll', function () {
+    // Parallax effect for hero
     const heroBg = document.querySelector('.hero-bg-image');
     if (heroBg) {
         let scrollOffset = window.pageYOffset;
         heroBg.style.transform = `translateY(${scrollOffset * 0.5}px)`;
+    }
+
+    // Glassmorphism effect for navbar
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+        if (window.scrollY > 50) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
     }
 });
 
@@ -422,6 +490,7 @@ function openOrderOptions(fullMessage) {
                 <button onclick="closeOrderModal()" class="close-modal-btn">Cancel</button>
             </div>
         </div>`;
+    history.pushState({ overlay: true }, "");
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
@@ -450,10 +519,13 @@ function copyAndRedirectMessenger(message) {
 }
 
 function closeOrderModal() {
-    const modal = document.getElementById('orderModal');
-    if (modal) modal.remove();
+    if (history.state && history.state.overlay) {
+        history.back();
+    } else {
+        const modal = document.getElementById('orderModal');
+        if (modal) modal.remove();
+    }
 }
-function closeOrderModal() { document.getElementById('orderModal')?.remove(); }
 
 function handleSingleBuy(card) {
     const name = card.querySelector('.p-name').innerText;
@@ -596,6 +668,19 @@ window.addEventListener('load', () => {
     if (loader) {
         loader.style.display = 'none';
     }
+
+    // New Elegant Splash Screen Logic
+    const splash = document.getElementById('splashScreen');
+    if (splash) {
+        // Minimum display time for the luxury animation to play out (2 seconds total)
+        setTimeout(() => {
+            splash.classList.add('hidden');
+            // Remove from DOM after fade transition completes (1.2s CSS transition)
+            setTimeout(() => {
+                splash.remove();
+            }, 1200);
+        }, 2200);
+    }
 });
 
 // Extra precaution: Jodi load hote deri hoy, 3 second por auto hide hobe
@@ -616,8 +701,12 @@ function handleCategoryClick(event, mainCat, subCat) {
     // Mobile-e menu auto bondho hobe
     const menu = document.getElementById('menuOverlay');
     if (menu) {
-        menu.classList.remove('active');
-        document.body.classList.remove('menu-open');
+        if (history.state && history.state.overlay) {
+            history.back();
+        } else {
+            menu.classList.remove('active');
+            document.body.classList.remove('menu-open');
+        }
     }
 }
 
@@ -775,17 +864,19 @@ function openProductDetails(id) {
                             <a href="https://wa.me/8801601982509?text=${encodeURIComponent(rawMsg)}" target="_blank" 
                                style="background:#25D366; color:#fff; padding:14px; border-radius:10px; text-decoration:none; font-weight:bold; display:block;">WhatsApp Order</a>
                             
-                            <a href="javascript:void(0)" onclick="navigator.clipboard.writeText('${rawMsg.replace(/'/g, "\\'")}').then(() => { alert('Details Copied!'); window.open('https://m.me/mushfikurrm0927', '_blank'); document.getElementById('socialOrderModal').remove(); })" 
+                            <a href="javascript:void(0)" onclick="navigator.clipboard.writeText('${rawMsg.replace(/'/g, "\\'")}').then(() => { alert('Details Copied!'); window.open('https://m.me/mushfikurrm0927', '_blank'); if(history.state && history.state.overlay) { history.back(); } else { document.getElementById('socialOrderModal').remove(); } })" 
                                style="background:#0084FF; color:#fff; padding:14px; border-radius:10px; text-decoration:none; font-weight:bold; display:block;">Messenger Order</a>
                         </div>
-                        <button onclick="document.getElementById('socialOrderModal').remove()" style="margin-top:20px; background:none; border:none; color:#777; cursor:pointer; text-decoration:underline;">Cancel</button>
+                        <button onclick="if(history.state && history.state.overlay) { history.back(); } else { document.getElementById('socialOrderModal').remove(); }" style="margin-top:20px; background:none; border:none; color:#777; cursor:pointer; text-decoration:underline;">Cancel</button>
                     </div>
                 </div>`;
+            history.pushState({ overlay: true }, "");
             document.body.insertAdjacentHTML('beforeend', modalHtml);
         };
     }
 
     // 6. Show the Page
+    history.pushState({ overlay: true }, "");
     dPage.classList.add('active');
     document.body.style.overflow = 'hidden';
     dPage.scrollTop = 0;
@@ -821,9 +912,13 @@ function handleDirectBuy() {
 
 // 8. Close Function
 function closeProductDetails() {
-    const detailsPage = document.getElementById('productDetailsPage');
-    detailsPage.classList.remove('active');
-    document.body.style.overflow = 'auto';
+    if (history.state && history.state.overlay) {
+        history.back();
+    } else {
+        const detailsPage = document.getElementById('productDetailsPage');
+        detailsPage.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
 }
 
 

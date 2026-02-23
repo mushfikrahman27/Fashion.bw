@@ -63,6 +63,17 @@ body {
     top: 0;
     z-index: 1000;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    /* Smooth transition for glassmorphism */
+}
+
+/* Glassmorphism class added via JavaScript on scroll */
+.navbar.scrolled {
+    background: rgba(10, 10, 10, 0.7) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
 .nav-left,
@@ -534,6 +545,7 @@ body {
 }
 
 .toast-notification {
+    backdrop-filter: blur(15px) saturate(180%);
     -webkit-backdrop-filter: blur(15px) saturate(180%);
     color: #f8fafc;
     padding: 16px 24px;
@@ -2270,14 +2282,18 @@ footer {
         overflow-y: auto !important;
         /* Force the overlay to scroll */
         overflow-x: hidden;
-        transform: translateY(100%);
-        transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(40px) scale(0.98);
+        transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1), transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.5s;
         display: block !important;
         color: #ffffff;
     }
 
     .details-overlay.active {
-        transform: translateY(0) !important;
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1) !important;
     }
 
     .details-container {
@@ -2646,9 +2662,8 @@ footer {
     }
 
     /* Ensure info section doesn't add weird padding */
-    #relatedGrid .product-card .product-info {
-        padding: 10px !important;
-        height: auto !important;
+    #relatedGrid .product-card .details-info {
+        padding: 20px !important;
     }
 
     /* Desktop: Switch to 4 per row but keep same logic */
@@ -2659,6 +2674,98 @@ footer {
         }
     }
 
+
+    /* --- PREMIUM SPLASH SCREEN --- */
+    .splash-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: #0a0a0a;
+        /* Deep luxury black */
+        z-index: 999999999;
+        /* Absolute top layer */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 1.2s cubic-bezier(0.65, 0, 0.35, 1), visibility 1.2s;
+    }
+
+    .splash-screen.hidden {
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    .splash-content {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+
+    /* Logo Animation inside Splash */
+    .splash-logo {
+        font-family: 'Playfair Display', serif;
+        font-size: 3rem;
+        font-weight: 700;
+        color: #dee2ff;
+        /* Provided color 1 */
+        letter-spacing: 4px;
+        opacity: 0;
+        animation: fadeInLogo 1.5s ease forwards 0.3s;
+    }
+
+    .splash-logo span {
+        color: #8e9aaf;
+        /* Provided color 3 */
+        font-weight: 400;
+    }
+
+    /* Elegant sleek loading line */
+    .splash-loader {
+        width: 0;
+        height: 2px;
+        background: #feeafa;
+        /* Provided color 2 */
+        border-radius: 2px;
+        animation: loadingLine 2s cubic-bezier(0.77, 0, 0.175, 1) forwards 0.5s;
+    }
+
+    @keyframes fadeInLogo {
+        0% {
+            opacity: 0;
+            transform: translateY(15px);
+            letter-spacing: 12px;
+            filter: blur(5px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+            letter-spacing: 4px;
+            filter: blur(0);
+        }
+    }
+
+    @keyframes loadingLine {
+        0% {
+            width: 0;
+            opacity: 0.5;
+        }
+
+        50% {
+            width: 100px;
+            opacity: 1;
+        }
+
+        100% {
+            width: 180px;
+            opacity: 0;
+            /* Fades out slightly before screen disappears */
+        }
+    }
 
     .advanced-filter-bar {
         display: flex;
@@ -2778,104 +2885,105 @@ footer {
             width: 100%;
         }
     }
+}
 
 
 
-    /* --- PREMIUM TRANSITIONS & ANIMATIONS --- */
+/* --- PREMIUM TRANSITIONS & ANIMATIONS --- */
 
-    /* 1. Card Entrance Animation */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+/* 1. Card Entrance Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
 
-    .product-card {
-        animation: fadeInUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-        transition: transform 0.4s ease, box-shadow 0.4s ease !important;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
+}
 
-    /* 2. Premium Card Hover Effect */
-    /* 2. Premium Card Hover Effect */
-    .product-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
-    }
+.product-card {
+    animation: fadeInUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    transition: transform 0.4s ease, box-shadow 0.4s ease !important;
+}
 
-    .product-card img {
-        transition: transform 0.8s cubic-bezier(0.2, 1, 0.3, 1) !important;
-    }
+/* 2. Premium Card Hover Effect */
+/* 2. Premium Card Hover Effect */
+.product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
 
-    .product-card:hover img {
-        transform: scale(1.05);
-        /* Very subtle zoom */
-    }
+.product-card img {
+    transition: transform 0.8s cubic-bezier(0.2, 1, 0.3, 1) !important;
+}
 
-    /* 3. Button Micro-interactions */
-    .det-btn {
-        position: relative;
-        overflow: hidden;
-        transition: all 0.4s ease !important;
-    }
+.product-card:hover img {
+    transform: scale(1.05);
+    /* Very subtle zoom */
+}
 
-    .buy-now::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-        transition: 0.5s;
-    }
+/* 3. Button Micro-interactions */
+.det-btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease !important;
+}
 
-    .buy-now:hover::after {
-        left: 100% !important;
-    }
+.buy-now::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: 0.5s;
+}
 
-    /* 4. Filter Pill Smooth Active State */
-    .pill {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        position: relative;
-    }
+.buy-now:hover::after {
+    left: 100% !important;
+}
 
-    .pill.active {
-        background: #d4af37 !important;
-        transform: scale(1.05);
+/* 4. Filter Pill Smooth Active State */
+.pill {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative;
+}
 
-    }
+.pill.active {
+    background: #d4af37 !important;
+    transform: scale(1.05);
 
-    /* 2. end of Premium Card Hover Effect */
-    .details-overlay {
-        /* Agei transition chilo, eita arektu refine kora */
-        transition: transform 0.7s cubic-bezier(0.85, 0, 0.15, 1) !important;
-        backdrop-filter: blur(10px);
-        /* Premium Glass effect for background */
-    }
+}
+
+/* 2. end of Premium Card Hover Effect */
+.details-overlay {
+    /* Agei transition chilo, eita arektu refine kora */
+    transition: transform 0.7s cubic-bezier(0.85, 0, 0.15, 1) !important;
+    backdrop-filter: blur(10px);
+    /* Premium Glass effect for background */
+}
 
 
-    /* Force Buy Now button to be clickable regardless of size selection */
-    /* Size select koruk ba na koruk, Buy Now button sob somoy active thakbe */
-    .buy-now-btn,
-    .buy-now {
-        pointer-events: auto !important;
-        opacity: 1 !important;
-        cursor: pointer !important;
-        display: block !important;
-        background-color: #c5a059 !important;
-        /* Force gold/brand color */
-        color: #fff !important;
-    }
+/* Force Buy Now button to be clickable regardless of size selection */
+/* Size select koruk ba na koruk, Buy Now button sob somoy active thakbe */
+.buy-now-btn,
+.buy-now {
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    cursor: pointer !important;
+    display: block !important;
+    background-color: #c5a059 !important;
+    /* Force gold/brand color */
+    color: #fff !important;
+}
 
-    /* Jodi kono active class er opekkha kore thake, sheta ke bypass kora */
-    .buy-now-btn.disabled,
-    .buy-now:disabled {
-        pointer-events: auto !important;
-        opacity: 1 !important;
-    }
+/* Jodi kono active class er opekkha kore thake, sheta ke bypass kora */
+.buy-now-btn.disabled,
+.buy-now:disabled {
+    pointer-events: auto !important;
+    opacity: 1 !important;
+}
