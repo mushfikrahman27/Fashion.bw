@@ -1,12 +1,23 @@
 /* --- 1. CONFIGURATION & UPDATED DATA --- */
+let cartArray = [];
+// Prevent browser from restoring scroll position on reload
+if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+}
+window.scrollTo(0, 0);
+
 const SOCIAL_CONFIG = {
     whatsappNumber: "8801601982509",
     messengerLink: "https://m.me/mushfikurrm0927"
 };
 
-let cartArray = [];
-const productsPerPage = window.innerWidth <= 768 ? 10 : 12;
+let productsPerPage = window.innerWidth <= 768 ? 10 : 16;
 let currentPage = 1;
+
+// Re-check width on resize
+window.addEventListener('resize', () => {
+    productsPerPage = window.innerWidth <= 768 ? 10 : 16;
+});
 
 // INITIAL DATA: Eikhane tumi category wise product add korbe
 /* --- DYNAMIC PRODUCT DATA --- */
@@ -240,9 +251,47 @@ function addToCart(id) {
     }
     // --- TRACKING END ---
 
-    const btn = document.querySelector(`button[onclick="addToCart(${id})"]`);
+    const btn = document.querySelector(`button[onclick*="addToCart(${id})"]`);
 
     if (btn) {
+        // Flying Cart Animation
+        const card = btn.closest('.product-card') || btn.closest('.details-content-wrapper');
+        const img = card ? card.querySelector('img') : null;
+        const cartIcon = document.querySelector('.cart-glass');
+
+        if (img && cartIcon) {
+            const imgClone = img.cloneNode(true);
+            const imgRect = img.getBoundingClientRect();
+            const cartRect = cartIcon.getBoundingClientRect();
+
+            imgClone.style.position = 'fixed';
+            imgClone.style.zIndex = '999999';
+            imgClone.style.top = imgRect.top + 'px';
+            imgClone.style.left = imgRect.left + 'px';
+            imgClone.style.width = imgRect.width + 'px';
+            imgClone.style.height = imgRect.height + 'px';
+            imgClone.style.transition = 'all 0.8s cubic-bezier(0.25, 1, 0.5, 1)';
+            imgClone.style.borderRadius = '8px';
+            imgClone.style.pointerEvents = 'none';
+            imgClone.style.objectFit = 'cover';
+            imgClone.style.opacity = '1';
+
+            document.body.appendChild(imgClone);
+
+            // Force reflow
+            void imgClone.offsetWidth;
+
+            imgClone.style.top = cartRect.top + 'px';
+            imgClone.style.left = (cartRect.left + cartRect.width / 2 - 10) + 'px';
+            imgClone.style.width = '20px';
+            imgClone.style.height = '20px';
+            imgClone.style.opacity = '0.2';
+
+            setTimeout(() => {
+                imgClone.remove();
+            }, 800);
+        }
+
         const oldText = btn.innerText;
         btn.innerText = "Added! ✓";
         btn.style.background = "#22c55e";
@@ -286,7 +335,11 @@ function showToast(productName) {
         <button class="toast-view-btn" onclick="toggleCartDisplay()">View Cart</button>
     `;
     container.appendChild(toast);
-    setTimeout(() => toast.classList.add('active'), 10);
+
+    // Force a reflow before adding the active class
+    void toast.offsetWidth;
+
+    toast.classList.add('active');
     setTimeout(() => {
         toast.classList.remove('active');
         setTimeout(() => toast.remove(), 400);
@@ -469,8 +522,8 @@ function displayProducts(page) {
     // Grid clear kora
     grid.innerHTML = "";
 
-    // Screen size onujayi productsPerPage update kora (Mobile: 10, Desktop: 12)
-    const currentLimit = window.innerWidth <= 768 ? 10 : 12;
+    // Screen size onujayi productsPerPage update kora (Mobile: 10, Desktop: 16)
+    const currentLimit = window.innerWidth <= 768 ? 10 : 16;
 
     const start = (page - 1) * currentLimit;
     const end = start + currentLimit;
@@ -495,9 +548,13 @@ function displayProducts(page) {
                     </div>
                     <div class="p-info">
                         <h3 class="p-name">${p.name}</h3>
+                        <p class="p-meta" style="display:none;">Color: ${p.color || "Default"}</p>
                         <p class="p-price">TK-${p.price}</p>
                     </div>
-                    <button class="cart-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Add to Cart</button>
+                    <div class="button-group" style="display: flex; gap: 10px; margin-top: 10px; width: 100%;">
+                        <button class="action-btn buy-btn" onclick="event.stopPropagation(); handleSingleBuy(this.closest('.product-card'))" style="flex: 1; padding: 12px 0;">Buy Now</button>
+                        <button class="cart-btn action-btn" onclick="event.stopPropagation(); addToCart(${p.id})" style="flex: 1; padding: 12px 0;">Add to Cart</button>
+                    </div>
                 `;
                 grid.appendChild(card);
             }
@@ -668,14 +725,23 @@ function openProductDetails(id) {
     const related = allProducts.filter(item => item.subCategory === p.subCategory && item.id !== p.id).slice(0, 4);
     if (related.length > 0) {
         related.forEach(rp => {
-            relatedGrid.innerHTML += `
-                <div class="product-card" onclick="openProductDetails(${rp.id})">
-                    <div class="product-img-holder"><img src="${rp.img}"></div>
-                    <div class="p-info">
-                        <h3 class="p-name">${rp.name}</h3>
-                        <p class="p-price">TK-${rp.price}</p>
-                    </div>
-                </div>`;
+            if (typeof renderSingleCard === 'function') {
+                renderSingleCard(relatedGrid, rp);
+            } else {
+                relatedGrid.innerHTML += `
+                    <div class="product-card" onclick="openProductDetails(${rp.id})">
+                        <div class="product-img-holder"><img src="${rp.img}"></div>
+                        <div class="p-info">
+                            <h3 class="p-name">${rp.name}</h3>
+                            <p class="p-meta" style="display:none;">Color: ${rp.color || "Default"}</p>
+                            <p class="p-price">TK-${rp.price}</p>
+                        </div>
+                        <div class="button-group" style="display: flex; gap: 10px; margin-top: 10px; width: 100%;">
+                            <button class="action-btn buy-btn" onclick="event.stopPropagation(); handleSingleBuy(this.closest('.product-card'))" style="flex: 1; padding: 12px 0;">Buy Now</button>
+                            <button class="cart-btn action-btn" onclick="event.stopPropagation(); addToCart(${rp.id})" style="flex: 1; padding: 12px 0;">Add to Cart</button>
+                        </div>
+                    </div>`;
+            }
         });
     }
 
@@ -766,7 +832,6 @@ function closeProductDetails() {
 // Global states for filters
 let currentCategory = 'All'; // Eta age thekei thakar kotha
 let currentMaxPrice = 5000;
-let currentSize = 'All';
 
 // Price Slider update function
 function updatePriceLabel(val) {
@@ -783,10 +848,7 @@ function applyAdvancedFilters() {
     const searchInput = document.getElementById('searchInput');
     const searchTerm = searchInput ? searchInput.value.toLowerCase() : "";
 
-    const sizeSelect = document.getElementById('sizeFilter');
-    currentSize = sizeSelect ? sizeSelect.value : "All";
-
-    const filteredProducts = allProducts.filter(product => {
+    filteredProducts = allProducts.filter(product => {
         // 1. Price Connection: String (TK) hole number-e convert korbe
         const productPriceNum = typeof product.price === 'string'
             ? parseInt(product.price.replace(/[^0-9]/g, ''))
@@ -797,16 +859,12 @@ function applyAdvancedFilters() {
         const matchesSearch = product.name.toLowerCase().includes(searchTerm);
         const matchesPrice = productPriceNum <= currentMaxPrice;
 
-        // 3. Size Connection (S, M, L, XL)
-        // Ensure koro product object-e sizes: ["S", "M"] ei bhabe data ache
-        const matchesSize = currentSize === 'All' || (product.sizes && product.sizes.includes(currentSize));
-
-        return matchesCategory && matchesSearch && matchesPrice && matchesSize;
+        return matchesCategory && matchesSearch && matchesPrice;
     });
 
     // Pagination reset kora bhalo jate filter korle 1st page theke dekhay
     currentPage = 1;
-    renderProducts(filteredProducts);
+    displayProducts(currentPage);
 }
 
 // Navbar search bar connectivity
@@ -898,7 +956,7 @@ function filterBySubCategory(subCatName) {
 }
 
 function setupPagination(totalItems, itemsPerPage) {
-    const paginationContainer = document.getElementById('pagination');
+    const paginationContainer = document.getElementById('paginationBar');
     if (!paginationContainer) return;
 
     paginationContainer.innerHTML = '';
