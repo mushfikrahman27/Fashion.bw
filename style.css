@@ -858,10 +858,61 @@ body.cart-open {
 /* --- PRODUCT GRID & CARDS --- */
 /* --- PRODUCT GRID & CARDS --- */
 .product-card {
-    background: var(--card) !important;
-    border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05); /* Very subtle border */
+    background: linear-gradient(145deg, #151515, #0a0a0a);
+    cursor: pointer; /* Mouse nile pointer (hand) dekhabe */
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+}
+.product-card:hover {
+      border-color: rgba(197, 160, 89, 0.5); /* Gold border glow */
+    transform: translateY(-5px); /* Ektu upore uthbe */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); /* Luxury shadow effect */
+}
+.product-card:hover .p-name::after {
+    width: 100%; /* Hover korle line-ta full hobe */
+}
+.product-card::after {
+    content: "VIEW DETAILS"; /* Minimalist Text */
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    color: #fff;
+    font-size: 9px;
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: 2px;
+    padding: 6px 10px;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    opacity: 0.8; /* Agei halka kore dekha jabe */
+    transition: all 0.3s ease;
+    z-index: 10;
 }
 
+.product-card:hover .p-name {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    color: #fff; /* Tomar brand color onujayi change korte paro */
+}
+
+.p-name {
+    display: inline-block;
+    position: relative;
+    padding-bottom: 5px;
+}
+.p-name::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 80px; /* Chotto ekta gold/white line */
+    height: 4px;
+    background: #c5a059; /* Luxury Gold Tone */
+    transition: width 0.3s ease;
+}
 .p-name, .p-meta {
     color: var(--foreground) !important;
 }
@@ -1914,4 +1965,22 @@ input[type="range"] {
     /* Agei transition chilo, eita arektu refine kora */
     transition: transform 0.7s cubic-bezier(0.85, 0, 0.15, 1) !important;
     backdrop-filter: blur(10px); /* Premium Glass effect for background */
+}
+
+
+/* Force Buy Now button to be clickable regardless of size selection */
+/* Size select koruk ba na koruk, Buy Now button sob somoy active thakbe */
+.buy-now-btn, .buy-now {
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    cursor: pointer !important;
+    display: block !important;
+    background-color: #c5a059 !important; /* Force gold/brand color */
+    color: #fff !important;
+}
+
+/* Jodi kono active class er opekkha kore thake, sheta ke bypass kora */
+.buy-now-btn.disabled, .buy-now:disabled {
+    pointer-events: auto !important;
+    opacity: 1 !important;
 }

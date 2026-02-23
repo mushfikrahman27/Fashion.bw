@@ -1,7 +1,7 @@
 /* --- 1. CONFIGURATION & UPDATED DATA --- */
 const SOCIAL_CONFIG = {
-    whatsappNumber: "8801601982509", 
-    messengerLink: "https://m.me/mushfikurrm0927" 
+    whatsappNumber: "8801601982509",
+    messengerLink: "https://m.me/mushfikurrm0927"
 };
 
 let cartArray = [];
@@ -12,47 +12,47 @@ let currentPage = 1;
 /* --- DYNAMIC PRODUCT DATA --- */
 const allProducts = [
     // WOMEN CATEGORY
-    { id: 1, name: "Luxury Tote Bag", price: "750", color: "Black", img: "bag1.jpg", category: "Women", subCategory: "Bags",img: "images/tote-bag.jpeg" },
-    { id: 2, name: "Premium Handbag", price: "950", color: "Brown", img: "bag2.jpg", category: "Women", subCategory: "Bags",  img: "images/pic-2.jpg"},
-    { id: 6, name: "Elegant Shoulder Bag", price: "820", color: "Beige", img: "bag3.jpg", category: "Women", subCategory: "Bags",img: "images/pic-3.jpg" },
-    { id: 7, name: "Mini Party Clutch", price: "640", color: "Gold", img: "bag4.jpg", category: "Women", subCategory: "Bags",img: "images/pic-4.jpg" },
-    { id: 8, name: "Casual Canvas Bag", price: "520", color: "Cream", img: "bag5.jpg", category: "Women", subCategory: "Bags" ,img: "images/pic-5.jpeg"},
+    { id: 1, name: "Luxury Tote Bag", price: "750", color: "Black", img: "bag1.jpg", category: "Women", subCategory: "Bags", img: "images/tote-bag.jpeg" },
+    { id: 2, name: "Premium Handbag", price: "950", color: "Brown", img: "bag2.jpg", category: "Women", subCategory: "Bags", img: "images/pic-2.jpg" },
+    { id: 6, name: "Elegant Shoulder Bag", price: "820", color: "Beige", img: "bag3.jpg", category: "Women", subCategory: "Bags", img: "images/pic-3.jpg" },
+    { id: 7, name: "Mini Party Clutch", price: "640", color: "Gold", img: "bag4.jpg", category: "Women", subCategory: "Bags", img: "images/pic-4.jpg" },
+    { id: 8, name: "Casual Canvas Bag", price: "520", color: "Cream", img: "bag5.jpg", category: "Women", subCategory: "Bags", img: "images/pic-5.jpeg" },
 
-    { id: 9, name: "Premium Abaya", price: "1400", color: "Pink", img: "dress1.jpg", category: "Women", subCategory: "Most Viewed",img: "images/pic-6.jpg" },
-    { id: 10, name: "premium borkha", price: "2600", color: "Maroon", img: "dress2.jpg", category: "Women", subCategory: "Dress",img: "images/pic-7.jpg" },
-    { id: 11, name: "Casual Women Watch", price: "980", color: "Sky Blue", img: "dress3.jpg", category: "Women", subCategory: "Trending",img: "images/pic-8.webp" },
+    { id: 9, name: "Premium Abaya", price: "1400", color: "Pink", img: "dress1.jpg", category: "Women", subCategory: "Most Viewed", img: "images/pic-6.jpg" },
+    { id: 10, name: "premium borkha", price: "2600", color: "Maroon", img: "dress2.jpg", category: "Women", subCategory: "Dress", img: "images/pic-7.jpg" },
+    { id: 11, name: "Casual Women Watch", price: "980", color: "Sky Blue", img: "dress3.jpg", category: "Women", subCategory: "Trending", img: "images/pic-8.webp" },
 
     // MEN CATEGORY
-    { id: 3, name: "Urban Street Sneaker", price: "1800", color: "White/Grey", img: "sneaker1.jpg", category: "Men", subCategory: "Sneakers",img: "images/pic-9.webp" },
-    { id: 4, name: "Classic Sport Sneaker", price: "2200", color: "Blue", img: "sneaker2.jpg", category: "Men", subCategory: "Sneakers",img: "images/pic-10.jpg" },
-    { id: 12, name: "Running Pro Sneaker", price: "1950", color: "Black/Red", img: "sneaker3.jpg", category: "Men", subCategory: "Sneakers",img: "images/pic-11.jpg" },
-    { id: 13, name: "Minimal White Sneaker", price: "1750", color: "White", img: "sneaker4.jpg", category: "Men", subCategory: "Sneakers",img: "images/pic-12.webp" },
+    { id: 3, name: "Urban Street Sneaker", price: "1800", color: "White/Grey", img: "sneaker1.jpg", category: "Men", subCategory: "Sneakers", img: "images/pic-9.webp" },
+    { id: 4, name: "Classic Sport Sneaker", price: "2200", color: "Blue", img: "sneaker2.jpg", category: "Men", subCategory: "Sneakers", img: "images/pic-10.jpg" },
+    { id: 12, name: "Running Pro Sneaker", price: "1950", color: "Black/Red", img: "sneaker3.jpg", category: "Men", subCategory: "Sneakers", img: "images/pic-11.jpg" },
+    { id: 13, name: "Minimal White Sneaker", price: "1750", color: "White", img: "sneaker4.jpg", category: "Men", subCategory: "Sneakers", img: "images/pic-12.webp" },
 
-    { id: 14, name: "Formal Leather Shoe", price: "2600", color: "Dark Brown", img: "shoe1.jpg", category: "Men", subCategory: "Shoes",img: "images/pic-13.jpg"  },
-    { id: 15, name: "Office Classic Shoe", price: "2400", color: "Black", img: "shoe2.jpg", category: "Men", subCategory: "Shoes",img: "images/pic-14.jpg"  },
+    { id: 14, name: "Formal Leather Shoe", price: "2600", color: "Dark Brown", img: "shoe1.jpg", category: "Men", subCategory: "Shoes", img: "images/pic-13.jpg" },
+    { id: 15, name: "Office Classic Shoe", price: "2400", color: "Black", img: "shoe2.jpg", category: "Men", subCategory: "Shoes", img: "images/pic-14.jpg" },
 
-    { id: 16, name: "Slim Fit Shirt", price: "1200", color: "White", img: "shirt1.jpg", category: "Men", subCategory: "Shirt" ,img: "images/pic-15.webp" },
-    { id: 17, name: "Casual Check Shirt", price: "980", color: "Green", img: "shirt2.jpg", category: "Men", subCategory: "Shirt",img: "images/pic-15.webp"  },
-    { id: 18, name: "Denim Casual Shirt", price: "1450", color: "Blue", img: "shirt3.jpg", category: "Men", subCategory: "Shirt" ,img: "images/pic-15.webp" },
+    { id: 16, name: "Slim Fit Shirt", price: "1200", color: "White", img: "shirt1.jpg", category: "Men", subCategory: "Shirt", img: "images/pic-15.webp" },
+    { id: 17, name: "Casual Check Shirt", price: "980", color: "Green", img: "shirt2.jpg", category: "Men", subCategory: "Shirt", img: "images/pic-15.webp" },
+    { id: 18, name: "Denim Casual Shirt", price: "1450", color: "Blue", img: "shirt3.jpg", category: "Men", subCategory: "Shirt", img: "images/pic-15.webp" },
 
     // COLLECTION CATEGORY
-    { id: 5, name: "Dark Aviator", price: "1200", color: "Silver", img: "glass1.jpg", category: "Men", subCategory: "Sunglasses",img: "images/pic-16.webp"  },
-    { id: 19, name: "Retro Round Glass", price: "1350", color: "Black", img: "glass2.jpg", category: "Men", subCategory: "Sunglasses",img: "images/pic-16.webp"  },
-    { id: 20, name: "Luxury Gold Frame", price: "1650", color: "Gold", img: "glass3.jpg", category: "Men", subCategory: "Sunglasses" ,img: "images/pic-16.webp" },
+    { id: 5, name: "Dark Aviator", price: "1200", color: "Silver", img: "glass1.jpg", category: "Men", subCategory: "Sunglasses", img: "images/pic-16.webp" },
+    { id: 19, name: "Retro Round Glass", price: "1350", color: "Black", img: "glass2.jpg", category: "Men", subCategory: "Sunglasses", img: "images/pic-16.webp" },
+    { id: 20, name: "Luxury Gold Frame", price: "1650", color: "Gold", img: "glass3.jpg", category: "Men", subCategory: "Sunglasses", img: "images/pic-16.webp" },
 
-    { id: 21, name: "Smart Analog Watch", price: "3200", color: "Silver", img: "watch1.jpg", category: "Collection", subCategory: "Watches",img: "images/pic-17.png"  },
-    { id: 22, name: "Leather Strap Watch", price: "2850", color: "Brown", img: "watch2.jpg", category: "Collection", subCategory: "Watches",img: "images/pic-17.png" },
-    { id: 23, name: "Modern Black Watch", price: "3100", color: "Black", img: "watch3.jpg", category: "Collection", subCategory: "Watches",img: "images/pic-17.png" },
+    { id: 21, name: "Smart Analog Watch", price: "3200", color: "Silver", img: "watch1.jpg", category: "Collection", subCategory: "Watches", img: "images/pic-17.png" },
+    { id: 22, name: "Leather Strap Watch", price: "2850", color: "Brown", img: "watch2.jpg", category: "Collection", subCategory: "Watches", img: "images/pic-17.png" },
+    { id: 23, name: "Modern Black Watch", price: "3100", color: "Black", img: "watch3.jpg", category: "Collection", subCategory: "Watches", img: "images/pic-17.png" },
 
     // ACCESSORIES
-    { id: 24, name: "Classic Leather Belt", price: "850", color: "Brown", img: "belt1.jpg", category: "Collection", subCategory: "Belts" ,img: "images/pic-18.jpg"},
-    { id: 25, name: "Minimal Black Belt", price: "780", color: "Black", img: "belt2.jpg", category: "Collection", subCategory: "Belts",img: "images/pic-18.jpg" },
+    { id: 24, name: "Classic Leather Belt", price: "850", color: "Brown", img: "belt1.jpg", category: "Collection", subCategory: "Belts", img: "images/pic-18.jpg" },
+    { id: 25, name: "Minimal Black Belt", price: "780", color: "Black", img: "belt2.jpg", category: "Collection", subCategory: "Belts", img: "images/pic-18.jpg" },
 
-    { id: 26, name: "Travel Backpack", price: "2100", color: "Grey", img: "bag6.jpg", category: "Men", subCategory: "Bags", img: "images/pic-19.jpg"},
-    { id: 27, name: "Office Laptop Bag", price: "2350", color: "Black", img: "bag7.jpg", category: "Men", subCategory: "Bags", img: "images/pic-19.jpg"},
+    { id: 26, name: "Travel Backpack", price: "2100", color: "Grey", img: "bag6.jpg", category: "Men", subCategory: "Bags", img: "images/pic-19.jpg" },
+    { id: 27, name: "Office Laptop Bag", price: "2350", color: "Black", img: "bag7.jpg", category: "Men", subCategory: "Bags", img: "images/pic-19.jpg" },
 
-    { id: 28, name: "Women Fashion Sandal", price: "1450", color: "Beige", img: "sandal1.jpg", category: "Women", subCategory: "Shoes", img: "images/pic-20.jpg"},
-    { id: 29, name: "Elegant Heel Sandal", price: "1750", color: "Black", img: "sandal2.jpg", category: "Women", subCategory: "Shoes" ,img: "images/pic-20.jpg"},
+    { id: 28, name: "Women Fashion Sandal", price: "1450", color: "Beige", img: "sandal1.jpg", category: "Women", subCategory: "Shoes", img: "images/pic-20.jpg" },
+    { id: 29, name: "Elegant Heel Sandal", price: "1750", color: "Black", img: "sandal2.jpg", category: "Women", subCategory: "Shoes", img: "images/pic-20.jpg" },
 
     { id: 30, name: "Sports Cap", price: "420", color: "Navy", img: "cap1.jpg", category: "Collection", subCategory: "Caps" },
     { id: 31, name: "Urban Snapback Cap", price: "520", color: "Black", img: "cap2.jpg", category: "Collection", subCategory: "Caps" },
@@ -93,14 +93,14 @@ let filteredProducts = [...allProducts];
 function initSearch() {
     const searchInput = document.querySelector('.stylish-search input');
     const suggestBox = document.getElementById('searchSuggestions');
-    const clearBtn = document.getElementById('clearSearchBtn'); 
-    
-    if(!searchInput) return;
+    const clearBtn = document.getElementById('clearSearchBtn');
 
-    if(clearBtn) {
+    if (!searchInput) return;
+
+    if (clearBtn) {
         clearBtn.addEventListener('click', () => {
-            searchInput.value = ""; 
-            if(suggestBox) {
+            searchInput.value = "";
+            if (suggestBox) {
                 suggestBox.innerHTML = "";
                 suggestBox.style.display = 'none';
             }
@@ -116,14 +116,14 @@ function initSearch() {
         const pBar = document.getElementById('paginationBar');
 
         if (term.length < 1) {
-            if(suggestBox) {
-                suggestBox.innerHTML = ""; 
-                suggestBox.style.display = 'none'; 
+            if (suggestBox) {
+                suggestBox.innerHTML = "";
+                suggestBox.style.display = 'none';
             }
         } else {
             /* --- SUB-CATEGORY PRIORITY LOGIC --- */
-            const matches = allProducts.filter(p => 
-                p.name.toLowerCase().includes(term) || 
+            const matches = allProducts.filter(p =>
+                p.name.toLowerCase().includes(term) ||
                 (p.subCategory && p.subCategory.toLowerCase().includes(term))
             ).sort((a, b) => {
                 // Check if search term matches sub-category
@@ -132,7 +132,7 @@ function initSearch() {
                 return bSub - aSub; // Sub-category matches come first
             }).slice(0, 6); // Showing top 6 results
 
-            if(matches.length > 0 && suggestBox) {
+            if (matches.length > 0 && suggestBox) {
                 suggestBox.innerHTML = matches.map(p => `
                     <div class="suggest-item" onclick="openProductDetails(${p.id})">
                         <img src="${p.img}" onerror="this.src='https://via.placeholder.com/400x500'">
@@ -151,12 +151,12 @@ function initSearch() {
 
         if (term === "") {
             cards.forEach(card => card.style.display = 'block');
-            if(pBar) pBar.style.display = 'flex';
-            displayProducts(currentPage); 
+            if (pBar) pBar.style.display = 'flex';
+            displayProducts(currentPage);
             return;
         }
 
-        if(pBar) pBar.style.display = 'none';
+        if (pBar) pBar.style.display = 'none';
 
         const gridMatches = [];
         cards.forEach(card => {
@@ -183,17 +183,17 @@ function initSearch() {
 /* --- 3. UI & CART ACTIONS --- */
 function toggleMenu() {
     const menu = document.getElementById('menuOverlay');
-    if(menu) menu.classList.toggle('active');
+    if (menu) menu.classList.toggle('active');
 }
 
 function toggleSub(btn) {
     const parent = btn.parentElement;
     // CSS e jodi .active use kora thake, tobe active use koro
-    parent.classList.toggle('active'); 
-    parent.classList.toggle('open'); 
-    
+    parent.classList.toggle('active');
+    parent.classList.toggle('open');
+
     const icon = btn.querySelector('.plus-icon');
-    if(icon) {
+    if (icon) {
         // Luxury look er jonno minus sign (−) use kora hoyeche
         icon.innerText = (parent.classList.contains('active') || parent.classList.contains('open')) ? "−" : "+";
     }
@@ -241,25 +241,25 @@ function addToCart(id) {
     // --- TRACKING END ---
 
     const btn = document.querySelector(`button[onclick="addToCart(${id})"]`);
-    
+
     if (btn) {
-        const oldText = btn.innerText; 
-        btn.innerText = "Added! ✓"; 
-        btn.style.background = "#22c55e"; 
-        setTimeout(() => { 
-            btn.innerText = oldText; 
-            btn.style.background = ""; 
+        const oldText = btn.innerText;
+        btn.innerText = "Added! ✓";
+        btn.style.background = "#22c55e";
+        setTimeout(() => {
+            btn.innerText = oldText;
+            btn.style.background = "";
         }, 1500);
     }
 
     const size = document.querySelector(`#sizes-prod-${id} span.active`)?.innerText || "Not Specified";
-    cartArray.push({...product, selectedSize: size});
-    
+    cartArray.push({ ...product, selectedSize: size });
+
     const countLabel = document.getElementById('navbarCartCount');
-    if(countLabel) countLabel.innerText = cartArray.length;
+    if (countLabel) countLabel.innerText = cartArray.length;
 
     const cartIcon = document.querySelector('.cart-glass');
-    if(cartIcon) {
+    if (cartIcon) {
         cartIcon.classList.add('cart-bounce-active');
         setTimeout(() => cartIcon.classList.remove('cart-bounce-active'), 400);
     }
@@ -267,7 +267,7 @@ function addToCart(id) {
 }
 
 /* --- 5. HERO & NOTIFICATIONS --- */
-window.addEventListener('scroll', function() {
+window.addEventListener('scroll', function () {
     const heroBg = document.querySelector('.hero-bg-image');
     if (heroBg) {
         let scrollOffset = window.pageYOffset;
@@ -296,14 +296,14 @@ function showToast(productName) {
 function removeItem(index) {
     cartArray.splice(index, 1);
     const countLabel = document.getElementById('navbarCartCount');
-    if(countLabel) countLabel.innerText = cartArray.length;
+    if (countLabel) countLabel.innerText = cartArray.length;
     renderSerialItems();
 }
 
 /* --- 6. RENDER CART --- */
 function renderSerialItems() {
     const container = document.getElementById('serialItemList');
-    if(!container) return;
+    if (!container) return;
 
     const headerHtml = `
         <div class="cart-header-cool">
@@ -350,7 +350,7 @@ function openOrderOptions(fullMessage) {
     }
 
     const encodedMsg = encodeURIComponent(fullMessage);
-    
+
     // Message-e single quote (') handle korar jonno escape logic
     const escapedMessage = fullMessage.replace(/'/g, "\\'");
 
@@ -382,7 +382,7 @@ function copyAndRedirectMessenger(message) {
         } else {
             alert("Order details copied! Please paste it in our Messenger inbox.");
         }
-        
+
         // 1.2 second delay jate user toast-ta dekhte pay, tarpore redirect
         setTimeout(() => {
             window.open(SOCIAL_CONFIG.messengerLink, '_blank');
@@ -396,7 +396,7 @@ function copyAndRedirectMessenger(message) {
     });
 }
 
-function closeOrderModal() { 
+function closeOrderModal() {
     const modal = document.getElementById('orderModal');
     if (modal) modal.remove();
 }
@@ -417,15 +417,13 @@ function processCartCheckout() {
     openOrderOptions(`Hello! I want to Buy: ${details}, Total Price: TK ${total}`);
 }
 
-document.addEventListener('click', (e) => {
-    if(e.target && e.target.classList.contains('ready')) handleSingleBuy(e.target.closest('.product-card'));
-});
+// (Removed global click listener for .ready as we use direct onclick now)
 
 /* --- 8. PRODUCT RENDERING & PAGINATION (UPDATED WITH DETAILS TRIGGER) --- */
 
 function renderSingleCard(container, p) {
     const uniqueId = `prod-${p.id}`;
-    
+
     // Nicher template e card-er main div-e onclick add kora hoyeche
     container.innerHTML += `
         <div class="product-card">
@@ -450,7 +448,7 @@ function renderSingleCard(container, p) {
                 </div>
                 
                 <div class="button-group">
-                    <button class="action-btn buy-btn" id="btn-${uniqueId}" disabled>Choose Size</button>
+                    <button class="action-btn buy-btn" id="btn-${uniqueId}" onclick="event.stopPropagation(); handleSingleBuy(this.closest('.product-card'))">Buy Now</button>
                     <button class="action-btn cart-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Add to Cart</button>
                 </div>
             </div>
@@ -462,27 +460,22 @@ function selectSize(prodId, element) {
     const options = document.querySelectorAll(`#sizes-${prodId} span`);
     options.forEach(opt => opt.classList.remove('active'));
     element.classList.add('active');
-    
-    const btn = document.getElementById(`btn-${prodId}`);
-    btn.innerText = "Buy Now";
-    btn.classList.add('ready');
-    btn.disabled = false;
 }
 
 function displayProducts(page) {
     const grid = document.getElementById('productGrid');
     if (!grid) return;
-    
+
     // Grid clear kora
     grid.innerHTML = "";
 
     // Screen size onujayi productsPerPage update kora (Mobile: 10, Desktop: 12)
     const currentLimit = window.innerWidth <= 768 ? 10 : 12;
-    
+
     const start = (page - 1) * currentLimit;
     const end = start + currentLimit;
     const itemsToShow = filteredProducts.slice(start, end);
-    
+
     if (itemsToShow.length === 0) {
         grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--muted-foreground); padding: 40px;">No products found in this category.</p>`;
     } else {
@@ -510,7 +503,7 @@ function displayProducts(page) {
             }
         });
     }
-    
+
     // Pagination button gulo setup kora
     if (typeof setupPagination === 'function') {
         setupPagination(filteredProducts.length, currentLimit);
@@ -519,8 +512,8 @@ function displayProducts(page) {
 
 function updatePagination() {
     const pBar = document.getElementById('paginationBar');
-    if(!pBar) return;
-    
+    if (!pBar) return;
+
     const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
     pBar.innerHTML = "";
 
@@ -530,8 +523,8 @@ function updatePagination() {
             const btn = document.createElement('button');
             btn.innerText = i;
             btn.className = `page-num ${i === currentPage ? 'active' : ''}`;
-            btn.onclick = () => { 
-                currentPage = i; 
+            btn.onclick = () => {
+                currentPage = i;
                 displayProducts(i);
                 window.scrollTo({ top: document.getElementById('productGrid').offsetTop - 100, behavior: 'smooth' });
             };
@@ -562,10 +555,10 @@ setTimeout(() => {
 function handleCategoryClick(event, mainCat, subCat) {
     event.preventDefault(); // Page jump stop korbe
     filterByCategory(mainCat, subCat); // Filter logic call korbe
-    
+
     // Mobile-e menu auto bondho hobe
     const menu = document.getElementById('menuOverlay');
-    if(menu) {
+    if (menu) {
         menu.classList.remove('active');
         document.body.classList.remove('menu-open');
     }
@@ -613,12 +606,11 @@ function filterByCategory(mainCat, subCat = 'All', element) {
 }
 
 /* --- FINAL MERGED PRODUCT DETAILS LOGIC --- */
-
 function openProductDetails(id) {
     const p = allProducts.find(item => item.id === id);
     if (!p) return;
 
-    // --- TRACKING START ---
+    // --- TRACKING ---
     if (typeof fbq === 'function') {
         fbq('track', 'ViewContent', {
             content_name: p.name,
@@ -632,17 +624,15 @@ function openProductDetails(id) {
 
     // 1. Basic Info Load
     document.getElementById('detName').innerText = p.name;
-    document.getElementById('detPrice').innerText = `TK-${p.price}`; 
+    document.getElementById('detPrice').innerText = `TK-${p.price}`;
     document.getElementById('mainDetailImg').src = p.img;
-    
-    // 2. Description & Care Instructions
-    document.getElementById('detDesc').innerText = p.description || `Experience premium quality with this ${p.name}. Crafted for comfort and designed to make a statement in every step.`;
-    document.getElementById('detCare').innerText = p.care || "Dry clean only. Store in a cool, dry place. Handle with care to maintain its luxury finish and longevity.";
+    document.getElementById('detDesc').innerText = p.description || `Experience premium quality with this ${p.name}.`;
+    document.getElementById('detCare').innerText = p.care || "Dry clean only. Handle with care.";
 
-    // 3. Gallery / Thumbnails Logic
+    // 2. Thumbnails Logic
     const thumbContainer = document.getElementById('thumbnailStrip');
     thumbContainer.innerHTML = '';
-    const gallery = p.gallery || [p.img, p.img, p.img]; 
+    const gallery = p.gallery || [p.img, p.img, p.img];
     gallery.forEach(imgSrc => {
         const thumb = document.createElement('img');
         thumb.src = imgSrc;
@@ -650,18 +640,19 @@ function openProductDetails(id) {
         thumbContainer.appendChild(thumb);
     });
 
-    // 4. Dynamic Size Section
+    // 3. Dynamic Size Section (DESIGN ONLY)
     const sizeSection = document.getElementById('sizeSection');
     const sizeContainer = document.getElementById('detSizes');
     sizeContainer.innerHTML = '';
     const needSize = ['Sneakers', 'Shoes', 'Shirts', 'Pants'].includes(p.subCategory) || ['Men', 'Women'].includes(p.category);
-    
+
     if (needSize) {
         sizeSection.style.display = 'block';
         ['S', 'M', 'L', 'XL'].forEach(s => {
             const span = document.createElement('span');
             span.innerText = s;
-            span.onclick = function() {
+            // Eikhane click korle shudhu visual change hobe, button block hobe na
+            span.onclick = function () {
                 sizeContainer.querySelectorAll('span').forEach(el => el.classList.remove('active'));
                 this.classList.add('active');
             };
@@ -671,11 +662,11 @@ function openProductDetails(id) {
         sizeSection.style.display = 'none';
     }
 
-  // 5. Related Products
+    // 4. Related Products
     const relatedGrid = document.getElementById('relatedGrid');
     relatedGrid.innerHTML = '';
     const related = allProducts.filter(item => item.subCategory === p.subCategory && item.id !== p.id).slice(0, 4);
-    if(related.length > 0) {
+    if (related.length > 0) {
         related.forEach(rp => {
             relatedGrid.innerHTML += `
                 <div class="product-card" onclick="openProductDetails(${rp.id})">
@@ -688,48 +679,52 @@ function openProductDetails(id) {
         });
     }
 
-  // --- FINAL REPAIR: Buy Now Only (Add to Cart Removed) ---
-    const rawOrderMsg = `Hello! I want to order: ${p.name} (ID: ${p.id}, Price: ${p.price})`;
-    const encodedOrderMsg = encodeURIComponent(rawOrderMsg);
-    const wpNumber = "8801601982509";
-    const msgrLink = "https://m.me/mushfikurrm0927";
-
+    // --- 5. THE ULTIMATE FIX: BYPASS SIZE LOGIC & ADD MSGR ---
     const dPage = document.getElementById('productDetailsPage');
-    const bBtn = dPage.getElementsByClassName('buy-now-btn')[0] || dPage.getElementsByClassName('buy-now')[0];
-    const aBtn = dPage.getElementsByClassName('add-to-cart-btn')[0] || dPage.getElementsByClassName('add-cart')[0];
+    const bBtn = dPage.querySelector('.buy-now-btn') || dPage.querySelector('.buy-now');
+    const aBtn = dPage.querySelector('.add-to-cart-btn') || dPage.querySelector('.add-cart');
 
-    // 1. Add to Cart button-ta purapuri muche fela ba hide kora
-    if (aBtn) {
-        aBtn.style.display = 'none'; // Button-ta details page theke gayeb hoye jabe
-    }
+    if (aBtn) aBtn.style.display = 'none';
 
-    // 2. Buy Now logic (WhatsApp & Messenger Chooser)
     if (bBtn) {
-        bBtn.style.width = '100%'; // Ekta button thakay eta full width hobe jate dekhte bhalo lage
-        bBtn.onclick = () => {
+        // FORCE BUTTON ACTIVE
+        bBtn.style.width = '100%';
+        bBtn.style.opacity = '1';
+        bBtn.style.pointerEvents = 'auto'; // Force click ability
+        bBtn.removeAttribute('disabled'); // Remove any HTML disabled attribute
+
+        bBtn.onclick = function (e) {
+            e.preventDefault();
+
+            const activeSize = sizeContainer.querySelector('span.active');
+            const sizeText = activeSize ? `, Size: ${activeSize.innerText}` : '';
+            const rawMsg = `Hello! I want to order: ${p.name} (ID: ${p.id}${sizeText}, Price: ${p.price})`;
+
+            // MODAL WITH BOTH WHATSAPP & MESSENGER
             const modalHtml = `
-                <div id="socialOrderModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100000001; display:flex; align-items:center; justify-content:center; padding:20px; font-family:sans-serif;">
-                    <div style="background:#111; padding:30px; border-radius:20px; text-align:center; max-width:350px; width:100%; border:1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                        <h3 style="color:#fff; margin-bottom:20px; font-size:1.2rem;">Complete Your Order</h3>
+                <div id="socialOrderModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100000001; display:flex; align-items:center; justify-content:center; padding:20px;">
+                    <div style="background:#111; padding:30px; border-radius:20px; text-align:center; max-width:350px; width:100%; border:1px solid #333;">
+                        <h3 style="color:#fff; margin-bottom:20px; font-family:sans-serif;">Order via</h3>
                         <div style="display:flex; flex-direction:column; gap:12px;">
-                            <a href="https://wa.me/${wpNumber}?text=${encodedOrderMsg}" target="_blank" 
+                            <a href="https://wa.me/8801601982509?text=${encodeURIComponent(rawMsg)}" target="_blank" 
                                style="background:#25D366; color:#fff; padding:14px; border-radius:10px; text-decoration:none; font-weight:bold; display:block;">WhatsApp Order</a>
                             
-                            <a href="javascript:void(0)" onclick="navigator.clipboard.writeText('${rawOrderMsg.replace(/'/g, "\\'")}').then(() => { alert('Order details copied! Now paste it in Messenger.'); window.open('${msgrLink}', '_blank'); document.getElementById('socialOrderModal').remove(); })" 
+                            <a href="javascript:void(0)" onclick="navigator.clipboard.writeText('${rawMsg.replace(/'/g, "\\'")}').then(() => { alert('Details Copied!'); window.open('https://m.me/mushfikurrm0927', '_blank'); document.getElementById('socialOrderModal').remove(); })" 
                                style="background:#0084FF; color:#fff; padding:14px; border-radius:10px; text-decoration:none; font-weight:bold; display:block;">Messenger Order</a>
                         </div>
-                        <button onclick="document.getElementById('socialOrderModal').remove()" style="margin-top:20px; background:none; border:none; color:#777; cursor:pointer; font-size:0.9rem; text-decoration:underline;">Cancel</button>
+                        <button onclick="document.getElementById('socialOrderModal').remove()" style="margin-top:20px; background:none; border:none; color:#777; cursor:pointer; text-decoration:underline;">Cancel</button>
                     </div>
                 </div>`;
             document.body.insertAdjacentHTML('beforeend', modalHtml);
         };
     }
 
-    // 3. Show the Overlay Page
+    // 6. Show the Page
     dPage.classList.add('active');
-    document.body.style.overflow = 'hidden'; 
+    document.body.style.overflow = 'hidden';
     dPage.scrollTop = 0;
 }
+
 // 7. Action Button Handlers (Eigulo nouton add kora hoyeche)
 function handleAddToCartFromDetails() {
     const productName = document.getElementById('detName').innerText;
@@ -777,8 +772,8 @@ let currentSize = 'All';
 function updatePriceLabel(val) {
     // UI-te Taka symbol show kora
     const label = document.getElementById('priceLabel'); // HTML-e id="priceLabel" thakle
-    if(label) label.innerText = `৳${val}`;
-    
+    if (label) label.innerText = `৳${val}`;
+
     currentMaxPrice = parseInt(val);
     applyAdvancedFilters();
 }
@@ -787,31 +782,31 @@ function updatePriceLabel(val) {
 function applyAdvancedFilters() {
     const searchInput = document.getElementById('searchInput');
     const searchTerm = searchInput ? searchInput.value.toLowerCase() : "";
-    
+
     const sizeSelect = document.getElementById('sizeFilter');
     currentSize = sizeSelect ? sizeSelect.value : "All";
 
     const filteredProducts = allProducts.filter(product => {
         // 1. Price Connection: String (TK) hole number-e convert korbe
-        const productPriceNum = typeof product.price === 'string' 
-            ? parseInt(product.price.replace(/[^0-9]/g, '')) 
+        const productPriceNum = typeof product.price === 'string'
+            ? parseInt(product.price.replace(/[^0-9]/g, ''))
             : product.price;
 
         // 2. Filter Conditions
         const matchesCategory = currentCategory === 'All' || product.category === currentCategory;
         const matchesSearch = product.name.toLowerCase().includes(searchTerm);
         const matchesPrice = productPriceNum <= currentMaxPrice;
-        
+
         // 3. Size Connection (S, M, L, XL)
         // Ensure koro product object-e sizes: ["S", "M"] ei bhabe data ache
         const matchesSize = currentSize === 'All' || (product.sizes && product.sizes.includes(currentSize));
-        
+
         return matchesCategory && matchesSearch && matchesPrice && matchesSize;
     });
 
     // Pagination reset kora bhalo jate filter korle 1st page theke dekhay
-    currentPage = 1; 
-    renderProducts(filteredProducts); 
+    currentPage = 1;
+    renderProducts(filteredProducts);
 }
 
 // Navbar search bar connectivity
@@ -836,11 +831,11 @@ function filterBySubCategory(subCatName) {
 
     const title = document.getElementById('sectionTitle');
 
-    if(title) title.innerText = subCatName + " Selection";
+    if (title) title.innerText = subCatName + " Selection";
 
     grid.innerHTML = '';
 
- if (filtered.length > 0) {
+    if (filtered.length > 0) {
 
         filtered.forEach(p => {
 
@@ -876,9 +871,9 @@ function filterBySubCategory(subCatName) {
 
     }
 
-} 
+}
 
- /* --- NEW HIGHLIGHT FILTER LOGIC (SAFE VERSION) --- */
+/* --- NEW HIGHLIGHT FILTER LOGIC (SAFE VERSION) --- */
 function filterBySubCategory(subCatName) {
     // 1. Current page reset kora jate 1st page theke shuru hoy
     if (typeof currentPage !== 'undefined') currentPage = 1;
@@ -909,14 +904,14 @@ function setupPagination(totalItems, itemsPerPage) {
     paginationContainer.innerHTML = '';
     const pageCount = Math.ceil(totalItems / itemsPerPage);
 
-    if (pageCount <= 1) return; 
+    if (pageCount <= 1) return;
 
     for (let i = 1; i <= pageCount; i++) {
         const btn = document.createElement('button');
         btn.innerText = i;
         // Current page active style dewa
         btn.className = (i === currentPage) ? 'page-btn active' : 'page-btn';
-        
+
         btn.onclick = () => {
             currentPage = i;
             displayProducts(currentPage); // Current page onujayi products dekhabe
