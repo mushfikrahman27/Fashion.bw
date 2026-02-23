@@ -1195,6 +1195,52 @@ function spinForRandomProduct() {
     }, 2500); // Must match transition time
 }
 
+
+// State management with LocalStorage
+let foundBalls = JSON.parse(localStorage.getItem('fifaBallsCollected')) || [];
+
+function initEasterEgg() {
+    // Agey jeta paise oita hide kore dibe
+    foundBalls.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.style.display = 'none';
+    });
+}
+
+function collectBall(id) {
+    if (!foundBalls.includes(id)) {
+        foundBalls.push(id);
+        localStorage.setItem('fifaBallsCollected', JSON.stringify(foundBalls));
+        
+        // Visual feedback
+        const ball = document.getElementById(id);
+        ball.style.transform = "scale(2) rotate(360deg)";
+        ball.style.opacity = "0";
+        
+        setTimeout(() => {
+            ball.style.display = 'none';
+        }, 400);
+
+        // Toast message
+        if(foundBalls.length < 3) {
+            alert(`⚽ You found a World Cup Ball! (${foundBalls.length}/3)`);
+        } else {
+            showFifaReward();
+        }
+    }
+}
+
+function showFifaReward() {
+    document.getElementById('fifa-popup').style.display = 'flex';
+}
+
+function closeFifaPopup() {
+    document.getElementById('fifa-popup').style.display = 'none';
+}
+
+// Start the check on load
+initEasterEgg();
+
 /* --- INITIAL RUN --- */
 displayProducts(1);
 initSearch();

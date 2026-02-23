@@ -131,6 +131,15 @@
                 </div>
                 <div style="height: 150px; width: 100%;"></div>
 
+                <div class="nested">
+    <a href="recently-viewed.html" style="text-decoration: none;">
+        <button class="category-trigger" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <span class="cat-text" style="color: #ff4d4d;">RECENTLY VIEWED</span>
+            <span class="plus-icon">→</span>
+        </button>
+    </a>
+</div>
+
                 <!-- 🎲 New Randomizer Button -->
                 <div class="randomizer-menu-btn-container">
                     <button class="menu-randomizer-btn" onclick="spinForRandomProduct()">
@@ -387,6 +396,25 @@
             }
         }
     </style>
+
+    <div id="easter-egg-hunt">
+    <img src="images/fifa-ball.webp" class="ball-icon" id="ball-1" onclick="collectBall('ball-1')" alt="Fifa Ball">
+    <img src="images/fifa-ball.webp" class="ball-icon" id="ball-2" onclick="collectBall('ball-2')" alt="Fifa Ball">
+    <img src="images/fifa-ball.webp" class="ball-icon" id="ball-3" onclick="collectBall('ball-3')" alt="Fifa Ball">
+</div>
+
+<div id="fifa-popup" class="fifa-overlay">
+    <div class="fifa-card">
+        <span class="close-btn" onclick="closeFifaPopup()">&times;</span>
+        <h2>⚽ WORLD CUP WINNER! 🏆</h2>
+        <p>You've found all secret balls across our store!</p>
+        <div class="promo-box">
+            <p>Use This ScreenShot In Chat</p>
+            <h3 id="promo-code">FIFA2026</h3>
+        </div>
+        <button class="claim-btn" onclick="closeFifaPopup()">Claim Reward</button>
+    </div>
+</div>
 
     <script src="script.js" defer></script>
 </body>
