@@ -1073,6 +1073,59 @@ function setupPagination(totalItems, itemsPerPage) {
         paginationContainer.appendChild(btn);
     }
 }
+
+/* --- HARDWARE BACK BUTTON FIX --- */
+
+// 1. Jokhon kono overlay open hobe, tokhon ei function-ta call korbe
+function pushNewState() {
+    history.pushState({ overlayOpen: true }, "");
+}
+
+// 2. Browser-er back button click event listen kora
+window.onpopstate = function(event) {
+    const menu = document.getElementById('menuOverlay');
+    const detailsPage = document.getElementById('productDetailsPage');
+    const cartOverlay = document.getElementById('cartSerialOverlay');
+    const orderModal = document.getElementById('orderModal') || document.getElementById('socialOrderModal');
+
+    // Jodi kono overlay open thake, tobe sheta bondho korbe (site theke ber hobe na)
+    if (menu && menu.classList.contains('active')) {
+        toggleMenu();
+    } 
+    else if (detailsPage && detailsPage.classList.contains('active')) {
+        closeProductDetails();
+    }
+    else if (cartOverlay && cartOverlay.classList.contains('active')) {
+        toggleCartDisplay();
+    }
+    else if (orderModal) {
+        orderModal.remove();
+    }
+};
+
+// 3. Tomar existing function-gulo te state push kora
+// Eigulo shudhu niche add koro, main function edit korar dorkar nai
+const originalOpenDetails = openProductDetails;
+openProductDetails = function(id) {
+    pushNewState();
+    originalOpenDetails(id);
+};
+
+const originalToggleMenu = toggleMenu;
+toggleMenu = function() {
+    if (!document.getElementById('menuOverlay').classList.contains('active')) {
+        pushNewState();
+    }
+    originalToggleMenu();
+};
+
+const originalToggleCart = toggleCartDisplay;
+toggleCartDisplay = function() {
+    if (!document.getElementById('cartSerialOverlay').classList.contains('active')) {
+        pushNewState();
+    }
+    originalToggleCart();
+};
 /* --- INITIAL RUN --- */
 displayProducts(1);
 initSearch();
