@@ -1190,7 +1190,7 @@ body {
     display: inline-block;
     width: 12px;
     height: 12px;
-    background-color: #EA2F14;
+    background-color: #40c5ea;
     /* Tomar dewa Red */
     border-radius: 50%;
     margin-left: 8px;
@@ -1417,7 +1417,7 @@ body.cart-open {
     width: 100%;
     height: 100vh;
     /* Full viewport height */
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(133, 48, 48, 0.5);
     z-index: 9999;
     display: none;
     /* Hidden by default */
@@ -1670,7 +1670,7 @@ body.cart-open {
 .product-card {
     border: 1px solid rgba(255, 255, 255, 0.05);
     /* Very subtle border */
-    background: linear-gradient(145deg, #151515, #0a0a0a);
+     background: #212f45  ;
     cursor: pointer;
     /* Mouse nile pointer (hand) dekhabe */
     transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
@@ -1679,8 +1679,8 @@ body.cart-open {
 }
 
 .product-card:hover {
-    border-color: rgba(197, 160, 89, 0.5);
-    /* Gold border glow */
+    border-color: rgba(235, 234, 231, 0.5);
+    /*  border glow */
     transform: translateY(-5px);
     /* Ektu upore uthbe */
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
@@ -1693,8 +1693,7 @@ body.cart-open {
 }
 
 .product-card::after {
-    content: "VIEW DETAILS";
-    /* Minimalist Text */
+    content: "";
     position: absolute;
     top: 15px;
     right: 15px;
@@ -1731,10 +1730,10 @@ body.cart-open {
     position: absolute;
     bottom: 0;
     left: 0;
-    width: 80px;
+    width: 70px;
     /* Chotto ekta gold/white line */
-    height: 4px;
-    background: #c5a059;
+    height: 3px;
+    background: #c55976;
     /* Luxury Gold Tone */
     transition: width 0.3s ease;
 }
@@ -1760,8 +1759,15 @@ body.cart-open {
 }
 
 .buy-btn {
-    background: #1a1a1a !important;
-    color: #a3a3a3 !important;
+  background-image: linear-gradient(to right, #2c3e50 0%, #3498db 51%, #2c3e50 100%) !important;
+    color:#E0FFFF  !important;
+    box-shadow: 0 0 10px #eee;
+  border-radius: 10px;
+}
+.buy-btn:hover {
+  background-position: right center;
+  color: #fff;
+  text-decoration: none;
 }
 
 .buy-btn.ready {
@@ -1769,9 +1775,11 @@ body.cart-open {
     color: #000 !important;
 }
 
+
 .cart-btn {
-    background: #2a2a2a !important;
+    background-image: linear-gradient(to right, #56ab2f 0%, #a8e063 51%, #56ab2f 100%) !important;
     border: 1px solid #404040 !important;
+     border-radius: 9px;
 }
 
 /* --- SEARCH REFINEMENT --- */
