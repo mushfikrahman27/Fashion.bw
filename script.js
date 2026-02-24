@@ -773,15 +773,7 @@ function openProductDetails(id) {
     const p = allProducts.find(item => item.id === id);
     if (!p) return;
 
-    // --- REALTIME TRACKING: Product View ---
-    const productKey = p.name.replace(/[.#$[\]]/g, "_"); // Firebase key-te special character allow kore na
-    const pRef = ref(db, 'product_views/' + productKey);
-    update(pRef, {
-        name: p.name,
-        views: increment(1),
-        lastViewed: new Date().toLocaleString()
-    }).catch(err => console.error("View tracking error:", err));
-
+ 
     // --- TRACKING ---
     if (typeof fbq === 'function') {
         fbq('track', 'ViewContent', {
