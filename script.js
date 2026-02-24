@@ -587,16 +587,33 @@ function selectSize(prodId, element) {
     element.classList.add('active');
 }
 
+function captureRecentView(element) {
+    // 1. Pura card-er HTML copy kora
+    const cardHTML = element.outerHTML;
+    
+    // 2. Name diye duplicate check kora
+    const productName = element.querySelector('.p-name').innerText;
+    let recentCards = JSON.parse(localStorage.getItem('recentCards')) || [];
+
+    // Duplicate thakle ager-ta remove
+    recentCards = recentCards.filter(html => !html.includes(`>${productName}<`));
+
+    // Shuru-te add kora
+    recentCards.unshift(cardHTML);
+
+    // Max 4 items rakha
+    if (recentCards.length > 4) recentCards.pop();
+
+    localStorage.setItem('recentCards', JSON.stringify(recentCards));
+}
+
+
 function displayProducts(page) {
     const grid = document.getElementById('productGrid');
     if (!grid) return;
 
-    // Grid clear kora
     grid.innerHTML = "";
-
-    // Screen size onujayi productsPerPage update kora (Mobile: 10, Desktop: 16)
     const currentLimit = window.innerWidth <= 768 ? 10 : 16;
-
     const start = (page - 1) * currentLimit;
     const end = start + currentLimit;
     const itemsToShow = filteredProducts.slice(start, end);
@@ -604,41 +621,39 @@ function displayProducts(page) {
     if (itemsToShow.length === 0) {
         grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--muted-foreground); padding: 40px;">No products found in this category.</p>`;
     } else {
-        // Eikhane amra tomar existing 'renderSingleCard' use korbo 
-        // Jate Toast notification ebong Add to Cart ager motoi kaj kore
         itemsToShow.forEach(p => {
-            if (typeof renderSingleCard === 'function') {
-                renderSingleCard(grid, p);
-            } else {
-                // Jodi renderSingleCard na thake, tobe backup template (Jate details kaj kore)
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.onclick = () => openProductDetails(p.id);
-                card.innerHTML = `
-                    <div class="product-img-holder">
-                        <img src="${p.img}" alt="${p.name}">
-                    </div>
-                    <div class="p-info">
-                        <h3 class="p-name">${p.name}</h3>
-                        <p class="p-meta" style="display:none;">Color: ${p.color || "Default"}</p>
-                        <p class="p-price">TK-${p.price}</p>
-                    </div>
-                    <div class="button-group" style="display: flex; gap: 10px; margin-top: 10px; width: 100%;">
-                        <button class="action-btn buy-btn" onclick="event.stopPropagation(); handleSingleBuy(this.closest('.product-card'))" style="flex: 1; padding: 12px 0;">Buy Now</button>
-                        <button class="cart-btn action-btn" onclick="event.stopPropagation(); addToCart(${p.id})" style="flex: 1; padding: 12px 0;">Add to Cart</button>
-                    </div>
-                `;
-                grid.appendChild(card);
-            }
+            // Eikhane amra element-ta toiri korchi
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            
+            // --- MAIN CHANGE EIKHANE ---
+            card.onclick = function() { 
+                captureRecentView(this); // Ei line-ta pura HTML card-ke clone korbe
+                openProductDetails(p.id); 
+            };
+            
+            card.innerHTML = `
+                <div class="product-img-holder">
+                    <img src="${p.img}" alt="${p.name}">
+                </div>
+                <div class="p-info">
+                    <h3 class="p-name">${p.name}</h3>
+                    <p class="p-meta" style="display:none;">Color: ${p.color || "Default"}</p>
+                    <p class="p-price">TK-${p.price}</p>
+                </div>
+                <div class="button-group" style="display: flex; gap: 10px; margin-top: 10px; width: 100%;">
+                    <button class="action-btn buy-btn" onclick="event.stopPropagation(); handleSingleBuy(this.closest('.product-card'))" style="flex: 1; padding: 12px 0;">Buy Now</button>
+                    <button class="cart-btn action-btn" onclick="event.stopPropagation(); addToCart(${p.id})" style="flex: 1; padding: 12px 0;">Add to Cart</button>
+                </div>
+            `;
+            grid.appendChild(card);
         });
     }
 
-    // Pagination button gulo setup kora
     if (typeof setupPagination === 'function') {
         setupPagination(filteredProducts.length, currentLimit);
     }
 }
-
 function updatePagination() {
     const pBar = document.getElementById('paginationBar');
     if (!pBar) return;

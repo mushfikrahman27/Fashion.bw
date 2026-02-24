@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recently Viewed | POLICIA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css"> <style>
+    body { 
+        background-color: #0a0a0a; 
+        color: white; 
+        margin: 0;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .recent-section { 
+        padding: 120px 15px 50px; 
+        min-height: 80vh; 
+    }
+
+    .page-title { 
+        text-align: center; 
+        font-family: 'Playfair Display', serif; 
+        font-size: 2.5rem; 
+        margin-bottom: 40px; 
+        letter-spacing: 2px;
+    }
+
+    /* --- GLOBAL GRID (Laptop-e 4 ta thakbe) --- */
+    .product-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 20px !important;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* --- MOBILE ADJUSTMENT (Row-te exactly 2-ta) --- */
+    @media (max-width: 768px) {
+        .product-grid {
+            grid-template-columns: repeat(2, 1fr) !important; /* Ek row-te 2-ta */
+            gap: 12px !important;
+            padding: 0 5px;
+        }
+
+        .page-title { 
+            font-size: 1.8rem; 
+            margin-bottom: 25px;
+        }
+
+        /* Card er height control jate beshi lamba na dekhay */
+        .product-card {
+            display: flex !important;
+            flex-direction: column !important;
+            height: auto !important;
+        }
+
+        /* Image jate lamba ba chapta na hoy */
+        .product-img-holder {
+            width: 100% !important;
+            aspect-ratio: 1 / 1 !important; /* Square Proportion */
+            overflow: hidden !important;
+        }
+
+        .product-img-holder img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+        }
+
+        /* Mobile-e choto font jate fix hoy */
+        .p-name {
+            font-size: 13px !important;
+            margin-top: 8px !important;
+        }
+
+        .p-price {
+            font-size: 14px !important;
+        }
+
+        /* Button group layout fix */
+        .button-group {
+            flex-direction: row !important; /* Pashapashi button */
+            gap: 5px !important;
+            margin-top: 10px !important;
+        }
+
+        .action-btn {
+            font-size: 9px !important;
+            padding: 10px 0 !important;
+        }
+    }
+</style>
+</head>
+<body>
+
+    <nav class="navbar" style="position: fixed; width: 100%; top: 0; z-index: 1000;">
+        <div class="nav-left">
+            <a href="index.html" style="text-decoration: none; color: white; display: flex; align-items: center; gap: 10px; padding: 15px;">
+                <span>← BACK</span>
+            </a>
+        </div>
+        <div class="nav-center">
+            <a href="index.html" class="brand-name" style="text-decoration: none;">POLI<span>CIA</span></a>
+        </div>
+    </nav>
+
+    <section class="recent-section">
+        <h1 class="page-title">RECENTLY <span style="color: #c55976;">VIEWED</span></h1>
+        
+        <div id="recent-container" class="product-grid"></div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const grid = document.getElementById('recent-container');
+            // 'recentCards' key theke memory read kora
+            const savedCards = JSON.parse(localStorage.getItem('recentCards')) || [];
+
+            if (savedCards.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 50px; opacity: 0.5;">
+                        <p>No products viewed yet.</p>
+                        <a href="index.html" style="color: #c55976; text-decoration: none;">GO SHOPPING</a>
+                    </div>`;
+                return;
+            }
+
+            // Pura HTML card block-ta eikhane bosiye deya
+            savedCards.forEach(cardHTML => {
+                grid.innerHTML += cardHTML;
+            });
+        });
+    </script>
+
+    <script src="script.js" defer></script>
+</body>
+</html>
