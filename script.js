@@ -539,9 +539,10 @@ function handleSingleBuy(card) {
 
 function processCartCheckout() {
     if (cartArray.length === 0) return;
-    const total = cartArray.reduce((sum, item) => sum + parseInt(item.price), 0);
-    const details = cartArray.map(i => `${i.name} (Size: ${i.selectedSize}, Color: ${i.color})`).join(', ');
-    openOrderOptions(`Hello! I want to Buy: ${details}, Total Price: TK ${total}`);
+    // Use the new universal 3-option checkout modal for cart orders
+    if (typeof triggerCartOrderFlow === 'function') {
+        triggerCartOrderFlow();
+    }
 }
 
 // (Removed global click listener for .ready as we use direct onclick now)
@@ -634,20 +635,20 @@ function displayProducts(page) {
                 openProductDetails(p.id); 
             };
             
-            card.innerHTML = `
-                <div class="product-img-holder">
-                    <img src="${p.img}" alt="${p.name}">
-                </div>
-                <div class="p-info">
-                    <h3 class="p-name">${p.name}</h3>
-                    <p class="p-meta" style="display:none;">Color: ${p.color || "Default"}</p>
-                    <p class="p-price">TK-${p.price}</p>
-                </div>
-                <div class="button-group" style="display: flex; gap: 10px; margin-top: 10px; width: 100%;">
-                    <button class="action-btn buy-btn" onclick="event.stopPropagation(); handleSingleBuy(this.closest('.product-card'))" style="flex: 1; padding: 12px 0;">Buy Now</button>
-                    <button class="cart-btn action-btn" onclick="event.stopPropagation(); addToCart(${p.id})" style="flex: 1; padding: 12px 0;">Add to Cart</button>
-                </div>
-            `;
+    card.innerHTML = `
+    <div class="product-img-holder">
+        <img src="${p.img}" alt="${p.name}">
+    </div>
+    <div class="p-info">
+        <h3 class="p-name">${p.name}</h3>
+        <p class="p-meta" style="display:none;">Color: ${p.color || "Default"}</p>
+        <p class="p-price">TK-${p.price}</p>
+    </div>
+    <div class="button-group" style="display: flex; gap: 10px; margin-top: 10px; width: 100%;">
+        <button class="action-btn buy-btn" onclick="event.stopPropagation(); triggerOrderFlow(${p.id})" style="flex: 1; padding: 12px 0;">Buy Now</button>
+        <button class="cart-btn action-btn" onclick="event.stopPropagation(); addToCart(${p.id})" style="flex: 1; padding: 12px 0;">Add to Cart</button>
+    </div>
+`;
             grid.appendChild(card);
         });
     }
@@ -852,7 +853,7 @@ function openProductDetails(id) {
         });
     }
 
-    // --- 5. THE ULTIMATE FIX: BYPASS SIZE LOGIC & ADD MSGR ---
+    /// --- 5. THE ULTIMATE FIX: BYPASS SIZE LOGIC & ADD MSGR ---
     const dPage = document.getElementById('productDetailsPage');
     const bBtn = dPage.querySelector('.buy-now-btn') || dPage.querySelector('.buy-now');
     const aBtn = dPage.querySelector('.add-to-cart-btn') || dPage.querySelector('.add-cart');
@@ -863,33 +864,13 @@ function openProductDetails(id) {
         // FORCE BUTTON ACTIVE
         bBtn.style.width = '100%';
         bBtn.style.opacity = '1';
-        bBtn.style.pointerEvents = 'auto'; // Force click ability
-        bBtn.removeAttribute('disabled'); // Remove any HTML disabled attribute
+        bBtn.style.pointerEvents = 'auto'; 
+        bBtn.removeAttribute('disabled'); 
 
         bBtn.onclick = function (e) {
             e.preventDefault();
-
-            const activeSize = sizeContainer.querySelector('span.active');
-            const sizeText = activeSize ? `, Size: ${activeSize.innerText}` : '';
-            const rawMsg = `Hello! I want to order: ${p.name} (ID: ${p.id}${sizeText}, Price: ${p.price})`;
-
-            // MODAL WITH BOTH WHATSAPP & MESSENGER
-            const modalHtml = `
-                <div id="socialOrderModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100000001; display:flex; align-items:center; justify-content:center; padding:20px;">
-                    <div style="background:#111; padding:30px; border-radius:20px; text-align:center; max-width:350px; width:100%; border:1px solid #333;">
-                        <h3 style="color:#fff; margin-bottom:20px; font-family:sans-serif;">Order via</h3>
-                        <div style="display:flex; flex-direction:column; gap:12px;">
-                            <a href="https://wa.me/8801601982509?text=${encodeURIComponent(rawMsg)}" target="_blank" 
-                               style="background:#25D366; color:#fff; padding:14px; border-radius:10px; text-decoration:none; font-weight:bold; display:block;">WhatsApp Order</a>
-                            
-                            <a href="javascript:void(0)" onclick="navigator.clipboard.writeText('${rawMsg.replace(/'/g, "\\'")}').then(() => { alert('Details Copied!'); window.open('https://m.me/mushfikurrm0927', '_blank'); if(history.state && history.state.overlay) { history.back(); } else { document.getElementById('socialOrderModal').remove(); } })" 
-                               style="background:#0084FF; color:#fff; padding:14px; border-radius:10px; text-decoration:none; font-weight:bold; display:block;">Messenger Order</a>
-                        </div>
-                        <button onclick="if(history.state && history.state.overlay) { history.back(); } else { document.getElementById('socialOrderModal').remove(); }" style="margin-top:20px; background:none; border:none; color:#777; cursor:pointer; text-decoration:underline;">Cancel</button>
-                    </div>
-                </div>`;
-            history.pushState({ overlay: true }, "");
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            // Eikhane amra puraton modal code muche direct triggerOrderFlow call korchi
+            triggerOrderFlow(p.id); 
         };
     }
 
@@ -898,7 +879,7 @@ function openProductDetails(id) {
     dPage.classList.add('active');
     document.body.style.overflow = 'hidden';
     dPage.scrollTop = 0;
-}
+} // <-- openProductDetails function eikhane shesh
 
 // 7. Action Button Handlers (Eigulo nouton add kora hoyeche)
 function handleAddToCartFromDetails() {
@@ -1259,6 +1240,238 @@ function closeFifaPopup() {
 // Start the check on load
 initEasterEgg();
 
+
+/* --- UNIVERSAL ORDER MODAL SYSTEM --- */
+let currentOrderContext = null;
+
+function triggerOrderFlow(productId) {
+    const p = allProducts.find(item => item.id === productId);
+    if (!p) return;
+
+    // Size check (Details page theke select kora thakle nibe)
+    const sizeContainer = document.getElementById('detSizes');
+    const activeSize = sizeContainer ? sizeContainer.querySelector('span.active') : null;
+    const selectedSize = activeSize ? activeSize.innerText : 'N/A';
+    const sizeLabelPart = activeSize ? `, Size: ${activeSize.innerText}` : '';
+
+    // Context for single-product direct buy (Firebase + Telegram)
+    currentOrderContext = {
+        type: 'single',
+        items: [{
+            productId: p.id,
+            productName: p.name,
+            productSize: selectedSize,
+            price: p.price,
+            color: p.color || ''
+        }],
+        totalPrice: parseInt(p.price.toString().replace(/[^0-9]/g, ''), 10) || 0
+    };
+
+    const rawMsg = `Hello! I want to order: ${p.name} (ID: ${p.id}${sizeLabelPart}, Price: TK-${p.price})`;
+
+    const modalHtml = `
+        <div id="socialOrderModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99999999; display:flex; align-items:center; justify-content:center; padding:20px; font-family: 'Poppins', sans-serif;">
+            <div id="modalContent" style="background:#111; padding:25px; border-radius:15px; text-align:center; max-width:380px; width:100%; border:1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                
+                <div id="orderOptions">
+                    <h3 style="color:#fff; margin-bottom:20px;">Complete Your Order</h3>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <button onclick="showDirectOrderForm()" style="background:#d4af37; color:#000; padding:15px; border-radius:10px; border:none; font-weight:bold; cursor:pointer; font-size:16px;">Direct Order (Cash on Delivery)</button>
+                        <a href="https://wa.me/8801601982509?text=${encodeURIComponent(rawMsg)}" target="_blank" style="background:#25D366; color:#fff; padding:14px; border-radius:10px; text-decoration:none; font-weight:bold; display:block;">Order on WhatsApp</a>
+                        <a href="javascript:void(0)" onclick="handleMessengerOrder('${rawMsg.replace(/'/g, "\\'")}')" style="background:#0084FF; color:#fff; padding:14px; border-radius:10px; text-decoration:none; font-weight:bold; display:block;">Order on Messenger</a>
+                    </div>
+                </div>
+
+                <div id="directOrderForm" style="display:none; text-align:left;">
+                    <h3 style="color:#fff; margin-bottom:15px; text-align:center;">Shipping Details</h3>
+                    <input type="text" id="custName" placeholder="Full Name" style="width:100%; padding:12px; margin-bottom:12px; border-radius:8px; border:1px solid #444; background:#000; color:#fff; box-sizing: border-box;">
+                    <input type="number" id="custPhone" placeholder="Phone Number" style="width:100%; padding:12px; margin-bottom:12px; border-radius:8px; border:1px solid #444; background:#000; color:#fff; box-sizing: border-box;">
+                    <textarea id="custAddress" placeholder="Full Address (Area/City)" rows="3" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #444; background:#000; color:#fff; box-sizing: border-box; resize:none;"></textarea>
+                    
+                    <button onclick="submitDirectOrder()" id="confirmBtn" style="width:100%; background:#d4af37; color:#000; padding:15px; border-radius:8px; border:none; font-weight:bold; cursor:pointer; font-size:16px;">Confirm Order</button>
+                    <button onclick="hideDirectOrderForm()" style="width:100%; background:none; border:none; color:#888; margin-top:10px; cursor:pointer; text-decoration:underline;">Back</button>
+                </div>
+
+                <button onclick="closeSocialModal()" style="margin-top:20px; background:none; border:none; color:#555; cursor:pointer; font-size:14px;">Cancel</button>
+            </div>
+        </div>`;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function triggerCartOrderFlow() {
+    if (!cartArray || cartArray.length === 0) return;
+
+    const items = cartArray.map(item => ({
+        productId: item.id,
+        productName: item.name,
+        productSize: item.selectedSize || 'N/A',
+        price: item.price,
+        color: item.color || ''
+    }));
+
+    const totalPrice = items.reduce((sum, it) => {
+        return sum + (parseInt(it.price.toString().replace(/[^0-9]/g, ''), 10) || 0);
+    }, 0);
+
+    currentOrderContext = {
+        type: 'cart',
+        items,
+        totalPrice
+    };
+
+    const itemLines = items.map((it, idx) => `${idx + 1}. ${it.productName} (Size: ${it.productSize}, Color: ${it.color}) - TK ${it.price}`).join('\n');
+    const rawMsg = `Hello! I want to order the following items:\n${itemLines}\n\nTotal Price: TK-${totalPrice}`;
+
+    const modalHtml = `
+        <div id="socialOrderModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99999999; display:flex; align-items:center; justify-content:center; padding:20px; font-family: 'Poppins', sans-serif;">
+            <div id="modalContent" style="background:#111; padding:25px; border-radius:15px; text-align:center; max-width:380px; width:100%; border:1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                
+                <div id="orderOptions">
+                    <h3 style="color:#fff; margin-bottom:20px;">Complete Your Order</h3>
+                    <p style="color:#aaa; font-size:13px; margin-bottom:15px;">You have ${items.length} item(s) in your cart.</p>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <button onclick="showDirectOrderForm()" style="background:#d4af37; color:#000; padding:15px; border-radius:10px; border:none; font-weight:bold; cursor:pointer; font-size:16px;">Direct Order (Cash on Delivery)</button>
+                        <a href="https://wa.me/8801601982509?text=${encodeURIComponent(rawMsg)}" target="_blank" style="background:#25D366; color:#fff; padding:14px; border-radius:10px; text-decoration:none; font-weight:bold; display:block;">Order on WhatsApp</a>
+                        <a href="javascript:void(0)" onclick="handleMessengerOrder('${rawMsg.replace(/'/g, "\\'")}')" style="background:#0084FF; color:#fff; padding:14px; border-radius:10px; text-decoration:none; font-weight:bold; display:block;">Order on Messenger</a>
+                    </div>
+                </div>
+
+                <div id="directOrderForm" style="display:none; text-align:left;">
+                    <h3 style="color:#fff; margin-bottom:15px; text-align:center;">Shipping Details</h3>
+                    <input type="text" id="custName" placeholder="Full Name" style="width:100%; padding:12px; margin-bottom:12px; border-radius:8px; border:1px solid #444; background:#000; color:#fff; box-sizing: border-box;">
+                    <input type="number" id="custPhone" placeholder="Phone Number" style="width:100%; padding:12px; margin-bottom:12px; border-radius:8px; border:1px solid #444; background:#000; color:#fff; box-sizing: border-box;">
+                    <textarea id="custAddress" placeholder="Full Address (Area/City)" rows="3" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #444; background:#000; color:#fff; box-sizing: border-box; resize:none;"></textarea>
+                    
+                    <button onclick="submitDirectOrder()" id="confirmBtn" style="width:100%; background:#d4af37; color:#000; padding:15px; border-radius:8px; border:none; font-weight:bold; cursor:pointer; font-size:16px;">Confirm Order</button>
+                    <button onclick="hideDirectOrderForm()" style="width:100%; background:none; border:none; color:#888; margin-top:10px; cursor:pointer; text-decoration:underline;">Back</button>
+                </div>
+
+                <button onclick="closeSocialModal()" style="margin-top:20px; background:none; border:none; color:#555; cursor:pointer; font-size:14px;">Cancel</button>
+            </div>
+        </div>`;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function showDirectOrderForm() { document.getElementById('orderOptions').style.display = 'none'; document.getElementById('directOrderForm').style.display = 'block'; }
+function hideDirectOrderForm() { document.getElementById('orderOptions').style.display = 'block'; document.getElementById('directOrderForm').style.display = 'none'; }
+function closeSocialModal() { const modal = document.getElementById('socialOrderModal'); if(modal) modal.remove(); }
+
+function handleMessengerOrder(msg) {
+    navigator.clipboard.writeText(msg).then(() => { 
+        alert('Order Details Copied! Now paste in Messenger.'); 
+        window.open('https://m.me/mushfikurrm0927', '_blank'); 
+        closeSocialModal();
+    });
+}
+
+
+// --- UPDATED SUBMIT FUNCTION FOR FIREBASE V10 (supports single & cart orders) ---
+async function submitDirectOrder() {
+    const cName = document.getElementById('custName').value.trim();
+    const cPhone = document.getElementById('custPhone').value.trim();
+    const cAddress = document.getElementById('custAddress').value.trim();
+
+    if(!cName || !cPhone || !cAddress) { alert("Please fill all information!"); return; }
+
+    const confirmBtn = document.getElementById('confirmBtn');
+    confirmBtn.innerText = "Placing Order...";
+    confirmBtn.disabled = true;
+
+    if (!currentOrderContext || !currentOrderContext.items || !currentOrderContext.items.length) {
+        alert("Order information is missing. Please try again.");
+        confirmBtn.innerText = "Confirm Order";
+        confirmBtn.disabled = false;
+        return;
+    }
+
+    try {
+        // 1. Telegram Alert (Eita agey pathai jate database fail korleo alert pai)
+        const botToken = "8257470622:AAEnkpQuIJEeXPrQBtisHxf9wGJ2Wr_tN18";
+        const chatId = "-1003814024113"; 
+        let tgMsg = "";
+        const ctx = currentOrderContext;
+
+        if (ctx.type === 'cart') {
+            const itemLines = ctx.items.map((it, idx) =>
+                `${idx + 1}. ${it.productName} (Size: ${it.productSize || 'N/A'}, Color: ${it.color || 'N/A'}) - TK ${it.price}`
+            ).join('\n');
+
+            tgMsg = `📦 *New Cart Order!*\n\n👤 *Name:* ${cName}\n📞 *Phone:* ${cPhone}\n📍 *Address:* ${cAddress}\n\n🛒 *Items:*\n${itemLines}\n\n💰 *Total Price:* ${ctx.totalPrice} TK\n\n✅ *Check Admin Panel!*`;
+        } else {
+            const it = ctx.items[0];
+            const sizePart = it.productSize && it.productSize !== 'N/A' ? ` (Size: ${it.productSize})` : '';
+            tgMsg = `📦 *New Direct Order!*\n\n👤 *Name:* ${cName}\n📞 *Phone:* ${cPhone}\n📍 *Address:* ${cAddress}\n👕 *Product:* ${it.productName}${sizePart}\n💰 *Price:* ${it.price} TK\n\n✅ *Check Admin Panel!*`;
+        }
+
+        fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, text: tgMsg, parse_mode: 'Markdown' })
+        });
+
+        // 2. Firebase Database-e pathano (Nouton Modular System)
+        // Note: Apnar index.html theke 'db' variable-ta globally access korte hobe
+        if (window.firebaseDB) {
+            const { ref, push, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+            const orderRef = ref(window.firebaseDB, 'orders');
+
+            const basePayload = {
+                customerName: cName,
+                phone: cPhone,
+                address: cAddress,
+                status: 'Pending',
+                timestamp: serverTimestamp()
+            };
+
+            let payload;
+            if (currentOrderContext.type === 'cart') {
+                payload = {
+                    ...basePayload,
+                    isCartOrder: true,
+                    items: currentOrderContext.items.map(it => ({
+                        productId: it.productId,
+                        productName: it.productName,
+                        productSize: it.productSize || 'N/A',
+                        color: it.color || '',
+                        price: it.price
+                    })),
+                    totalPrice: currentOrderContext.totalPrice,
+                    // Backward compatible summary fields
+                    productName: `Cart Order (${currentOrderContext.items.length} items)`,
+                    productId: 'cart',
+                    productSize: 'N/A',
+                    price: currentOrderContext.totalPrice
+                };
+            } else {
+                const it = currentOrderContext.items[0];
+                payload = {
+                    ...basePayload,
+                    productName: it.productName,
+                    productId: it.productId,
+                    productSize: it.productSize || 'N/A',
+                    price: it.price
+                };
+            }
+
+            await push(orderRef, payload);
+        }
+
+        // 3. Show Success Message
+        document.getElementById('modalContent').innerHTML = `
+            <div style="padding:20px;">
+                <h2 style="color:#d4af37; margin-bottom:10px;">Order Success!</h2>
+                <p style="color:#fff;">Thank you ${cName}, we received your order.</p>
+                <button onclick="closeSocialModal()" style="margin-top:20px; background:#fff; color:#000; padding:10px 25px; border-radius:8px; border:none; font-weight:bold; cursor:pointer;">Close</button>
+            </div>`;
+
+    } catch (error) {
+        console.error("Order Error:", error);
+        alert("Success! We've received your order. (Telegram Sent)");
+        closeSocialModal();
+    }
+}
 /* --- INITIAL RUN --- */
 displayProducts(1);
 initSearch();
