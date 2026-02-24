@@ -419,8 +419,9 @@
   <script src="script.js" defer></script>
     
     <script type="module">
-        // 1. Database import kora (Path thik kora hoyeche)
-        import { db } from './js/firebase-config.js';
+        // 1. Database import kora
+        // NOTE: firebase-config.js file-ta website root-e ache
+        import { db } from './firebase-config.js';
         
         // 2. GLOBAL ACCESS: Ei line-ta script.js ke database-er access dibe
         window.firebaseDB = db; 

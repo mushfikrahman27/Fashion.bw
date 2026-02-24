@@ -21,7 +21,8 @@ const firebaseConfig = {
 
 // 3. Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+// Analytics sometimes fails on some environments; DB/Auth must still work
+try { getAnalytics(app); } catch (_) {}
 
 // 4. Export kora (Eikhane db ekhon Realtime Database ke bujhachhe)
 export const db = getDatabase(app); 

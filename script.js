@@ -48,6 +48,105 @@ const SOCIAL_CONFIG = {
     messengerLink: "https://m.me/mushfikurrm0927"
 };
 
+/* --- SMART SIZE LOGIC FOR PRODUCT CARDS --- */
+function getSizeTypeForProduct(p) {
+    if (!p) return 'none';
+    const sub = (p.subCategory || '').toLowerCase();
+    const cat = (p.category || '').toLowerCase();
+
+    // Accessories: no size
+    const accessorySubs = ['bags', 'sunglasses', 'wallet', 'wallets', 'belts', 'caps', 'winter', 'travel', 'watches'];
+    if (accessorySubs.includes(sub)) return 'none';
+
+    // Footwear: numeric sizes
+    const footwearSubs = ['sneakers', 'shoes', 'sandal', 'sandals'];
+    if (footwearSubs.includes(sub)) return 'footwear';
+
+    // Clothing: M–XXL
+    const clothingSubs = ['shirt', 'shirts', 'tshirt', 'tshirts', 'shorts', 'leggings', 'sweater', 'hoodie', 'dress', 'abaya', 'borkha', 'pants'];
+    if (clothingSubs.includes(sub)) return 'clothing';
+    if (cat === 'men' || cat === 'women') return 'clothing';
+
+    return 'none';
+}
+
+function buildSizeOptionsHTML(p) {
+    const sizeType = getSizeTypeForProduct(p);
+    let sizes = [];
+
+    if (sizeType === 'clothing') {
+        sizes = ['M', 'L', 'XL', 'XXL'];
+    } else if (sizeType === 'footwear') {
+        sizes = ['40', '41', '42', '43', '44', '45'];
+    } else {
+        return '';
+    }
+
+    const spans = sizes.map(size => 
+        `<span onclick="event.stopPropagation(); selectSize(${p.id}, this)">${size}</span>`
+    ).join('');
+
+    return `
+        <div class="size-container">
+            <label class="size-label">Select Size:</label>
+            <div class="size-options" id="sizes-prod-${p.id}">
+                ${spans}
+            </div>
+        </div>
+    `;
+}
+
+/* --- BACKGROUND PRODUCT INTERACTION ANALYTICS (Firebase Realtime DB) --- */
+function scheduleBackgroundTask(task) {
+    try {
+        if (typeof requestIdleCallback === 'function') {
+            requestIdleCallback(() => task(), { timeout: 2000 });
+        } else {
+            setTimeout(() => task(), 0);
+        }
+    } catch (_) {
+        // no-op
+    }
+}
+
+function trackProductAnalytics(product, eventType) {
+    if (!product || !product.id) return;
+    if (!window.firebaseDB) return; // Firebase not ready / not loaded
+
+    const productId = String(product.id);
+    const safeEvent = eventType === 'views' ? 'views' : (eventType === 'carts' ? 'carts' : null);
+    if (!safeEvent) return;
+
+    scheduleBackgroundTask(async () => {
+        try {
+            const { ref, runTransaction, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+            const analyticsRef = ref(window.firebaseDB, `product_analytics/${productId}`);
+
+            await runTransaction(analyticsRef, (current) => {
+                const cur = current && typeof current === 'object' ? current : {};
+                const next = { ...cur };
+
+                next.productId = product.id;
+                next.productName = product.name || cur.productName || '';
+                next.price = product.price || cur.price || '';
+                next.img = product.img || cur.img || '';
+                next.category = product.category || cur.category || '';
+                next.subCategory = product.subCategory || cur.subCategory || '';
+
+                next.views = (typeof next.views === 'number' ? next.views : 0);
+                next.carts = (typeof next.carts === 'number' ? next.carts : 0);
+                next[safeEvent] = next[safeEvent] + 1;
+                next.lastUpdated = serverTimestamp();
+
+                return next;
+            });
+        } catch (e) {
+            // Keep completely silent for users (background only)
+            // console.debug('product_analytics error', e);
+        }
+    });
+}
+
 let productsPerPage = window.innerWidth <= 768 ? 10 : 16;
 let currentPage = 1;
 
@@ -281,6 +380,9 @@ function toggleCartDisplay() {
 function addToCart(id) {
     const product = allProducts.find(p => p.id === id);
     if (!product) return;
+
+    // Background analytics: cart adds
+    trackProductAnalytics(product, 'carts');
 
     // --- TRACKING START: FB Pixel & GA4 AddToCart ---
     const numericPrice = parseFloat(product.price.toString().replace(/[^0-9.]/g, ''));
@@ -550,9 +652,7 @@ function processCartCheckout() {
 /* --- 8. PRODUCT RENDERING & PAGINATION (UPDATED WITH DETAILS TRIGGER) --- */
 
 function renderSingleCard(container, p) {
-    const uniqueId = `prod-${p.id}`;
-
-    // Nicher template e card-er main div-e onclick add kora hoyeche
+    // Related products / small cards
     container.innerHTML += `
         <div class="product-card">
             <div class="product-img-holder skeleton" onclick="openProductDetails(${p.id})" style="cursor: pointer;">
@@ -565,18 +665,10 @@ function renderSingleCard(container, p) {
                 <p class="p-meta">Color: ${p.color}</p>
                 <p class="p-price">TK-${p.price}</p>
                 
-                <div class="size-container">
-                    <label class="size-label">Select Size:</label>
-                    <div class="size-options" id="sizes-${uniqueId}">
-                        <span onclick="event.stopPropagation(); selectSize('${uniqueId}', this)">S</span>
-                        <span onclick="event.stopPropagation(); selectSize('${uniqueId}', this)">M</span>
-                        <span onclick="event.stopPropagation(); selectSize('${uniqueId}', this)">L</span>
-                        <span onclick="event.stopPropagation(); selectSize('${uniqueId}', this)">XL</span>
-                    </div>
-                </div>
+                ${buildSizeOptionsHTML(p)}
                 
                 <div class="button-group">
-                    <button class="action-btn buy-btn" id="btn-${uniqueId}" onclick="event.stopPropagation(); handleSingleBuy(this.closest('.product-card'))">Buy Now</button>
+                    <button class="action-btn buy-btn" onclick="event.stopPropagation(); triggerOrderFlow(${p.id})">Buy Now</button>
                     <button class="action-btn cart-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Add to Cart</button>
                 </div>
             </div>
@@ -585,7 +677,7 @@ function renderSingleCard(container, p) {
 
 function selectSize(prodId, element) {
     // Stop propagation jate size select korle details page na khule jay
-    const options = document.querySelectorAll(`#sizes-${prodId} span`);
+    const options = document.querySelectorAll(`#sizes-prod-${prodId} span`);
     options.forEach(opt => opt.classList.remove('active'));
     element.classList.add('active');
 }
@@ -644,6 +736,7 @@ function displayProducts(page) {
         <p class="p-meta" style="display:none;">Color: ${p.color || "Default"}</p>
         <p class="p-price">TK-${p.price}</p>
     </div>
+    ${buildSizeOptionsHTML(p)}
     <div class="button-group" style="display: flex; gap: 10px; margin-top: 10px; width: 100%;">
         <button class="action-btn buy-btn" onclick="event.stopPropagation(); triggerOrderFlow(${p.id})" style="flex: 1; padding: 12px 0;">Buy Now</button>
         <button class="cart-btn action-btn" onclick="event.stopPropagation(); addToCart(${p.id})" style="flex: 1; padding: 12px 0;">Add to Cart</button>
@@ -773,6 +866,9 @@ function filterByCategory(mainCat, subCat = 'All', element) {
 function openProductDetails(id) {
     const p = allProducts.find(item => item.id === id);
     if (!p) return;
+
+    // Background analytics: details page opens
+    trackProductAnalytics(p, 'views');
 
  
     // --- TRACKING ---
@@ -990,29 +1086,21 @@ function filterBySubCategory(subCatName) {
     if (filtered.length > 0) {
 
         filtered.forEach(p => {
-
             grid.innerHTML += `
-
                 <div class="product-card" onclick="openProductDetails(${p.id})">
-
                     <div class="product-img-holder">
-
                         <img src="${p.img}">
-
                     </div>
-
                     <div class="p-info">
-
                         <h3 class="p-name">${p.name}</h3>
-
                         <p class="p-price">TK-${p.price}</p>
-
                     </div>
-
-                    <button class="cart-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Add to Cart</button>
-
+                    ${buildSizeOptionsHTML(p)}
+                    <div class="button-group" style="display:flex; gap:8px; margin-top:8px;">
+                        <button class="action-btn buy-btn" onclick="event.stopPropagation(); triggerOrderFlow(${p.id})">Buy Now</button>
+                        <button class="cart-btn action-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Add to Cart</button>
+                    </div>
                 </div>`;
-
         });
 
         grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1058,19 +1146,47 @@ function setupPagination(totalItems, itemsPerPage) {
 
     if (pageCount <= 1) return;
 
+    // Previous button
+    const prevBtn = document.createElement('button');
+    prevBtn.innerHTML = '‹';
+    prevBtn.className = 'page-btn nav-btn prev-btn';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => {
+        if (currentPage > 1) {
+            currentPage -= 1;
+            displayProducts(currentPage);
+            window.scrollTo({ top: document.getElementById('productGrid').offsetTop - 100, behavior: 'smooth' });
+        }
+    };
+    paginationContainer.appendChild(prevBtn);
+
+    // Numbered buttons
     for (let i = 1; i <= pageCount; i++) {
         const btn = document.createElement('button');
         btn.innerText = i;
-        // Current page active style dewa
-        btn.className = (i === currentPage) ? 'page-btn active' : 'page-btn';
+        btn.className = (i === currentPage) ? 'page-btn page-num active' : 'page-btn page-num';
 
         btn.onclick = () => {
             currentPage = i;
-            displayProducts(currentPage); // Current page onujayi products dekhabe
+            displayProducts(currentPage);
             window.scrollTo({ top: document.getElementById('productGrid').offsetTop - 100, behavior: 'smooth' });
         };
         paginationContainer.appendChild(btn);
     }
+
+    // Next button
+    const nextBtn = document.createElement('button');
+    nextBtn.innerHTML = '›';
+    nextBtn.className = 'page-btn nav-btn next-btn';
+    nextBtn.disabled = currentPage === pageCount;
+    nextBtn.onclick = () => {
+        if (currentPage < pageCount) {
+            currentPage += 1;
+            displayProducts(currentPage);
+            window.scrollTo({ top: document.getElementById('productGrid').offsetTop - 100, behavior: 'smooth' });
+        }
+    };
+    paginationContainer.appendChild(nextBtn);
 }
 
 /* --- HARDWARE BACK BUTTON FIX --- */
@@ -1248,11 +1364,20 @@ function triggerOrderFlow(productId) {
     const p = allProducts.find(item => item.id === productId);
     if (!p) return;
 
-    // Size check (Details page theke select kora thakle nibe)
+    // Size check: details page priority, then main card selection
+    let selectedSize = null;
     const sizeContainer = document.getElementById('detSizes');
     const activeSize = sizeContainer ? sizeContainer.querySelector('span.active') : null;
-    const selectedSize = activeSize ? activeSize.innerText : 'N/A';
-    const sizeLabelPart = activeSize ? `, Size: ${activeSize.innerText}` : '';
+    if (activeSize) selectedSize = activeSize.innerText;
+
+    if (!selectedSize) {
+        const cardSizeContainer = document.getElementById(`sizes-prod-${productId}`);
+        const activeCardSize = cardSizeContainer ? cardSizeContainer.querySelector('span.active') : null;
+        if (activeCardSize) selectedSize = activeCardSize.innerText;
+    }
+
+    const sizeLabelPart = selectedSize ? `, Size: ${selectedSize}` : '';
+    const safeSizeForContext = selectedSize || 'N/A';
 
     // Context for single-product direct buy (Firebase + Telegram)
     currentOrderContext = {
@@ -1260,7 +1385,7 @@ function triggerOrderFlow(productId) {
         items: [{
             productId: p.id,
             productName: p.name,
-            productSize: selectedSize,
+            productSize: safeSizeForContext,
             price: p.price,
             color: p.color || ''
         }],

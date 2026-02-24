@@ -1355,32 +1355,53 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 30px;
+    gap: 24px;
     padding: 40px 0;
 }
 
 .pagination-column {
     display: flex;
     flex-direction: row;
-    gap: 12px;
+    gap: 10px;
     align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(15, 15, 15, 0.9);
+    color: #e5e5e5;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0.5px;
+    transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease, border-color 0.25s ease;
+}
+
+.page-btn:hover {
+    background: #111827;
+    border-color: #d4af37;
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.35);
+    transform: translateY(-1px);
 }
 
 .page-num {
-    width: 40px;
-    height: 40px;
-    border: 1px solid var(--border);
-    background: #1a1a1a !important;
-    color: #ffffff !important;
-    border: 2px solid #333 !important;
-    font-weight: 700;
-    cursor: pointer;
+    padding: 0 14px;
 }
 
 .page-num.active {
-    background: #ffffff !important;
+    background: #d4af37 !important;
     color: #000000 !important;
-    border-color: #ffffff !important;
+    border-color: #facc15 !important;
+    box-shadow: 0 0 18px rgba(212, 175, 55, 0.5);
 }
 
 .scroll-top-btn {
@@ -1759,9 +1780,9 @@ body.cart-open {
 }
 
 .buy-btn {
-    background-image: linear-gradient(to right, #2c3e50 0%, #3498db 51%, #2c3e50 100%) !important;
-    color: #E0FFFF !important;
-    box-shadow: 0 0 10px #eee;
+    background-image: linear-gradient(to right, #00d2ff 0%, #3a7bd5 100%) !important;
+    color: #eaefef !important;
+    
     border-radius: 10px;
 }
 
@@ -1778,7 +1799,7 @@ body.cart-open {
 
 
 .cart-btn {
-    background-image: linear-gradient(to right, #56ab2f 0%, #a8e063 51%, #56ab2f 100%) !important;
+    background-image: linear-gradient(to right, #1e3c72 0%, #2a5298 100%) !important;
     border: 1px solid #404040 !important;
     border-radius: 9px;
 }

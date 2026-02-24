@@ -39,9 +39,9 @@
     /* --- MOBILE ADJUSTMENT (Row-te exactly 2-ta) --- */
     @media (max-width: 768px) {
         .product-grid {
-            grid-template-columns: repeat(2, 1fr) !important; /* Ek row-te 2-ta */
+            grid-template-columns: repeat(2, 1fr) !important; /* 2 cards per row */
             gap: 12px !important;
-            padding: 0 5px;
+            padding: 0 8px !important;
         }
 
         .page-title { 
@@ -49,17 +49,19 @@
             margin-bottom: 25px;
         }
 
-        /* Card er height control jate beshi lamba na dekhay */
+        /* Card ratio similar to laptop look */
         .product-card {
+            width: 100% !important;
             display: flex !important;
             flex-direction: column !important;
-            height: auto !important;
+            background: #111 !important;
+            border-radius: 10px !important;
+            overflow: hidden !important;
         }
 
-        /* Image jate lamba ba chapta na hoy */
         .product-img-holder {
             width: 100% !important;
-            aspect-ratio: 1 / 1 !important; /* Square Proportion */
+            aspect-ratio: 3 / 4 !important; /* Closer to laptop card ratio */
             overflow: hidden !important;
         }
 
@@ -69,21 +71,26 @@
             object-fit: cover !important;
         }
 
-        /* Mobile-e choto font jate fix hoy */
+        .p-info {
+            padding: 8px !important;
+            text-align: center !important;
+        }
+
         .p-name {
             font-size: 13px !important;
-            margin-top: 8px !important;
+            margin: 6px 0 4px !important;
         }
 
         .p-price {
             font-size: 14px !important;
         }
 
-        /* Button group layout fix */
         .button-group {
-            flex-direction: row !important; /* Pashapashi button */
-            gap: 5px !important;
-            margin-top: 10px !important;
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 6px !important;
+            padding: 8px !important;
+            margin-top: 4px !important;
         }
 
         .action-btn {
@@ -92,79 +99,11 @@
         }
     }
 </style>
-<style>
-    /* ... ager code gulo thakbe ... */
-
-    @media (max-width: 768px) {
-        .product-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 10px !important;
-            padding: 0 10px !important;
-        }
-
-        /* CARD HEIGHT & WIDTH FIX */
-        .product-card {
-            width: 100% !important;
-            height: 300px !important; /* Fixed height jate lamba na hoy */
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: space-between !important;
-            background: #111 !important; /* Card background color match */
-            border-radius: 10px !important;
-            overflow: hidden !important;
-            margin-bottom: 5px !important;
-        }
-
-        /* IMAGE AREA: Height komiye square kora */
-        .product-img-holder {
-            height: 160px !important; /* Image er height fix */
-            width: 100% !important;
-        }
-
-        .product-img-holder img {
-            height: 100% !important;
-            width: 100% !important;
-            object-fit: cover !important;
-        }
-
-        /* INFO AREA: Spacing komano */
-        .p-info {
-            padding: 8px !important;
-            text-align: center !important;
-        }
-
-        .p-name {
-            font-size: 12px !important;
-            height: 32px !important; /* 2 line text limit */
-            overflow: hidden !important;
-            margin: 5px 0 !important;
-        }
-
-        .p-price {
-            font-size: 13px !important;
-            font-weight: bold !important;
-            color: #ff4d4d !important;
-        }
-
-        /* BUTTONS: Pashapashi ar choto */
-        .button-group {
-            display: flex !important;
-            gap: 4px !important;
-            padding: 5px !important;
-        }
-
-        .action-btn {
-            font-size: 8px !important;
-            padding: 8px 0 !important;
-            letter-spacing: 0 !important;
-        }
-    }
-</style>
 </head><body>
 
     <nav class="navbar" style="position: fixed; width: 100%; top: 0; z-index: 1000; background: #0a0a0a; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; height: 70px; border-bottom: 1px solid rgba(255,255,255,0.05);">
         <div class="nav-left">
-            <button onclick="event.preventDefault(); window.history.back();" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; border-radius: 5px; font-family: 'Montserrat', sans-serif; font-size: 12px;">
+            <button onclick="(function(e){ e.preventDefault(); if (window.history.length > 1) { window.history.back(); } else { window.location.href = 'index.html'; } })(event);" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; border-radius: 5px; font-family: 'Montserrat', sans-serif; font-size: 12px;">
                 <span style="font-size: 16px;">←</span> BACK
             </button>
         </div>
@@ -200,6 +139,12 @@
                 grid.innerHTML += cardHTML;
             });
         });
+    </script>
+
+    <script type="module">
+        // Firebase DB access for Direct Order + Analytics from this page
+        import { db } from './firebase-config.js';
+        window.firebaseDB = db;
     </script>
 
     <script src="script.js" defer></script>
