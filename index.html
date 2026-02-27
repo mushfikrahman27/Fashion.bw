@@ -152,15 +152,48 @@
     </nav>
 
     <section class="hero-parallax">
-        <div class="hero-bg-image" style="background-image: url('policia-hero-bg.jpeg');"></div>
+        <div class="hero-bg-image" style="background-image: url('images/banner1.jpg');"></div>
         <div class="hero-overlay"></div>
-        <div class="hero-content">
-            <h1 class="hero-title">Redefining Elegance</h1>
-            <p class="hero-subtitle">Curated Luxury for the Modern Individual</p>
-            <button class="hero-cta"
-                onclick="document.querySelector('.products-section').scrollIntoView({behavior:'smooth'})">
-                Explore Collection
-            </button>
+        <div class="hero-editorial-overlay">
+            <div class="editorial-panel">
+                <div class="editorial-content">
+                    <h1 class="hero-title">Redefining Elegance</h1>
+                    <p class="hero-subtitle">Curated Luxury for the Modern Individual</p>
+                    <button class="hero-cta"
+                        onclick="document.querySelector('.products-section').scrollIntoView({behavior:'smooth'})">
+                        Explore Collection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Collection Section -->
+    <section class="featured-collection">
+        <div class="promo-grid">
+            <div class="promo-card large-card" onclick="filterProducts('Men'); scrollToSection('products-section');">
+                <img src="images/men.jpg" alt="Men's Collection" class="promo-image">
+                <div class="promo-card-content">
+                    <h3 class="promo-title">Men's Collection</h3>
+                    <p class="promo-subtitle">Discover Premium Styles</p>
+                </div>
+            </div>
+            <div class="promo-column">
+                <div class="promo-card small-card" onclick="filterProducts('Women'); scrollToSection('products-section');">
+                    <img src="images/woman.jpg" alt="Women's Collection" class="promo-image">
+                    <div class="promo-card-content">
+                        <h3 class="promo-title">Women's</h3>
+                        <p class="promo-subtitle">Elegant Designs</p>
+                    </div>
+                </div>
+                <div class="promo-card small-card" onclick="filterProducts('Accessories'); scrollToSection('products-section');">
+                    <img src="images/accesories.png" alt="Accessories" class="promo-image">
+                    <div class="promo-card-content">
+                        <h3 class="promo-title">Accessories</h3>
+                        <p class="promo-subtitle">Complete Your Look</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -240,12 +273,46 @@
         </div>
     </section>
 
+    <!-- Policy & Features Section -->
+    <section class="policy-features-section">
+        <div class="policy-features-grid">
+            <div class="policy-feature-card" onclick="openPage('returns')">
+                <div class="policy-icon">↩️</div>
+                <h3 class="policy-title">Easy Returns</h3>
+                <p class="policy-description">30-day hassle-free return policy</p>
+            </div>
+            <div class="policy-feature-card" onclick="openPage('delivery')">
+                <div class="policy-icon">🌍</div>
+                <h3 class="policy-title">Global Delivery</h3>
+                <p class="policy-description">Worldwide shipping available</p>
+            </div>
+            <div class="policy-feature-card" onclick="openPage('support')">
+                <div class="policy-icon">💬</div>
+                <h3 class="policy-title">24/7 Support</h3>
+                <p class="policy-description">Always here to help you</p>
+            </div>
+            <div class="policy-feature-card" onclick="openPage('payment')">
+                <div class="policy-icon">🔒</div>
+                <h3 class="policy-title">Secure Payment</h3>
+                <p class="policy-description">100% secure transactions</p>
+            </div>
+        </div>
+    </section>
+
     <footer class="main-footer">
         <div class="footer-content">
             <div class="brand-name">Fashion<span>ForAll</span></div>
             <p>&copy; 2026 Premium Shop. All rights reserved.</p>
         </div>
     </footer>
+
+    <!-- Info Page Modal -->
+    <div id="infoPageModal" class="info-page-modal">
+        <div class="info-page-content">
+            <button class="info-page-close" onclick="closeInfoPage()">✕</button>
+            <div id="infoPageContent"></div>
+        </div>
+    </div>
 
     <div id="toastContainer" class="toast-container"></div>
     <div class="light-comfort-bg"></div>

@@ -5,6 +5,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 // 2. Apnar Firebase configuration (Realtime Database URL shoho)
 const firebaseConfig = {
@@ -27,3 +28,4 @@ try { getAnalytics(app); } catch (_) {}
 // 4. Export kora (Eikhane db ekhon Realtime Database ke bujhachhe)
 export const db = getDatabase(app); 
 export const auth = getAuth(app);
+export const storage = getStorage(app);

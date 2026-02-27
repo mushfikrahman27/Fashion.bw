@@ -1,67 +1,257 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - My Shop</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f7f6; display: flex; }
-        .sidebar { width: 240px; background: #2c3e50; color: white; min-height: 100vh; padding: 20px; position: fixed; }
-        .sidebar h2 { font-size: 20px; text-align: center; border-bottom: 1px solid #555; padding-bottom: 10px; }
-        .sidebar ul { list-style: none; padding: 0; margin-top: 20px; }
-        .sidebar ul li { padding: 12px; border-bottom: 1px solid #34495e; cursor: pointer; }
-        .sidebar ul li:hover { background: #34495e; }
-        .logout-btn { background: #e74c3c; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; margin-top: 20px; }
-        .main-content { flex: 1; margin-left: 240px; padding: 30px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-align: center; }
-        .card h3 { margin: 0; color: #7f8c8d; font-size: 16px; }
-        .card p { font-size: 28px; font-weight: bold; margin: 10px 0 0 0; }
-        .v-count { color: #3498db; }
-        .o-count { color: #2ecc71; }
-    </style>
+    <title>Admin Dashboard - Policia</title>
+    <!-- SaaS Stylesheet -->
+    <link rel="stylesheet" href="css/admin-style.css">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 
-    <div class="sidebar">
-        <h2>Admin Panel</h2>
-        <ul>
-            <li>Dashboard</li>
-            <li>Orders</li>
-            <li>Messages</li>
-        </ul>
-        <button id="logoutBtn" class="logout-btn">Logout</button>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <h2>POLI<span>CIA</span> Admin</h2>
+        </div>
+        <nav>
+            <ul class="nav-menu">
+                <li class="nav-item active" id="navDashboard">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </li>
+                <li class="nav-item" id="navOrders" onclick="openPendingOrdersPanel()">
+                    <span class="nav-icon">📦</span>
+                    <span>Orders</span>
+                </li>
+                <li class="nav-item" id="navMessages">
+                    <span class="nav-icon">💬</span>
+                    <span>Messages</span>
+                </li>
+                <li class="nav-item" id="navMedia">
+                    <span class="nav-icon">📸</span>
+                    <span>Media Manager</span>
+                </li>
+                <li class="nav-item" id="navSettings">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Settings</span>
+                </li>
+            </ul>
+        </nav>
+        <div class="logout-container">
+            <button id="logoutBtn" class="btn-sidebar-logout">Logout</button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Top Navigation Bar -->
+        <header class="topbar">
+            <div class="topbar-title">
+                <h1>Dashboard Overview</h1>
+            </div>
+            <div class="topbar-actions">
+                <!-- Add search or notification icons here later -->
+                <div class="admin-profile">
+                    <span>Admin User</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-body">
+
+            <!-- Statistical Overview -->
+            <div class="stats-grid">
+                <!-- Visitors Card -->
+                <div class="card card-stat">
+                    <div class="card-header">
+                        <div class="card-icon icon-visitors">👤</div>
+                        <div class="card-trend trend-up" id="visitorsTrend">
+                            <span id="visitorsTrendVal">+0%</span>
+                            <span>↑</span>
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <h3>Total Visitors</h3>
+                        <div class="card-value" id="totalVisitors">0</div>
+                        <p class="trend-subtext">vs yesterday</p>
+                    </div>
+                </div>
+
+                <!-- Orders Card -->
+                <div class="card card-stat">
+                    <div class="card-header">
+                        <div class="card-icon icon-orders">🛒</div>
+                        <div class="card-trend trend-up" id="ordersTrend">
+                            <span id="ordersTrendVal">+0%</span>
+                            <span>↑</span>
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <h3>Total Orders</h3>
+                        <div class="card-value" id="totalOrders">0</div>
+                        <div class="order-progress-sm"
+                            style="height:4px; background:#f1f5f9; border-radius:2px; margin-top:10px;">
+                            <div id="orderStatusProgress"
+                                style="width:0%; height:100%; background:var(--success); border-radius:2px; transition:width 1s;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Orders Card (Interactive) -->
+                <div class="card card-stat clickable" id="pendingCard">
+                    <div class="card-header">
+                        <div class="card-icon icon-pending">⏳</div>
+                        <div class="badge-pending" id="pendingOrdersBadge">Action Needed</div>
+                    </div>
+                    <div class="card-info">
+                        <h3>Pending Orders</h3>
+                        <div class="card-value" id="pendingOrders" style="color: var(--warning);">0</div>
+                        <p class="trend-subtext">Click to view &amp; manage</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Visualization -->
+            <div class="content-row">
+                <!-- Main Analytics Chart -->
+                <div class="section-card">
+                    <div class="section-card-header">
+                        <h2>Product Performance</h2>
+                        <div class="chart-controls">
+                            <select id="chartTimeline" class="mini-select">
+                                <option value="daily">Daily View</option>
+                                <option value="weekly">Weekly View</option>
+                                <option value="monthly">Monthly View</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="productPerformanceChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Priority Alerts -->
+                <div class="section-card">
+                    <div class="section-card-header">
+                        <h2>Priority Alerts</h2>
+                        <span class="badge-count" id="alertCount">0</span>
+                    </div>
+                    <div id="atRiskProducts" class="alert-list">
+                        <!-- Alert items injected by JS -->
+                        <div class="skeleton-list">
+                            <div class="skeleton" style="height:60px; margin-bottom:12px; border-radius:8px;"></div>
+                            <div class="skeleton" style="height:60px; border-radius:8px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Rankings -->
+            <div class="content-row">
+                <div class="section-card">
+                    <div class="section-card-header">
+                        <h2>Top Viewed Products</h2>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Product</th>
+                                    <th>Views</th>
+                                    <th>Conversion</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topViewedProducts">
+                                <!-- Data injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="section-card-header">
+                        <h2>Top Cart Additions</h2>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Product</th>
+                                    <th>Carts</th>
+                                    <th>Drop-off</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topCartProducts">
+                                <!-- Data injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media Manager Grid -->
+            <h2 class="section-title" style="margin-top:40px;">Media Manager</h2>
+            <div class="section-card" style="margin-top:16px;">
+                <div class="media-header">
+                    <p>Current active homepage assets. Click a slot to update live.</p>
+                </div>
+                <div class="media-grid" id="mediaManagerGrid">
+                    <!-- Slots generated by JS -->
+                    <div class="skeleton" style="height:120px; border-radius:12px;"></div>
+                    <div class="skeleton" style="height:120px; border-radius:12px;"></div>
+                    <div class="skeleton" style="height:120px; border-radius:12px;"></div>
+                </div>
+
+                <!-- Hidden Upload Form (Triggered by Slot Click) -->
+                <div id="mediaUploadZone"
+                    style="display:none; margin-top:32px; padding-top:24px; border-top:1px solid var(--border-light);">
+                    <h3 id="currentSlotTitle">Updating Slot</h3>
+                    <div class="upload-flex" style="display:flex; gap:20px; align-items:flex-end; margin-top:16px;">
+                        <input type="file" id="mediaFile" accept="image/*" class="modern-file-input">
+                        <button id="mediaUploadBtn" class="btn-primary">Upload &amp; Set Live</button>
+                    </div>
+                    <div id="mediaUploadStatus" style="margin-top:12px; font-size:13px;"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Slide-in Panel: Pending Orders -->
+    <div id="pendingOrdersOverlay" class="side-panel-overlay">
+        <aside class="side-panel">
+            <div class="side-panel-header">
+                <h2>Pending Orders</h2>
+                <button class="btn-close-panel" onclick="closePendingOrdersPanel()">&times;</button>
+            </div>
+            <div id="pendingOrdersList" class="side-panel-scrollable">
+                <!-- Orders injected by JS -->
+            </div>
+        </aside>
     </div>
 
-    <div class="main-content">
-        <h1>Dashboard Overview</h1>
-        <div class="stats-grid">
-            <div class="card">
-                <h3>Total Visitors</h3>
-                <p id="totalVisitors" class="v-count">0</p>
-            </div>
-            <div class="card">
-                <h3>Total Orders</h3>
-                <p id="totalOrders" class="o-count">0</p>
-            </div>
-            <div class="card" id="pendingCard">
-                <h3>Pending Orders</h3>
-                <p id="pendingOrders" style="color: #f39c12;">0</p>
-            </div>
-        </div>
+    <!-- Confirm Modal placeholder -->
+    <div id="confirmModal" style="display:none;"></div>
 
-        <div class="stats-grid" style="margin-top: 20px;">
-            <div class="card" style="text-align:left;">
-                <h3 style="text-align:center;">Top Viewed Products</h3>
-                <ol id="topViewedProducts" style="margin: 12px 0 0 18px; padding: 0; color:#2c3e50; font-weight:600;"></ol>
-            </div>
-            <div class="card" style="text-align:left;">
-                <h3 style="text-align:center;">Top Added To Cart</h3>
-                <ol id="topCartProducts" style="margin: 12px 0 0 18px; padding: 0; color:#2c3e50; font-weight:600;"></ol>
-            </div>
-        </div>
-    </div>
-
+    <!-- Module JS -->
     <script type="module" src="js/dashboard.js"></script>
+
+    <script>
+        // Inline UI helpers (non-data logic)
+        function closePendingOrdersPanel() {
+            document.getElementById('pendingOrdersOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    </script>
 </body>
+
 </html>
