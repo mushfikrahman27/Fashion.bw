@@ -1,17 +1,123 @@
 // admin/js/dashboard.js
 import { auth, db, storage } from '../../firebase-config.js';
-import { ref as dbRef, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { ref as dbRef, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 /** ════════════════════════════════════════════════════
-    1. SECURITY & AUTH
+    1. SECURITY & AUTH + ADMIN ROLE GATING
     ════════════════════════════════════════════════════ */
-onAuthStateChanged(auth, (user) => {
+let isAdmin = false;
+let currentUserId = null;
+
+// Admin role check function
+async function checkAdminRole(uid) {
+    try {
+        const adminRef = dbRef(db, `admins/${uid}`);
+        const snapshot = await get(adminRef);
+        return snapshot.exists() && snapshot.val() === true;
+    } catch (error) {
+        console.error('Error checking admin role:', error);
+        return false;
+    }
+}
+
+// Admin requirement helper
+async function requireAdminOrBlock(actionName) {
+    if (!isAdmin) {
+        alert('Not authorized: Admin access required for ' + actionName);
+        return false;
+    }
+    return true;
+}
+
+// Enhanced auth state change with role checking
+onAuthStateChanged(auth, async (user) => {
     if (!user) {
         window.location.href = "index.html";
+        return;
     }
+    
+    currentUserId = user.uid;
+    
+    // Check admin role
+    isAdmin = await checkAdminRole(user.uid);
+    
+    if (!isAdmin) {
+        // Disable all admin controls
+        disableAdminControls();
+        showUnauthorizedMessage();
+    } else {
+        // Enable controls for admin
+        enableAdminControls();
+    }
+    
+    // Load dashboard data regardless (read access allowed)
+    loadDashboardStats();
+    renderMediaGrid();
 });
+
+function disableAdminControls() {
+    // Disable order action buttons
+    const orderButtons = document.querySelectorAll('.btn-sm');
+    orderButtons.forEach(btn => {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.title = 'Admin access required';
+    });
+    
+    // Disable media upload
+    const mediaUploadBtn = document.getElementById('mediaUploadBtn');
+    if (mediaUploadBtn) {
+        mediaUploadBtn.disabled = true;
+        mediaUploadBtn.style.opacity = '0.5';
+        mediaUploadBtn.title = 'Admin access required';
+    }
+    
+    // Disable any other admin controls
+    const adminControls = document.querySelectorAll('[data-admin-only]');
+    adminControls.forEach(control => {
+        control.disabled = true;
+        control.style.opacity = '0.5';
+        control.title = 'Admin access required';
+    });
+}
+
+function enableAdminControls() {
+    // Enable all admin controls
+    const disabledControls = document.querySelectorAll('.btn-sm[disabled], #mediaUploadBtn[disabled], [data-admin-only][disabled]');
+    disabledControls.forEach(control => {
+        control.disabled = false;
+        control.style.opacity = '1';
+        control.title = '';
+    });
+}
+
+function showUnauthorizedMessage() {
+    const container = document.querySelector('.dashboard-container') || document.body;
+    const message = document.createElement('div');
+    message.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ff4444;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        z-index: 9999;
+        font-weight: bold;
+        box-shadow: 0 4px 12px rgba(255,68,68,0.3);
+    `;
+    message.textContent = 'Limited access: You are viewing as a non-admin user';
+    container.appendChild(message);
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        if (message.parentNode) {
+            message.parentNode.removeChild(message);
+        }
+    }, 5000);
+}
 
 /** ════════════════════════════════════════════════════
     2. GLOBAL STATE & UTILS
@@ -19,73 +125,6 @@ onAuthStateChanged(auth, (user) => {
 let latestOrders = [];
 let productSalesMap = {};
 let performanceChart = null;
-
-// ORDER SCHEMA NORMALIZATION - Phase 4 Compatibility
-function normalizeOrder(rawOrder, orderKey) {
-    // Handle both old and new order schemas
-    const normalized = {
-        key: orderKey,
-        orderId: rawOrder.orderId || rawOrder.id || orderKey,
-        createdAt: rawOrder.createdAt || rawOrder.timestamp || Date.now(),
-        status: rawOrder.status || "pending",
-        channel: rawOrder.channel || "unknown",
-        customer: {
-            name: rawOrder.customer?.name || rawOrder.name || "",
-            phone: rawOrder.customer?.phone || rawOrder.phone || "",
-            address: rawOrder.customer?.address || rawOrder.address || ""
-        },
-        items: [],
-        totals: {
-            subtotal: 0,
-            deliveryCharge: 0,
-            total: 0
-        }
-    };
-
-    // Normalize items array
-    if (rawOrder.items && Array.isArray(rawOrder.items)) {
-        // New schema: items array with detailed objects
-        normalized.items = rawOrder.items.map(item => ({
-            productId: item.productId || item.id || "",
-            name: item.name || item.productName || "",
-            price: parseFloat(item.price) || 0,
-            qty: parseInt(item.qty || item.quantity || 1),
-            selectedSize: item.selectedSize || item.size || "N/A",
-            color: item.color || ""
-        }));
-    } else if (rawOrder.productName) {
-        // Old schema: single product
-        normalized.items = [{
-            productId: rawOrder.productId || "",
-            name: rawOrder.productName || rawOrder.name || "",
-            price: parseFloat(rawOrder.price) || 0,
-            qty: parseInt(rawOrder.quantity || rawOrder.qty || 1),
-            selectedSize: rawOrder.size || rawOrder.selectedSize || "N/A",
-            color: rawOrder.color || ""
-        }];
-    }
-
-    // Normalize totals
-    const computedSubtotal = normalized.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-    
-    if (rawOrder.totals) {
-        // New schema: totals object
-        normalized.totals = {
-            subtotal: rawOrder.totals.subtotal ?? computedSubtotal,
-            deliveryCharge: rawOrder.totals.deliveryCharge ?? 0,
-            total: rawOrder.totals.total ?? computedSubtotal
-        };
-    } else {
-        // Old schema or missing totals
-        normalized.totals = {
-            subtotal: rawOrder.subtotal ?? computedSubtotal,
-            deliveryCharge: rawOrder.deliveryCharge ?? 0,
-            total: rawOrder.total ?? computedSubtotal
-        };
-    }
-
-    return normalized;
-}
 
 // Animated count-up helper
 function animateValue(obj, start, end, duration) {
@@ -108,6 +147,51 @@ function hideSkeletons() {
 }
 
 /** ════════════════════════════════════════════════════
+    2.1 ORDER SCHEMA NORMALIZATION
+    ════════════════════════════════════════════════════ */
+// Normalize new order schema to what admin UI expects
+function normalizeOrder(order) {
+    // Check if it's the new schema (has orderId, customer, items, totals)
+    if (order.orderId && order.customer && order.items && order.totals) {
+        // New schema - convert to old format for UI compatibility
+        return {
+            id: order.id, // Firebase key
+            orderId: order.orderId,
+            customerName: order.customer.name,
+            phone: order.customer.phone,
+            address: order.customer.address,
+            status: order.status,
+            createdAt: order.createdAt,
+            channel: order.channel,
+            // Backward compatibility fields
+            productName: order.items.length === 1 ? order.items[0].name : `Cart Order (${order.items.length} items)`,
+            productId: order.items.length === 1 ? order.items[0].productId : 'cart',
+            productSize: order.items.length === 1 ? (order.items[0].selectedSize || 'N/A') : 'N/A',
+            price: order.totals.total,
+            totalPrice: order.totals.total,
+            isCartOrder: order.items.length > 1,
+            items: order.items.map(it => ({
+                productId: it.productId,
+                productName: it.name,
+                productSize: it.selectedSize || 'N/A',
+                price: it.price,
+                qty: it.qty || 1,
+                color: it.color || ''
+            }))
+        };
+    } else {
+        // Old schema - return as-is with defaults
+        return {
+            ...order,
+            orderId: order.orderId || 'N/A',
+            channel: order.channel || 'direct',
+            isCartOrder: order.isCartOrder || false,
+            items: order.items || []
+        };
+    }
+}
+
+/** ════════════════════════════════════════════════════
     3. DATA LISTENERS (Firebase Core)
     ════════════════════════════════════════════════════ */
 function loadDashboardStats() {
@@ -115,14 +199,6 @@ function loadDashboardStats() {
     const visitsRef = dbRef(db, 'visits');
     onValue(visitsRef, (snapshot) => {
         const val = snapshot.val() || {};
-        const visits = Object.values(val);
-        const total = visits.length;
-
-        const el = document.getElementById('totalVisitors');
-        const current = parseInt(el.innerText.replace(/,/g, '')) || 0;
-        animateValue(el, current, total, 1000);
-
-        // Simple Trend Calculation (Today vs Yesterday)
         calculateVisitorTrend(visits);
     });
 
@@ -130,17 +206,19 @@ function loadDashboardStats() {
     const ordersRef = dbRef(db, 'orders');
     onValue(ordersRef, (snapshot) => {
         const data = snapshot.val() || {};
-        const orders = Object.entries(data).map(([id, o]) => normalizeOrder(o, id));
+        const rawOrders = Object.entries(data).map(([id, o]) => ({ id, ...o }));
+        
+        // Normalize all orders to compatible format
+        const orders = rawOrders.map(order => normalizeOrder(order));
         latestOrders = orders;
 
         // Build sales map for chart
         productSalesMap = {};
         orders.forEach(o => {
-            const items = o.items || [];
+            const items = o.isCartOrder ? (o.items || []) : [{ productId: o.productId }];
             items.forEach(it => {
                 if (it.productId) {
-                    const key = String(it.productId);
-                    productSalesMap[key] = (productSalesMap[key] || 0) + (it.qty || 1);
+                    productSalesMap[it.productId] = (productSalesMap[it.productId] || 0) + 1;
                 }
             });
         });
@@ -167,7 +245,6 @@ function loadDashboardStats() {
     onValue(analyticsRef, (snapshot) => {
         const data = snapshot.val() || {};
         const list = Object.values(data);
-
         renderTopLists(list);
         renderPerformanceChart(list);
         updatePriorityAlerts(list);
@@ -175,27 +252,16 @@ function loadDashboardStats() {
 }
 
 /** ════════════════════════════════════════════════════
-    4. UI RENDERING LOGIC
+    4. CHARTS & METRICS
     ════════════════════════════════════════════════════ */
-
 function calculateVisitorTrend(visits) {
-    const now = Date.now();
-    const todayStart = new Date().setHours(0, 0, 0, 0);
-    const yesterdayStart = todayStart - (24 * 60 * 60 * 1000);
-
-    const todayCount = visits.filter(v => v.timestamp >= todayStart).length;
-    const yesterdayCount = visits.filter(v => v.timestamp >= yesterdayStart && v.timestamp < todayStart).length;
-
-    const trendValEl = document.getElementById('visitorsTrendVal');
-    const trendContainer = document.getElementById('visitorsTrend');
-
-    if (yesterdayCount === 0) {
-        trendValEl.innerText = todayCount > 0 ? '+100%' : '0%';
-    } else {
-        const perc = Math.round(((todayCount - yesterdayCount) / yesterdayCount) * 100);
-        trendValEl.innerText = `${perc >= 0 ? '+' : ''}${perc}%`;
-        trendContainer.className = `card-trend ${perc >= 0 ? 'trend-up' : 'trend-down'}`;
-    }
+    const trendEl = document.getElementById('visitorTrend');
+    if (!trendEl) return;
+    const days = Object.keys(visits).sort().slice(-7);
+    const counts = days.map(d => visits[d] || 0);
+    const trend = counts[counts.length - 1] - counts[0];
+    trendEl.innerText = trend >= 0 ? `+${trend}` : `${trend}`;
+    trendEl.className = trend >= 0 ? 'trend-up' : 'trend-down';
 }
 
 function renderTopLists(list) {
@@ -251,41 +317,33 @@ function renderPerformanceChart(list) {
     }
 
     performanceChart = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
             labels,
             datasets: [
                 {
-                    label: 'Views (Clicks)',
+                    label: 'Views',
                     data: views,
-                    borderColor: '#4f46e5',
-                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
+                    backgroundColor: '#4f46e5',
+                    borderRadius: 6
                 },
                 {
-                    label: 'Conversions (Sales)',
+                    label: 'Sales',
                     data: conversions,
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
+                    backgroundColor: '#10b981',
+                    borderRadius: 6
                 }
             ]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'top', labels: { usePointStyle: true, boxPadding: 10 } }
+                legend: {
+                    position: 'bottom'
+                }
             },
             scales: {
-                y: { beginAtZero: true, grid: { display: false } },
-                x: { grid: { display: false } }
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
             }
         }
     });
@@ -297,19 +355,18 @@ function updatePriorityAlerts(list) {
     document.getElementById('alertCount').innerText = atRisk.length;
 
     if (atRisk.length === 0) {
-        container.innerHTML = '<div class="empty-state">No critical alerts today.</div>';
-        return;
-    }
-
-    container.innerHTML = atRisk.map(p => `
-        <div class="alert-item">
-            <div class="alert-content">
-                <h4>High View / Zero Sales</h4>
-                <p><strong>${p.productName}</strong> has ${p.views} views but 0 sales.</p>
+        container.innerHTML = '<div class="empty-state">No high-risk products detected.</div>';
+    } else {
+        container.innerHTML = atRisk.map(p => `
+            <div class="alert-item">
+                <div class="alert-content">
+                    <h4>High View / Zero Sales</h4>
+                    <p><strong>${p.productName}</strong> has ${p.views} views but 0 sales.</p>
+                </div>
+                <button class="btn-alert">Fix Now</button>
             </div>
-            <button class="btn-alert">Fix Now</button>
-        </div>
-    `).join('');
+        `).join('');
+    }
 }
 
 /** ════════════════════════════════════════════════════
@@ -326,23 +383,24 @@ window.openPendingOrdersPanel = function () {
         container.innerHTML = '<div class="empty-state">Chill! No pending orders.</div>';
     } else {
         container.innerHTML = pending.map((o, idx) => {
-            const items = o.items || [];
-            const itemsHtml = items.map(it => `• ${it.name} (${it.selectedSize || 'N/A'}) - TK ${it.price}`).join('<br>');
+            // Use normalized items array
+            const items = o.isCartOrder ? (o.items || []) : [{ productName: o.productName, price: o.price, productSize: o.productSize }];
+            const itemsHtml = items.map(it => `• ${it.productName} (${it.productSize || 'N/A'}) - TK ${it.price}`).join('<br>');
+
+            // Show orderId if available
+            const orderIdDisplay = o.orderId && o.orderId !== 'N/A' ? `<small style="color:#888;">ID: ${o.orderId}</small>` : '';
 
             return `
                 <div class="order-panel-card">
                     <div class="order-panel-meta">
-                        <strong>${o.customer.name}</strong>
-                        <span>${o.customer.phone}</span>
-                        <small style="color:#d4af37;">Order ID: ${o.orderId}</small>
+                        <strong>${o.customerName}</strong>
+                        <span>${o.phone}</span>
+                        ${orderIdDisplay}
                     </div>
                     <div class="order-panel-items">${itemsHtml}</div>
-                    <div class="order-panel-totals">
-                        <small>Total: TK ${o.totals.total}</small>
-                    </div>
                     <div class="order-panel-actions">
-                        <button class="btn-sm success" onclick="archiveOrder('${o.key}')">Approve &amp; Archive</button>
-                        <button class="btn-sm danger" onclick="deleteOrder('${o.key}')">Cancel</button>
+                        <button class="btn-sm success" onclick="archiveOrder('${o.id}')" ${!isAdmin ? 'disabled' : ''}>Approve &amp; Archive</button>
+                        <button class="btn-sm danger" onclick="deleteOrder('${o.id}')" ${!isAdmin ? 'disabled' : ''}>Cancel</button>
                     </div>
                 </div>
             `;
@@ -353,15 +411,30 @@ window.openPendingOrdersPanel = function () {
     document.body.style.overflow = 'hidden';
 };
 
-window.archiveOrder = function (id) {
+// GATED ORDER OPERATIONS
+window.archiveOrder = async function (id) {
+    if (!(await requireAdminOrBlock('order archiving'))) return;
+    
     if (confirm('Mark as Archived?')) {
-        update(dbRef(db, `orders/${id}`), { status: 'Archived' });
+        try {
+            await update(dbRef(db, `orders/${id}`), { status: 'Archived' });
+        } catch (error) {
+            console.error('Failed to archive order:', error);
+            alert('Failed to archive order. Please try again.');
+        }
     }
 };
 
-window.deleteOrder = function (id) {
+window.deleteOrder = async function (id) {
+    if (!(await requireAdminOrBlock('order deletion'))) return;
+    
     if (confirm('Permanently delete this order?')) {
-        remove(dbRef(db, `orders/${id}`));
+        try {
+            await remove(dbRef(db, `orders/${id}`));
+        } catch (error) {
+            console.error('Failed to delete order:', error);
+            alert('Failed to delete order. Please try again.');
+        }
     }
 };
 
@@ -391,8 +464,8 @@ function renderMediaGrid() {
             const val = snap.val();
             const statusEl = document.getElementById(`status_${slot.id}`);
             if (statusEl) {
-                statusEl.innerText = val ? 'Active' : 'Empty';
-                statusEl.className = val ? 'badge success' : 'badge muted';
+                statusEl.className = val?.url ? 'badge success' : 'badge muted';
+                statusEl.innerText = val?.url ? 'Live' : 'Empty';
             }
         });
     });
@@ -407,8 +480,10 @@ window.selectMediaSlot = function (id, name) {
     zone.scrollIntoView({ behavior: 'smooth' });
 };
 
-// Handle Upload
+// GATED MEDIA UPLOAD
 document.getElementById('mediaUploadBtn').addEventListener('click', async () => {
+    if (!(await requireAdminOrBlock('media upload'))) return;
+    
     const fileInput = document.getElementById('mediaFile');
     const status = document.getElementById('mediaUploadStatus');
     const slot = document.getElementById('mediaUploadZone').getAttribute('data-active-slot');
@@ -429,7 +504,6 @@ document.getElementById('mediaUploadBtn').addEventListener('click', async () => 
     }
 });
 
-// Sidebar Navigation Handlers
 document.getElementById('navDashboard')?.addEventListener('click', () => location.reload());
 
 document.getElementById('navMessages')?.addEventListener('click', () => {
@@ -438,9 +512,9 @@ document.getElementById('navMessages')?.addEventListener('click', () => {
 
 // Logout
 document.getElementById('logoutBtn').addEventListener('click', () => {
-    signOut(auth).then(() => location.href = "index.html");
+    signOut(auth).then(() => {
+        window.location.href = 'index.html';
+    });
 });
 
-// Init
-loadDashboardStats();
-renderMediaGrid();
+// Note: loadDashboardStats() and renderMediaGrid() are called in the auth state change handler

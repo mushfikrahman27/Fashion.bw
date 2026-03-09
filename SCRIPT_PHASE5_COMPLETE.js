@@ -3,165 +3,6 @@
     "use strict";
     
     let cartArray = [];
-    
-    // User Analytics Tracking System
-    class UserAnalytics {
-        constructor() {
-            this.sessionId = this.generateSessionId();
-            this.startTime = Date.now();
-            this.pageViews = 0;
-            this.productViews = new Map();
-            this.cartAdditions = new Map();
-            this.init();
-        }
-        
-        generateSessionId() {
-            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        }
-        
-        init() {
-            this.trackPageView();
-            this.setupProductClickTracking();
-            this.setupCartTracking();
-            this.setupSessionTracking();
-        }
-        
-        trackPageView() {
-            this.pageViews++;
-            this.sendToAnalytics({
-                type: 'page_view',
-                sessionId: this.sessionId,
-                timestamp: Date.now(),
-                page: window.location.pathname,
-                userAgent: navigator.userAgent,
-                referrer: document.referrer
-            });
-        }
-        
-        trackProductView(productId, productName) {
-            const currentViews = this.productViews.get(productId) || 0;
-            this.productViews.set(productId, currentViews + 1);
-            
-            this.sendToAnalytics({
-                type: 'product_view',
-                sessionId: this.sessionId,
-                timestamp: Date.now(),
-                productId: productId,
-                productName: productName,
-                viewCount: currentViews + 1
-            });
-        }
-        
-        trackCartAddition(productId, productName) {
-            const currentAdditions = this.cartAdditions.get(productId) || 0;
-            this.cartAdditions.set(productId, currentAdditions + 1);
-            
-            this.sendToAnalytics({
-                type: 'cart_addition',
-                sessionId: this.sessionId,
-                timestamp: Date.now(),
-                productId: productId,
-                productName: productName,
-                additionCount: currentAdditions + 1
-            });
-        }
-        
-        setupProductClickTracking() {
-            // Track product card clicks
-            document.addEventListener('click', (e) => {
-                const productCard = e.target.closest('.product-card');
-                if (productCard) {
-                    const productName = productCard.querySelector('.p-name')?.textContent;
-                    const productId = this.getProductIdFromCard(productCard);
-                    if (productId && productName) {
-                        this.trackProductView(productId, productName);
-                    }
-                }
-            });
-        }
-        
-        setupCartTracking() {
-            // Track add to cart clicks
-            document.addEventListener('click', (e) => {
-                if (e.target.classList.contains('cart-btn') || 
-                    e.target.closest('.cart-btn')) {
-                    const productCard = e.target.closest('.product-card');
-                    if (productCard) {
-                        const productName = productCard.querySelector('.p-name')?.textContent;
-                        const productId = this.getProductIdFromCard(productCard);
-                        if (productId && productName) {
-                            this.trackCartAddition(productId, productName);
-                        }
-                    }
-                }
-            });
-        }
-        
-        setupSessionTracking() {
-            // Track session end
-            window.addEventListener('beforeunload', () => {
-                this.sendToAnalytics({
-                    type: 'session_end',
-                    sessionId: this.sessionId,
-                    timestamp: Date.now(),
-                    duration: Date.now() - this.startTime,
-                    pageViews: this.pageViews,
-                    productViews: Array.from(this.productViews.entries()),
-                    cartAdditions: Array.from(this.cartAdditions.entries())
-                });
-            });
-        }
-        
-        getProductIdFromCard(card) {
-            // Try to get product ID from various sources
-            const onclick = card.getAttribute('onclick');
-            if (onclick) {
-                const match = onclick.match(/openProductDetails\(['"]([^'"]+)['"]\)/);
-                if (match) return match[1];
-            }
-            
-            // Fallback: generate ID from product name
-            const productName = card.querySelector('.p-name')?.textContent;
-            if (productName) {
-                return productName.toLowerCase().replace(/\s+/g, '_');
-            }
-            
-            return null;
-        }
-        
-        sendToAnalytics(data) {
-            // In production, this would send to your analytics backend
-            // For now, we'll store in localStorage for admin panel to read
-            const existingData = JSON.parse(localStorage.getItem('user_analytics') || '[]');
-            existingData.push(data);
-            
-            // Keep only last 1000 entries to prevent localStorage overflow
-            if (existingData.length > 1000) {
-                existingData.splice(0, existingData.length - 1000);
-            }
-            
-            localStorage.setItem('user_analytics', JSON.stringify(existingData));
-            
-            // Also send to Firebase if configured
-            if (window.firebaseAnalyticsEnabled) {
-                this.sendToFirebase(data);
-            }
-        }
-        
-        async sendToFirebase(data) {
-            try {
-                // This would require Firebase SDK to be included
-                // For now, just log the data
-                console.log('Analytics data:', data);
-            } catch (error) {
-                console.error('Error sending analytics to Firebase:', error);
-            }
-        }
-    }
-    
-    // Initialize analytics
-    const userAnalytics = new UserAnalytics();
-    window.userAnalytics = userAnalytics;
     // Prevent browser from restoring scroll position on reload
     if ('scrollRestoration' in history) {
         history.scrollRestoration = 'manual';
@@ -228,16 +69,12 @@
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
-        const time = now.toLocaleTimeString('en-US', { 
-            hour12: false, 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        }).replace(/:/g, '');
+        const dateStr = `${year}${month}${day}`;
         
-        // Generate 4-digit random number for better readability
-        const random = Math.floor(Math.random() * 9000) + 1000;
+        // Generate 4-6 digit random number
+        const random = Math.floor(Math.random() * 900000) + 100000;
         
-        return `ORD-${year}${month}${day}-${time}-${random}`;
+        return `ZN-${dateStr}-${random}`;
     }
 
     /* --- SECURITY: VALIDATION & SANITIZATION --- */
@@ -399,72 +236,44 @@
 
     /* --- CREATE ORDER IN RTDB --- */
     async function createOrderInRTDB(orderData) {
-        console.log('🔥 Creating order in RTDB...', orderData);
-        
-        // Always generate an Order ID first (even if Firebase fails)
-        const orderId = generateOrderId();
-        console.log('📝 Generated Order ID:', orderId);
-        
         if (!window.firebaseDB) {
-            console.error('❌ Firebase not available, using local fallback');
-            // Return local order ID even if Firebase fails
-            return {
-                orderId: orderId,
-                firebaseKey: null,
-                fallback: true
-            };
+            throw new Error('Firebase not available');
         }
 
-        try {
-            const { ref, push, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
-            const orderRef = ref(window.firebaseDB, 'orders');
-            
-            // Create order payload with required schema
-            const payload = {
-                orderId: orderId,
-                createdAt: serverTimestamp(),
-                status: "pending",
-                channel: orderData.channel || "direct",
-                customer: {
-                    name: orderData.customerName || '',
-                    phone: orderData.phone || '',
-                    address: orderData.address || '',
-                    note: orderData.note || ''
-                },
-                items: orderData.items || [],
-                totals: {
-                    subtotal: orderData.subtotal || 0,
-                    deliveryCharge: orderData.deliveryCharge || 0,
-                    total: orderData.total || 0
-                }
-            };
-            
-            console.log('💾 Saving order payload:', payload);
+        const { ref, push, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+        const orderRef = ref(window.firebaseDB, 'orders');
+        
+        // Generate unique orderId
+        const orderId = generateOrderId();
+        
+        // Create order payload with required schema
+        const payload = {
+            orderId: orderId,
+            createdAt: serverTimestamp(),
+            status: "pending",
+            channel: orderData.channel || "direct",
+            customer: {
+                name: orderData.customerName || '',
+                phone: orderData.phone || '',
+                address: orderData.address || '',
+                note: orderData.note || ''
+            },
+            items: orderData.items || [],
+            totals: {
+                subtotal: orderData.subtotal || 0,
+                deliveryCharge: orderData.deliveryCharge || 0,
+                total: orderData.total || 0
+            }
+        };
 
-            // Save to RTDB with timeout
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Firebase timeout')), 5000);
-            });
-            
-            const result = await Promise.race([push(orderRef, payload), timeoutPromise]);
-            console.log('✅ Order saved to Firebase:', result.key);
-            
-            // Return the orderId and the Firebase key
-            return {
-                orderId: orderId,
-                firebaseKey: result.key,
-                fallback: false
-            };
-        } catch (error) {
-            console.error('❌ Failed to create order in RTDB:', error);
-            // Still return the Order ID even if Firebase fails
-            return {
-                orderId: orderId,
-                firebaseKey: null,
-                fallback: true,
-                error: error.message
-            };
-        }
+        // Save to RTDB
+        const result = await push(orderRef, payload);
+        
+        // Return the orderId and the Firebase key
+        return {
+            orderId: orderId,
+            firebaseKey: result.key
+        };
     }
 
     /* --- SMART SIZE LOGIC FOR PRODUCT CARDS --- */
@@ -689,21 +498,10 @@
             return false;
         }
 
-        // Mobile-specific: Add timeout for Firebase loading
-        const isMobile = window.innerWidth <= 768;
-        const timeoutMs = isMobile ? 3000 : 5000; // 3s for mobile, 5s for desktop
-
         try {
             const { ref, get } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
             const productsRef = ref(window.firebaseDB, 'products');
-            
-            // Create a timeout promise
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Firebase timeout')), timeoutMs);
-            });
-            
-            // Race between Firebase fetch and timeout
-            const snapshot = await Promise.race([get(productsRef), timeoutPromise]);
+            const snapshot = await get(productsRef);
             
             if (snapshot.exists()) {
                 const firebaseProducts = snapshot.val();
@@ -722,16 +520,12 @@
                 if (activeProducts.length > 0) {
                     window.allProducts = activeProducts;
                     filteredProducts = [...window.allProducts];
-                    console.log(`✅ Loaded ${activeProducts.length} products from Firebase`);
+                    console.log(`Loaded ${activeProducts.length} products from Firebase`);
                     return true;
                 }
             }
         } catch (error) {
-            if (error.message === 'Firebase timeout') {
-                console.warn('⏰ Firebase loading timed out, using fallback products');
-            } else {
-                console.warn('Failed to load products from Firebase:', error);
-            }
+            console.warn('Failed to load products from Firebase:', error);
         }
         
         return false; // Use fallback
@@ -739,82 +533,15 @@
 
     // Initialize products on page load
     document.addEventListener('DOMContentLoaded', async () => {
-        console.log('🚀 Script initializing...');
-        
-        // Force scroll to top immediately
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-        
-        // Add event delegation for search suggestions
-        document.addEventListener('click', function(event) {
-            const searchContainer = document.querySelector('.stylish-search');
-            if (searchContainer && !searchContainer.contains(event.target)) {
-                hideSearchSuggestions();
-            }
-            
-            // Handle suggestion clicks
-            if (event.target.closest('.ssRow')) {
-                const row = event.target.closest('.ssRow');
-                const productId = row.dataset.id;
-                const productName = row.querySelector('.ssName').textContent;
-                selectSearchSuggestion(productId, productName);
-            }
-        });
-        
-        // Add keyboard navigation for search
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', handleSearchInput);
-            searchInput.addEventListener('keydown', handleSearchKeyboard);
-            searchInput.addEventListener('focus', function() {
-                if (this.value.trim().length > 0) {
-                    showIsolatedSearchSuggestions(this.value.toLowerCase().trim());
-                }
-            });
-        }
-        
-        // Mobile-specific: Add a small delay for mobile devices
-        const isMobile = window.innerWidth <= 768;
-        if (isMobile) {
-            console.log('📱 Mobile device detected, adding delay...');
-            // Show loading indicator for mobile
-            const grid = document.getElementById('productGrid');
-            if (grid) {
-                grid.innerHTML = '<div style="text-align: center; padding: 50px; color: #666;">Loading products...</div>';
-            }
-            // Small delay for mobile to ensure DOM is fully ready
-            await new Promise(resolve => setTimeout(resolve, 100));
-        }
-        
-        // First load products from Firebase or fallback
-        console.log('📦 Loading products...');
         const loadedFromFirebase = await loadProductsFromFirebase();
         if (!loadedFromFirebase) {
             console.log('Using fallback hardcoded products');
         }
         
-        // Then render them
-        console.log('🎨 Rendering products...');
-        updateProductView(); // Use unified system for initial load
-        
-        // Force scroll to top again after products load
-        setTimeout(() => {
-            window.scrollTo(0, 0);
-            document.documentElement.scrollTop = 0;
-            document.body.scrollTop = 0;
-        }, 100);
-        
-        // Fallback: if no products are showing after 2 seconds, force render
-        setTimeout(() => {
-            const grid = document.getElementById('productGrid');
-            if (grid && grid.children.length === 0) {
-                console.log('Fallback: Forcing product render');
-                updateProductView();
-            }
-        }, isMobile ? 1000 : 2000); // Shorter timeout for mobile
-        
-        console.log('✅ Script initialization complete');
+        // Continue with existing initialization
+        if (typeof renderProducts === 'function') {
+            renderProducts();
+        }
     });
 
     /* --- 3. UI & CART ACTIONS --- */
@@ -1155,11 +882,6 @@
         if (typeof setupPagination === 'function') {
             setupPagination(filteredProducts.length, currentLimit);
         }
-        
-        // Hook B: Products rendered - hide splash if not already hidden
-        if (typeof hideSplash === 'function') {
-            hideSplash("products-rendered");
-        }
     }
 
     function setupPagination(totalItems, itemsPerPage) {
@@ -1171,20 +893,6 @@
 
         if (pageCount <= 1) return;
 
-        // Previous button
-        const prevBtn = document.createElement('button');
-        prevBtn.innerText = 'PREV';
-        prevBtn.className = 'nav-btn-stylish';
-        prevBtn.onclick = () => {
-            if (currentPage > 1) {
-                currentPage--;
-                displayProducts(currentPage);
-                window.scrollTo({ top: document.getElementById('productGrid').offsetTop - 100, behavior: 'smooth' });
-            }
-        };
-        paginationContainer.appendChild(prevBtn);
-
-        // Page numbers
         for (let i = 1; i <= pageCount; i++) {
             const btn = document.createElement('button');
             btn.innerText = i;
@@ -1196,19 +904,6 @@
             };
             paginationContainer.appendChild(btn);
         }
-
-        // Next button
-        const nextBtn = document.createElement('button');
-        nextBtn.innerText = 'NEXT';
-        nextBtn.className = 'nav-btn-stylish';
-        nextBtn.onclick = () => {
-            if (currentPage < pageCount) {
-                currentPage++;
-                displayProducts(currentPage);
-                window.scrollTo({ top: document.getElementById('productGrid').offsetTop - 100, behavior: 'smooth' });
-            }
-        };
-        paginationContainer.appendChild(nextBtn);
     }
 
     // Page load hoye gele loading screen hide korar jonno
@@ -1217,39 +912,6 @@
         if (loader) {
             loader.style.display = 'none';
         }
-        
-        // Speed-optimized splash screen logic
-        let splashHidden = false;
-        
-        function hideSplash(reason) {
-            if (splashHidden) return; // Idempotent - run once only
-            splashHidden = true;
-            
-            const splash = document.getElementById('splashScreen');
-            if (!splash) return;
-            
-            console.log(`Splash hiding: ${reason}`);
-            
-            // Add hide class for fade out
-            splash.classList.add('hide');
-            
-            // Remove from layout after transition
-            setTimeout(() => {
-                splash.style.display = 'none';
-                // Restore scroll
-                document.documentElement.style.overflow = "";
-                document.body.style.overflow = "";
-                document.body.classList.remove("no-scroll");
-            }, 450);
-        }
-        
-        // Hook A: DOM ready with critical UI
-        if (document.getElementById('productGrid') || document.querySelector('.navbar')) {
-            hideSplash("dom-ready");
-        }
-        
-        // Hook B: Fallback timeout
-        setTimeout(() => hideSplash("fallback-timeout"), 2200);
     });
 
     /* --- UNIFIED FILTER SYSTEM --- */
@@ -1361,169 +1023,22 @@
         updateProductView();
     }
 
-    // Search input handler with debouncing and isolated suggestions
-    let searchDebounceTimer;
+    // Search input handler - now updates filter state
     function handleSearchInput() {
         const searchInput = document.getElementById('searchInput');
-        const suggestionsPanel = document.getElementById('searchSuggestPanel');
-        
         if (searchInput) {
-            const searchTerm = searchInput.value.toLowerCase().trim();
             filterState.searchText = searchInput.value;
-            
-            // Clear existing timer
-            clearTimeout(searchDebounceTimer);
-            
-            // Hide immediately if empty
-            if (searchTerm.length === 0) {
-                hideSearchSuggestions();
-                updateProductView();
-                return;
-            }
-            
-            // Debounce search suggestions (250ms)
-            searchDebounceTimer = setTimeout(() => {
-                showIsolatedSearchSuggestions(searchTerm);
-            }, 250);
-            
-            // Don't update product view while typing - only on empty or selection
-        }
-    }
-    
-    // Isolated search suggestions with exact markup
-    function showIsolatedSearchSuggestions(searchTerm) {
-        const suggestionsPanel = document.getElementById('searchSuggestPanel');
-        if (!suggestionsPanel || !window.allProducts || window.allProducts.length === 0) {
-            hideSearchSuggestions();
-            return;
-        }
-        
-        // Get matching products with prioritization
-        const matches = [];
-        const maxSuggestions = 10;
-        const addedIds = new Set();
-        
-        // Prioritize name matches
-        window.allProducts.forEach(product => {
-            if (matches.length >= maxSuggestions) return;
-            if (addedIds.has(product.id)) return;
-            
-            const nameMatch = product.name.toLowerCase().includes(searchTerm);
-            const categoryMatch = product.category.toLowerCase().includes(searchTerm);
-            const subCategoryMatch = product.subCategory && product.subCategory.toLowerCase().includes(searchTerm);
-            
-            if (nameMatch || categoryMatch || subCategoryMatch) {
-                const priority = nameMatch ? 1 : (categoryMatch ? 2 : 3);
-                matches.push({ ...product, matchType: priority });
-                addedIds.add(product.id);
-            }
-        });
-        
-        // Sort by priority (name matches first)
-        matches.sort((a, b) => a.matchType - b.matchType);
-        
-        // Display suggestions with exact isolated markup
-        if (matches.length > 0) {
-            suggestionsPanel.innerHTML = matches.map(product => `
-                <div class="ssRow" data-id="${product.id}" role="button" tabindex="0">
-                    <img class="ssThumb" src="${product.img}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/40x40'">
-                    <div class="ssText">
-                        <div class="ssName">${highlightMatch(product.name, searchTerm)}</div>
-                        <div class="ssMeta"><span class="ssTag">${product.category}${product.subCategory ? ' • ' + product.subCategory : ''}</span></div>
-                    </div>
-                    <div class="ssPrice">৳${product.price}</div>
-                </div>
-            `).join('');
-            
-            suggestionsPanel.classList.add('isOpen');
-            suggestionsPanel.style.display = 'block';
-        } else {
-            hideSearchSuggestions();
-        }
-    }
-    
-    // Highlight matching text in suggestions
-    function highlightMatch(text, searchTerm) {
-        const regex = new RegExp(`(${searchTerm})`, 'gi');
-        return text.replace(regex, '<strong>$1</strong>');
-    }
-    
-    // Hide search suggestions with isolated panel
-    function hideSearchSuggestions() {
-        const suggestionsPanel = document.getElementById('searchSuggestPanel');
-        if (suggestionsPanel) {
-            suggestionsPanel.classList.remove('isOpen');
-            suggestionsPanel.style.display = 'none';
-            suggestionsPanel.innerHTML = '';
-        }
-    }
-    
-    // Select a search suggestion and open product details
-    function selectSearchSuggestion(productId, productName) {
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.value = productName;
-            filterState.searchText = productName;
-            hideSearchSuggestions();
             updateProductView();
-            
-            // Open product details using existing function
-            openProductDetails(parseInt(productId));
         }
     }
-    
+
     // Clear search function
     function clearSearch() {
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
             searchInput.value = "";
             filterState.searchText = "";
-            hideSearchSuggestions();
             updateProductView();
-        }
-    }
-    
-    // Keyboard navigation for search
-    function handleSearchKeyboard(event) {
-        const suggestionsPanel = document.getElementById('searchSuggestPanel');
-        const items = suggestionsPanel ? suggestionsPanel.querySelectorAll('.ssRow') : [];
-        let currentIndex = -1;
-        
-        // Find current highlighted item
-        items.forEach((item, index) => {
-            if (item.classList.contains('isHighlighted')) {
-                currentIndex = index;
-            }
-        });
-        
-        switch(event.key) {
-            case 'ArrowDown':
-                event.preventDefault();
-                items.forEach(item => item.classList.remove('isHighlighted'));
-                const nextIndex = (currentIndex + 1) % items.length;
-                items[nextIndex].classList.add('isHighlighted');
-                items[nextIndex].scrollIntoView({ block: 'nearest' });
-                break;
-                
-            case 'ArrowUp':
-                event.preventDefault();
-                items.forEach(item => item.classList.remove('isHighlighted'));
-                const prevIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
-                items[prevIndex].classList.add('isHighlighted');
-                items[prevIndex].scrollIntoView({ block: 'nearest' });
-                break;
-                
-            case 'Enter':
-                event.preventDefault();
-                if (currentIndex >= 0 && items[currentIndex]) {
-                    items[currentIndex].click();
-                }
-                break;
-                
-            case 'Escape':
-                event.preventDefault();
-                hideSearchSuggestions();
-                break;
         }
     }
 
@@ -1901,15 +1416,8 @@
             
             const orderResult = await createOrderInRTDB(sanitizedData);
             
-            console.log('🎯 Order Result:', orderResult);
-            
             // Show success with orderId
-            let successMessage = `Order created! Your Order ID: ${orderResult.orderId}`;
-            if (orderResult.fallback) {
-                successMessage += "\n(Note: Order saved locally due to connection issues)";
-            }
-            console.log('📱 Showing alert:', successMessage);
-            alert(`${successMessage}\n\nRedirecting to WhatsApp...`);
+            alert(`Order created! Your Order ID: ${orderResult.orderId}\n\nRedirecting to WhatsApp...`);
             
             // Build WhatsApp message with orderId
             const message = buildOrderMessage(orderResult.orderId, sanitizedData);
@@ -1966,11 +1474,7 @@
             const orderResult = await createOrderInRTDB(sanitizedData);
             
             // Show success with orderId
-            let successMessage = `Order created! Your Order ID: ${orderResult.orderId}`;
-            if (orderResult.fallback) {
-                successMessage += "\n(Note: Order saved locally due to connection issues)";
-            }
-            alert(`${successMessage}\n\nRedirecting to Messenger...`);
+            alert(`Order created! Your Order ID: ${orderResult.orderId}\n\nRedirecting to Messenger...`);
             
             // Build Messenger message with orderId
             const message = buildOrderMessage(orderResult.orderId, sanitizedData);
@@ -2156,29 +1660,18 @@
             
             const orderResult = await createOrderInRTDB(sanitizedData);
             
-            console.log('🎯 Direct Order Result:', orderResult);
-            
             // SECURITY: Telegram alerts disabled for public site
             // await sendTelegramAlert(cName, cPhone, cAddress, currentOrderContext, orderResult.orderId);
             
             // Show success with orderId
-            let successContent = `
+            document.getElementById('modalContent').innerHTML = `
                 <div style="padding:20px;">
                     <h2 style="color:#d4af37; margin-bottom:10px;">Order Placed Successfully!</h2>
                     <p style="color:#fff;">Thank you ${cName}, we received your order.</p>
-                    <p style="color:#d4af37; font-weight:bold; margin:10px 0;">Order ID: ${orderResult.orderId}</p>`;
-            
-            if (orderResult.fallback) {
-                successContent += `<p style="color:#ffa500; font-size:12px;">Note: Order saved locally due to connection issues</p>`;
-            }
-            
-            successContent += `
+                    <p style="color:#d4af37; font-weight:bold; margin:10px 0;">Order ID: ${orderResult.orderId}</p>
                     <p style="color:#aaa; font-size:14px;">We will contact you soon for confirmation.</p>
                     <button onclick="closeSocialModal()" style="margin-top:20px; background:#fff; color:#000; padding:10px 25px; border-radius:8px; border:none; font-weight:bold; cursor:pointer;">Close</button>
                 </div>`;
-            
-            console.log('📱 Showing success modal with Order ID:', orderResult.orderId);
-            document.getElementById('modalContent').innerHTML = successContent;
 
             // Clear cart if it was a cart order
             if (currentOrderContext.type === 'cart') {
@@ -2239,98 +1732,6 @@
         alert(`${pageName} page - Coming soon!`);
     }
 
-    // Add missing handleCategoryClick function
-    function handleCategoryClick(event, mainCat, subCat) {
-        event.preventDefault(); // Page jump stop korbe
-        filterByCategory(mainCat, subCat); // Filter logic call korbe
-
-        // Mobile-e menu auto bondho hobe
-        const menu = document.getElementById('menuOverlay');
-        if (menu) {
-            if (history.state && history.state.overlay) {
-                history.back();
-            } else {
-                menu.classList.remove('active');
-                document.body.classList.remove('menu-open');
-            }
-        }
-    }
-
-    // Add missing spinForRandomProduct function
-    function spinForRandomProduct() {
-        const menu = document.getElementById('menuOverlay');
-        if (menu) {
-            menu.classList.remove('active');
-            document.body.classList.remove('menu-open');
-        }
-
-        const overlay = document.getElementById('rouletteOverlay');
-        const spinner = document.getElementById('rouletteSpinner');
-        const resultText = document.getElementById('rouletteResultText');
-
-        if (!overlay || !spinner || !resultText) {
-            // Fallback: just pick a random product and open details
-            const randomProduct = window.allProducts[Math.floor(Math.random() * window.allProducts.length)];
-            if (randomProduct) {
-                openProductDetails(randomProduct.id);
-            }
-            return;
-        }
-
-        // Reset UI
-        resultText.classList.remove('show');
-        resultText.innerText = '';
-
-        // Generate an array of random product images to act as the "tape"
-        const spinItems = [];
-        const numSpins = 15; // Number of items it spins past before stopping
-
-        for (let i = 0; i < numSpins; i++) {
-            const randomP = window.allProducts[Math.floor(Math.random() * window.allProducts.length)];
-            spinItems.push(randomP);
-        }
-
-        // The final winning product ensures it exists
-        const winningProduct = spinItems[spinItems.length - 1];
-
-        // Inject HTML into spinner
-        spinner.innerHTML = spinItems.map(p => `<img src="${p.img}" alt="${p.name}">`).join('');
-
-        // Reset spin position
-        spinner.style.transition = 'none';
-        spinner.style.transform = 'translateY(0)';
-
-        // Show overlay
-        overlay.classList.add('active');
-
-        // Force reflow
-        void spinner.offsetWidth;
-
-        // Trigger spin animation
-        const imageHeights = 300; // Expected from CSS
-
-        spinner.style.transition = 'transform 2.5s cubic-bezier(0.15, 0.85, 0.3, 1)'; // Decelerating spin
-        spinner.classList.add('spinning-blur');
-
-        // Stop at the very last image
-        const finalOffset = -1 * imageHeights * (numSpins - 1);
-        spinner.style.transform = `translateY(${finalOffset}px)`;
-
-        // Wait for spin to finish
-        setTimeout(() => {
-            spinner.classList.remove('spinning-blur');
-            resultText.innerText = `You Discovered: ${winningProduct.name}`;
-            resultText.classList.add('show');
-
-            // Wait 1 second to let them read it, then open product
-            setTimeout(() => {
-                overlay.classList.remove('active');
-                openProductDetails(winningProduct.id);
-            }, 1200);
-
-        }, 2500); // Must match transition time
-    }
-
     // Export functions for inline handlers
     window.toggleMenu = toggleMenu;
     window.toggleCartDisplay = toggleCartDisplay;
@@ -2354,6 +1755,9 @@
     window.filterByCategory = filterByCategory;
     window.filterBySubCategory = filterBySubCategory;
     window.updatePriceLabel = updatePriceLabel;
+    window.collectBall = collectBall;
+    window.showFifaReward = showFifaReward;
+    window.closeFifaPopup = closeFifaPopup;
     window.toggleSub = toggleSub;
     window.filterProducts = filterProducts;
     window.scrollToSection = scrollToSection;
@@ -2361,11 +1765,11 @@
     window.clearSearch = clearSearch;
     window.handleWhatsAppOrder = handleWhatsAppOrder;
     window.resetRateLimit = resetRateLimit;
-    window.spinForRandomProduct = spinForRandomProduct;
-    window.selectSearchSuggestion = selectSearchSuggestion;
-    window.hideSearchSuggestions = hideSearchSuggestions;
-    window.showPremiumSearchSuggestions = showPremiumSearchSuggestions;
-    window.handleSearchKeyboard = handleSearchKeyboard;
+
+    // Render products on load
+    document.addEventListener('DOMContentLoaded', () => {
+        updateProductView(); // Use unified system for initial load
+    });
 
     // CONSOLE LOG TO VERIFY PHASE 5 FEATURES
     console.log('✅ PHASE 5 SCRIPT LOADED WITH ALL FEATURES:');

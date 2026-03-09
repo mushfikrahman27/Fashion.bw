@@ -3,165 +3,6 @@
     "use strict";
     
     let cartArray = [];
-    
-    // User Analytics Tracking System
-    class UserAnalytics {
-        constructor() {
-            this.sessionId = this.generateSessionId();
-            this.startTime = Date.now();
-            this.pageViews = 0;
-            this.productViews = new Map();
-            this.cartAdditions = new Map();
-            this.init();
-        }
-        
-        generateSessionId() {
-            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        }
-        
-        init() {
-            this.trackPageView();
-            this.setupProductClickTracking();
-            this.setupCartTracking();
-            this.setupSessionTracking();
-        }
-        
-        trackPageView() {
-            this.pageViews++;
-            this.sendToAnalytics({
-                type: 'page_view',
-                sessionId: this.sessionId,
-                timestamp: Date.now(),
-                page: window.location.pathname,
-                userAgent: navigator.userAgent,
-                referrer: document.referrer
-            });
-        }
-        
-        trackProductView(productId, productName) {
-            const currentViews = this.productViews.get(productId) || 0;
-            this.productViews.set(productId, currentViews + 1);
-            
-            this.sendToAnalytics({
-                type: 'product_view',
-                sessionId: this.sessionId,
-                timestamp: Date.now(),
-                productId: productId,
-                productName: productName,
-                viewCount: currentViews + 1
-            });
-        }
-        
-        trackCartAddition(productId, productName) {
-            const currentAdditions = this.cartAdditions.get(productId) || 0;
-            this.cartAdditions.set(productId, currentAdditions + 1);
-            
-            this.sendToAnalytics({
-                type: 'cart_addition',
-                sessionId: this.sessionId,
-                timestamp: Date.now(),
-                productId: productId,
-                productName: productName,
-                additionCount: currentAdditions + 1
-            });
-        }
-        
-        setupProductClickTracking() {
-            // Track product card clicks
-            document.addEventListener('click', (e) => {
-                const productCard = e.target.closest('.product-card');
-                if (productCard) {
-                    const productName = productCard.querySelector('.p-name')?.textContent;
-                    const productId = this.getProductIdFromCard(productCard);
-                    if (productId && productName) {
-                        this.trackProductView(productId, productName);
-                    }
-                }
-            });
-        }
-        
-        setupCartTracking() {
-            // Track add to cart clicks
-            document.addEventListener('click', (e) => {
-                if (e.target.classList.contains('cart-btn') || 
-                    e.target.closest('.cart-btn')) {
-                    const productCard = e.target.closest('.product-card');
-                    if (productCard) {
-                        const productName = productCard.querySelector('.p-name')?.textContent;
-                        const productId = this.getProductIdFromCard(productCard);
-                        if (productId && productName) {
-                            this.trackCartAddition(productId, productName);
-                        }
-                    }
-                }
-            });
-        }
-        
-        setupSessionTracking() {
-            // Track session end
-            window.addEventListener('beforeunload', () => {
-                this.sendToAnalytics({
-                    type: 'session_end',
-                    sessionId: this.sessionId,
-                    timestamp: Date.now(),
-                    duration: Date.now() - this.startTime,
-                    pageViews: this.pageViews,
-                    productViews: Array.from(this.productViews.entries()),
-                    cartAdditions: Array.from(this.cartAdditions.entries())
-                });
-            });
-        }
-        
-        getProductIdFromCard(card) {
-            // Try to get product ID from various sources
-            const onclick = card.getAttribute('onclick');
-            if (onclick) {
-                const match = onclick.match(/openProductDetails\(['"]([^'"]+)['"]\)/);
-                if (match) return match[1];
-            }
-            
-            // Fallback: generate ID from product name
-            const productName = card.querySelector('.p-name')?.textContent;
-            if (productName) {
-                return productName.toLowerCase().replace(/\s+/g, '_');
-            }
-            
-            return null;
-        }
-        
-        sendToAnalytics(data) {
-            // In production, this would send to your analytics backend
-            // For now, we'll store in localStorage for admin panel to read
-            const existingData = JSON.parse(localStorage.getItem('user_analytics') || '[]');
-            existingData.push(data);
-            
-            // Keep only last 1000 entries to prevent localStorage overflow
-            if (existingData.length > 1000) {
-                existingData.splice(0, existingData.length - 1000);
-            }
-            
-            localStorage.setItem('user_analytics', JSON.stringify(existingData));
-            
-            // Also send to Firebase if configured
-            if (window.firebaseAnalyticsEnabled) {
-                this.sendToFirebase(data);
-            }
-        }
-        
-        async sendToFirebase(data) {
-            try {
-                // This would require Firebase SDK to be included
-                // For now, just log the data
-                console.log('Analytics data:', data);
-            } catch (error) {
-                console.error('Error sending analytics to Firebase:', error);
-            }
-        }
-    }
-    
-    // Initialize analytics
-    const userAnalytics = new UserAnalytics();
-    window.userAnalytics = userAnalytics;
     // Prevent browser from restoring scroll position on reload
     if ('scrollRestoration' in history) {
         history.scrollRestoration = 'manual';
@@ -228,16 +69,12 @@
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
-        const time = now.toLocaleTimeString('en-US', { 
-            hour12: false, 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        }).replace(/:/g, '');
+        const dateStr = `${year}${month}${day}`;
         
-        // Generate 4-digit random number for better readability
-        const random = Math.floor(Math.random() * 9000) + 1000;
+        // Generate 4-6 digit random number
+        const random = Math.floor(Math.random() * 900000) + 100000;
         
-        return `ORD-${year}${month}${day}-${time}-${random}`;
+        return `ZN-${dateStr}-${random}`;
     }
 
     /* --- SECURITY: VALIDATION & SANITIZATION --- */
@@ -399,72 +236,44 @@
 
     /* --- CREATE ORDER IN RTDB --- */
     async function createOrderInRTDB(orderData) {
-        console.log('🔥 Creating order in RTDB...', orderData);
-        
-        // Always generate an Order ID first (even if Firebase fails)
-        const orderId = generateOrderId();
-        console.log('📝 Generated Order ID:', orderId);
-        
         if (!window.firebaseDB) {
-            console.error('❌ Firebase not available, using local fallback');
-            // Return local order ID even if Firebase fails
-            return {
-                orderId: orderId,
-                firebaseKey: null,
-                fallback: true
-            };
+            throw new Error('Firebase not available');
         }
 
-        try {
-            const { ref, push, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
-            const orderRef = ref(window.firebaseDB, 'orders');
-            
-            // Create order payload with required schema
-            const payload = {
-                orderId: orderId,
-                createdAt: serverTimestamp(),
-                status: "pending",
-                channel: orderData.channel || "direct",
-                customer: {
-                    name: orderData.customerName || '',
-                    phone: orderData.phone || '',
-                    address: orderData.address || '',
-                    note: orderData.note || ''
-                },
-                items: orderData.items || [],
-                totals: {
-                    subtotal: orderData.subtotal || 0,
-                    deliveryCharge: orderData.deliveryCharge || 0,
-                    total: orderData.total || 0
-                }
-            };
-            
-            console.log('💾 Saving order payload:', payload);
+        const { ref, push, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+        const orderRef = ref(window.firebaseDB, 'orders');
+        
+        // Generate unique orderId
+        const orderId = generateOrderId();
+        
+        // Create order payload with required schema
+        const payload = {
+            orderId: orderId,
+            createdAt: serverTimestamp(),
+            status: "pending",
+            channel: orderData.channel || "direct",
+            customer: {
+                name: orderData.customerName || '',
+                phone: orderData.phone || '',
+                address: orderData.address || '',
+                note: orderData.note || ''
+            },
+            items: orderData.items || [],
+            totals: {
+                subtotal: orderData.subtotal || 0,
+                deliveryCharge: orderData.deliveryCharge || 0,
+                total: orderData.total || 0
+            }
+        };
 
-            // Save to RTDB with timeout
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Firebase timeout')), 5000);
-            });
-            
-            const result = await Promise.race([push(orderRef, payload), timeoutPromise]);
-            console.log('✅ Order saved to Firebase:', result.key);
-            
-            // Return the orderId and the Firebase key
-            return {
-                orderId: orderId,
-                firebaseKey: result.key,
-                fallback: false
-            };
-        } catch (error) {
-            console.error('❌ Failed to create order in RTDB:', error);
-            // Still return the Order ID even if Firebase fails
-            return {
-                orderId: orderId,
-                firebaseKey: null,
-                fallback: true,
-                error: error.message
-            };
-        }
+        // Save to RTDB
+        const result = await push(orderRef, payload);
+        
+        // Return the orderId and the Firebase key
+        return {
+            orderId: orderId,
+            firebaseKey: result.key
+        };
     }
 
     /* --- SMART SIZE LOGIC FOR PRODUCT CARDS --- */
@@ -515,7 +324,7 @@
         `;
     }
 
-    /* --- CART PERSISTENCE --- */
+    /* --- CART PERSISTENCE (COMMIT G) --- */
     const CART_STORAGE_KEY = 'policia_cart';
 
     function saveCartToStorage() {
@@ -540,7 +349,7 @@
     // Load cart on page load
     document.addEventListener('DOMContentLoaded', loadCartFromStorage);
 
-    /* --- BACKGROUND PRODUCT INTERACTION ANALYTICS --- */
+    /* --- BACKGROUND PRODUCT INTERACTION ANALYTICS (Firebase Realtime DB) --- */
     function scheduleBackgroundTask(task) {
         try {
             if (typeof requestIdleCallback === 'function') {
@@ -586,6 +395,7 @@
                 });
             } catch (e) {
                 // Keep completely silent for users (background only)
+                // console.debug('product_analytics error', e);
             }
         });
     }
@@ -682,28 +492,39 @@
     // Default filtered list
     let filteredProducts = [...window.allProducts];
 
-    /* --- FIREBASE PRODUCT LOADER --- */
+    /* --- SEARCH INDEXING OPTIMIZATION (COMMIT H) --- */
+    const searchIndex = window.allProducts.map(product => ({
+        id: product.id,
+        name: product.name.toLowerCase(),
+        category: product.category.toLowerCase(),
+        subCategory: product.subCategory ? product.subCategory.toLowerCase() : '',
+        img: product.img
+    }));
+
+    // Optimized search function
+    function optimizedSearch(term) {
+        if (!term) return [];
+        
+        const results = searchIndex.filter(item => 
+            item.name.includes(term) || 
+            item.category.includes(term) || 
+            item.subCategory.includes(term)
+        );
+        
+        return results.slice(0, 10); // Limit to 10 results
+    }
+
+    /* --- FIREBASE PRODUCT LOADER (COMMIT 1) --- */
     async function loadProductsFromFirebase() {
         if (!window.firebaseDB) {
             console.log('Firebase not available, using fallback products');
             return false;
         }
 
-        // Mobile-specific: Add timeout for Firebase loading
-        const isMobile = window.innerWidth <= 768;
-        const timeoutMs = isMobile ? 3000 : 5000; // 3s for mobile, 5s for desktop
-
         try {
             const { ref, get } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
             const productsRef = ref(window.firebaseDB, 'products');
-            
-            // Create a timeout promise
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Firebase timeout')), timeoutMs);
-            });
-            
-            // Race between Firebase fetch and timeout
-            const snapshot = await Promise.race([get(productsRef), timeoutPromise]);
+            const snapshot = await get(productsRef);
             
             if (snapshot.exists()) {
                 const firebaseProducts = snapshot.val();
@@ -722,16 +543,21 @@
                 if (activeProducts.length > 0) {
                     window.allProducts = activeProducts;
                     filteredProducts = [...window.allProducts];
-                    console.log(`✅ Loaded ${activeProducts.length} products from Firebase`);
+                    // Update search index
+                    searchIndex.length = 0;
+                    searchIndex.push(...window.allProducts.map(product => ({
+                        id: product.id,
+                        name: product.name.toLowerCase(),
+                        category: product.category.toLowerCase(),
+                        subCategory: product.subCategory ? product.subCategory.toLowerCase() : '',
+                        img: product.img
+                    })));
+                    console.log(`Loaded ${activeProducts.length} products from Firebase`);
                     return true;
                 }
             }
         } catch (error) {
-            if (error.message === 'Firebase timeout') {
-                console.warn('⏰ Firebase loading timed out, using fallback products');
-            } else {
-                console.warn('Failed to load products from Firebase:', error);
-            }
+            console.warn('Failed to load products from Firebase:', error);
         }
         
         return false; // Use fallback
@@ -739,83 +565,84 @@
 
     // Initialize products on page load
     document.addEventListener('DOMContentLoaded', async () => {
-        console.log('🚀 Script initializing...');
-        
-        // Force scroll to top immediately
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-        
-        // Add event delegation for search suggestions
-        document.addEventListener('click', function(event) {
-            const searchContainer = document.querySelector('.stylish-search');
-            if (searchContainer && !searchContainer.contains(event.target)) {
-                hideSearchSuggestions();
-            }
-            
-            // Handle suggestion clicks
-            if (event.target.closest('.ssRow')) {
-                const row = event.target.closest('.ssRow');
-                const productId = row.dataset.id;
-                const productName = row.querySelector('.ssName').textContent;
-                selectSearchSuggestion(productId, productName);
-            }
-        });
-        
-        // Add keyboard navigation for search
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', handleSearchInput);
-            searchInput.addEventListener('keydown', handleSearchKeyboard);
-            searchInput.addEventListener('focus', function() {
-                if (this.value.trim().length > 0) {
-                    showIsolatedSearchSuggestions(this.value.toLowerCase().trim());
-                }
-            });
-        }
-        
-        // Mobile-specific: Add a small delay for mobile devices
-        const isMobile = window.innerWidth <= 768;
-        if (isMobile) {
-            console.log('📱 Mobile device detected, adding delay...');
-            // Show loading indicator for mobile
-            const grid = document.getElementById('productGrid');
-            if (grid) {
-                grid.innerHTML = '<div style="text-align: center; padding: 50px; color: #666;">Loading products...</div>';
-            }
-            // Small delay for mobile to ensure DOM is fully ready
-            await new Promise(resolve => setTimeout(resolve, 100));
-        }
-        
-        // First load products from Firebase or fallback
-        console.log('📦 Loading products...');
         const loadedFromFirebase = await loadProductsFromFirebase();
         if (!loadedFromFirebase) {
             console.log('Using fallback hardcoded products');
         }
         
-        // Then render them
-        console.log('🎨 Rendering products...');
-        updateProductView(); // Use unified system for initial load
-        
-        // Force scroll to top again after products load
-        setTimeout(() => {
-            window.scrollTo(0, 0);
-            document.documentElement.scrollTop = 0;
-            document.body.scrollTop = 0;
-        }, 100);
-        
-        // Fallback: if no products are showing after 2 seconds, force render
-        setTimeout(() => {
-            const grid = document.getElementById('productGrid');
-            if (grid && grid.children.length === 0) {
-                console.log('Fallback: Forcing product render');
-                updateProductView();
-            }
-        }, isMobile ? 1000 : 2000); // Shorter timeout for mobile
-        
-        console.log('✅ Script initialization complete');
+        // Continue with existing initialization
+        if (typeof renderProducts === 'function') {
+            renderProducts();
+        }
     });
+
+    /* --- 2. ENHANCED SEARCH FUNCTIONALITY (COMMIT C) --- */
+    function initSearch() {
+        const searchInput = document.querySelector('.stylish-search input');
+        const suggestBox = document.getElementById('searchSuggestions');
+        const clearBtn = document.getElementById('clearSearchBtn');
+
+        if (!searchInput) return;
+
+        let searchTimeout;
+
+        // Enhanced search with debounce
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                handleSearch(e.target.value.toLowerCase().trim());
+            }, 250); // Debounce
+        });
+
+        // ESC to close
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                suggestBox.style.display = 'none';
+            }
+        });
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = "";
+                suggestBox.style.display = 'none';
+                searchInput.dispatchEvent(new Event('input'));
+                searchInput.focus();
+            });
+        }
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.stylish-search')) {
+                suggestBox.style.display = 'none';
+            }
+        });
+    }
+
+    function handleSearch(term) {
+        const suggestBox = document.getElementById('searchSuggestions');
+        
+        if (!term) {
+            suggestBox.style.display = 'none';
+            return;
+        }
+
+        const results = optimizedSearch(term);
+
+        if (results.length > 0) {
+            suggestBox.innerHTML = results.map(item => `
+                <div class="suggestion-item" onclick="openProductDetails(${item.id})">
+                    <img src="${item.img}" class="suggestion-thumbnail" onerror="this.src='https://via.placeholder.com/40x40'">
+                    <div class="suggestion-content">
+                        <div class="suggestion-name">${item.name}</div>
+                        <div class="suggestion-category">${item.category} ${item.subCategory ? '/ ' + item.subCategory : ''}</div>
+                    </div>
+                </div>
+            `).join('');
+            suggestBox.style.display = 'block';
+        } else {
+            suggestBox.style.display = 'none';
+        }
+    }
 
     /* --- 3. UI & CART ACTIONS --- */
     function toggleMenu() {
@@ -835,11 +662,13 @@
 
     function toggleSub(btn) {
         const parent = btn.parentElement;
+        // CSS e jodi .active use kora thake, tobe active use koro
         parent.classList.toggle('active');
         parent.classList.toggle('open');
 
         const icon = btn.querySelector('.plus-icon');
         if (icon) {
+            // Luxury look er jonno minus sign (−) use kora hoyeche
             icon.innerText = (parent.classList.contains('active') || parent.classList.contains('open')) ? "−" : "+";
         }
     }
@@ -937,9 +766,54 @@
         showToast(product.name);
     }
 
+    /* --- 5. HERO PARALLAX SMOOTHING (COMMIT F) --- */
+    // Smooth Parallax with Throttling
+    let parallaxTicking = false;
+
+    function updateParallax() {
+        const scrolled = window.pageYOffset;
+        const parallaxElements = document.querySelectorAll('.hero-bg-image');
+        
+        parallaxElements.forEach(element => {
+            const speed = 0.3; // Reduced sensitivity
+            const yPos = -(scrolled * speed);
+            const maxTranslate = -100; // Cap the movement
+            const finalY = Math.max(yPos, maxTranslate);
+            
+            element.style.transform = `translate3d(0, ${finalY}px, 0)`;
+        });
+        
+        parallaxTicking = false;
+    }
+
+    function requestTick() {
+        if (!parallaxTicking) {
+            requestAnimationFrame(updateParallax);
+            parallaxTicking = true;
+        }
+    }
+
+    // Disable on mobile
+    if (window.innerWidth > 768) {
+        window.addEventListener('scroll', requestTick, { passive: true });
+    }
+
+    // Glassmorphism effect for navbar
+    window.addEventListener('scroll', function () {
+        const navbar = document.querySelector('.navbar');
+        if (navbar) {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        }
+    });
+
     function showToast(productName) {
         const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
+        // ...
         toast.className = 'toast-notification';
         toast.innerHTML = `
             <div class="toast-content">
@@ -1005,6 +879,8 @@
     }
 
     /* --- 7. ORDER LOGIC --- */
+    /* --- ORDER LOGIC WITH FB TRACKING & MESSENGER COPY --- */
+
     function openOrderOptions(fullMessage) {
         // 1. FB Pixel Tracking: InitiateCheckout
         if (typeof fbq === 'function') {
@@ -1015,6 +891,8 @@
         }
 
         const encodedMsg = encodeURIComponent(fullMessage);
+
+        // Message-e single quote (') handle korar jonno escape logic
         const escapedMessage = fullMessage.replace(/'/g, "\\'");
 
         const modalHtml = `
@@ -1038,19 +916,23 @@
 
     // Messenger Redirect & Clipboard Logic
     function copyAndRedirectMessenger(message) {
+        // Clipboard-e text copy kora
         navigator.clipboard.writeText(message).then(() => {
+            // Notification dekhano
             if (typeof showToast === "function") {
                 showToast("Order details copied! Please paste it in Messenger.");
             } else {
                 alert("Order details copied! Please paste it in our Messenger inbox.");
             }
 
+            // 1.2 second delay jate user toast-ta dekhte pay, tarpore redirect
             setTimeout(() => {
                 window.open(SOCIAL_CONFIG.messengerLink, '_blank');
                 closeOrderModal();
             }, 1200);
         }).catch(err => {
             console.error('Could not copy text: ', err);
+            // Fallback: Jodi clipboard access na thake, direct redirect hobe
             window.open(SOCIAL_CONFIG.messengerLink, '_blank');
             closeOrderModal();
         });
@@ -1075,13 +957,18 @@
 
     function processCartCheckout() {
         if (cartArray.length === 0) return;
+        // Use the new universal 3-option checkout modal for cart orders
         if (typeof triggerCartOrderFlow === 'function') {
             triggerCartOrderFlow();
         }
     }
 
-    /* --- 8. PRODUCT RENDERING & PAGINATION --- */
+    // (Removed global click listener for .ready as we use direct onclick now)
+
+    /* --- 8. PRODUCT RENDERING & PAGINATION (UPDATED WITH DETAILS TRIGGER) --- */
+
     function renderSingleCard(container, p) {
+        // Related products / small cards - PERFORMANCE OPTIMIZED
         let html = '';
         html += `
             <div class="product-card">
@@ -1107,10 +994,32 @@
     }
 
     function selectSize(prodId, element) {
+        // Stop propagation jate size select korle details page na khule jay
         const options = document.querySelectorAll(`#sizes-prod-${prodId} span`);
         options.forEach(opt => opt.classList.remove('active'));
         element.classList.add('active');
     }
+
+    function captureRecentView(element) {
+        // 1. Pura card-er HTML copy kora
+        const cardHTML = element.outerHTML;
+        
+        // 2. Name diye duplicate check kora
+        const productName = element.querySelector('.p-name').innerText;
+        let recentCards = JSON.parse(localStorage.getItem('recentCards')) || [];
+
+        // Duplicate thakle ager-ta remove
+        recentCards = recentCards.filter(html => !html.includes(`>${productName}<`));
+
+        // Shuru-te add kora
+        recentCards.unshift(cardHTML);
+
+        // Max 4 items rakha
+        if (recentCards.length > 4) recentCards.pop();
+
+        localStorage.setItem('recentCards', JSON.stringify(recentCards));
+    }
+
 
     function displayProducts(page) {
         const grid = document.getElementById('productGrid');
@@ -1126,10 +1035,13 @@
             grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--muted-foreground); padding: 40px;">No products found in this category.</p>`;
         } else {
             itemsToShow.forEach(p => {
+                // Eikhane amra element-ta toiri korchi
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 
+                // --- MAIN CHANGE EIKHANE ---
                 card.onclick = function() { 
+                    captureRecentView(this); // Ei line-ta pura HTML card-ke clone korbe
                     openProductDetails(p.id); 
                 };
                 
@@ -1155,60 +1067,28 @@
         if (typeof setupPagination === 'function') {
             setupPagination(filteredProducts.length, currentLimit);
         }
-        
-        // Hook B: Products rendered - hide splash if not already hidden
-        if (typeof hideSplash === 'function') {
-            hideSplash("products-rendered");
-        }
     }
+    function updatePagination() {
+        const pBar = document.getElementById('paginationBar');
+        if (!pBar) return;
 
-    function setupPagination(totalItems, itemsPerPage) {
-        const paginationContainer = document.getElementById('paginationBar');
-        if (!paginationContainer) return;
+        const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+        pBar.innerHTML = "";
 
-        paginationContainer.innerHTML = '';
-        const pageCount = Math.ceil(totalItems / itemsPerPage);
-
-        if (pageCount <= 1) return;
-
-        // Previous button
-        const prevBtn = document.createElement('button');
-        prevBtn.innerText = 'PREV';
-        prevBtn.className = 'nav-btn-stylish';
-        prevBtn.onclick = () => {
-            if (currentPage > 1) {
-                currentPage--;
-                displayProducts(currentPage);
-                window.scrollTo({ top: document.getElementById('productGrid').offsetTop - 100, behavior: 'smooth' });
+        // Jodio 1tar beshi page thake tobei pagination dekhabe
+        if (totalPages > 1) {
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.innerText = i;
+                btn.className = `page-num ${i === currentPage ? 'active' : ''}`;
+                btn.onclick = () => {
+                    currentPage = i;
+                    displayProducts(i);
+                    window.scrollTo({ top: document.getElementById('productGrid').offsetTop - 100, behavior: 'smooth' });
+                };
+                pBar.appendChild(btn);
             }
-        };
-        paginationContainer.appendChild(prevBtn);
-
-        // Page numbers
-        for (let i = 1; i <= pageCount; i++) {
-            const btn = document.createElement('button');
-            btn.innerText = i;
-            btn.className = `page-num ${i === currentPage ? 'active' : ''}`;
-            btn.onclick = () => {
-                currentPage = i;
-                displayProducts(i);
-                window.scrollTo({ top: document.getElementById('productGrid').offsetTop - 100, behavior: 'smooth' });
-            };
-            paginationContainer.appendChild(btn);
         }
-
-        // Next button
-        const nextBtn = document.createElement('button');
-        nextBtn.innerText = 'NEXT';
-        nextBtn.className = 'nav-btn-stylish';
-        nextBtn.onclick = () => {
-            if (currentPage < pageCount) {
-                currentPage++;
-                displayProducts(currentPage);
-                window.scrollTo({ top: document.getElementById('productGrid').offsetTop - 100, behavior: 'smooth' });
-            }
-        };
-        paginationContainer.appendChild(nextBtn);
     }
 
     // Page load hoye gele loading screen hide korar jonno
@@ -1217,47 +1097,57 @@
         if (loader) {
             loader.style.display = 'none';
         }
-        
-        // Speed-optimized splash screen logic
-        let splashHidden = false;
-        
-        function hideSplash(reason) {
-            if (splashHidden) return; // Idempotent - run once only
-            splashHidden = true;
-            
-            const splash = document.getElementById('splashScreen');
-            if (!splash) return;
-            
-            console.log(`Splash hiding: ${reason}`);
-            
-            // Add hide class for fade out
-            splash.classList.add('hide');
-            
-            // Remove from layout after transition
+
+        // New Elegant Splash Screen Logic
+        const splash = document.getElementById('splashScreen');
+        if (splash) {
+            // Minimum display time for the luxury animation to play out (2 seconds total)
             setTimeout(() => {
-                splash.style.display = 'none';
-                // Restore scroll
-                document.documentElement.style.overflow = "";
-                document.body.style.overflow = "";
-                document.body.classList.remove("no-scroll");
-            }, 450);
+                splash.classList.add('hidden');
+                // Remove from DOM after fade transition completes (1.2s CSS transition)
+                setTimeout(() => {
+                    splash.remove();
+                }, 1200);
+            }, 2200);
         }
-        
-        // Hook A: DOM ready with critical UI
-        if (document.getElementById('productGrid') || document.querySelector('.navbar')) {
-            hideSplash("dom-ready");
-        }
-        
-        // Hook B: Fallback timeout
-        setTimeout(() => hideSplash("fallback-timeout"), 2200);
     });
 
+    // Extra precaution: Jodi load hote deri hoy, 3 second por auto hide hobe
+    setTimeout(() => {
+        const loader = document.getElementById('loadingScreen');
+        if (loader && loader.style.display !== 'none') {
+            loader.style.display = 'none';
+        }
+    }, 3000);
+
+    /* --- FINAL MENU & FILTER BRIDGE --- */
+
+    // 1. Menu item click handler
+    function handleCategoryClick(event, mainCat, subCat) {
+        event.preventDefault(); // Page jump stop korbe
+        filterByCategory(mainCat, subCat); // Filter logic call korbe
+
+        // Mobile-e menu auto bondho hobe
+        const menu = document.getElementById('menuOverlay');
+        if (menu) {
+            if (history.state && history.state.overlay) {
+                history.back();
+            } else {
+                menu.classList.remove('active');
+                document.body.classList.remove('menu-open');
+            }
+        }
+    }
+
     /* --- UNIFIED FILTER SYSTEM --- */
+
+    // PURE FILTER FUNCTION - Single Source of Truth
     function applyFilters(products, state) {
         return products.filter(product => {
             // 1. Category filter
             if (state.category && state.category !== 'All') {
                 if (product.category !== state.category) return false;
+                // If subCategory is set, check it too
                 if (state.subCategory && state.subCategory !== 'All' && product.subCategory !== state.subCategory) {
                     return false;
                 }
@@ -1316,18 +1206,22 @@
 
     // BACKWARD COMPATIBILITY WRAPPERS
     function filterByCategory(mainCat, subCat = 'All', element) {
+        // 0. Smart Parameter Fix: Jodi 2nd parameter-e bhul kore 'element' chole ashe
         if (subCat && typeof subCat !== 'string') {
             element = subCat;
             subCat = 'All';
         }
 
+        // 1. Active class logic (Button color highlight)
         if (element && element.classList) {
             const allPills = document.querySelectorAll('.pill');
             allPills.forEach(pill => pill.classList.remove('active'));
             element.classList.add('active');
         }
 
+        // 2. Update filter state
         if (mainCat === 'All') {
+            // Reset all filters when "All" is selected
             filterState.category = null;
             filterState.subCategory = null;
         } else {
@@ -1335,195 +1229,58 @@
             filterState.subCategory = subCat === 'All' ? null : subCat;
         }
 
+        // 3. Update view through unified system
         updateProductView();
     }
 
     function filterBySubCategory(subCatName) {
+        // 1. Pill button gulo theke active class shore fela
         const allPills = document.querySelectorAll('.pill');
         allPills.forEach(pill => pill.classList.remove('active'));
 
-        filterState.category = null;
+        // 2. Update filter state
+        filterState.category = null; // Reset category when using subCategory directly
         filterState.subCategory = subCatName;
 
+        // 3. Update view through unified system
         updateProductView();
     }
 
     function applyAdvancedFilters() {
+        // This function is now just a wrapper for the unified system
+        // It's called by the price slider and search input
         updateProductView();
     }
 
     // Price slider update - now updates filter state
     function updatePriceLabel(val) {
-        const label = document.getElementById('priceLabel');
+        // UI-te Taka symbol show kora
+        const label = document.getElementById('priceLabel'); // HTML-e id="priceLabel" thakle
         if (label) label.innerText = `৳${val}`;
 
+        // Update filter state
         filterState.priceMax = parseInt(val);
+        
+        // Update view through unified system
         updateProductView();
     }
 
-    // Search input handler with debouncing and isolated suggestions
-    let searchDebounceTimer;
+    // Search input handler - now updates filter state
     function handleSearchInput() {
         const searchInput = document.getElementById('searchInput');
-        const suggestionsPanel = document.getElementById('searchSuggestPanel');
-        
         if (searchInput) {
-            const searchTerm = searchInput.value.toLowerCase().trim();
             filterState.searchText = searchInput.value;
-            
-            // Clear existing timer
-            clearTimeout(searchDebounceTimer);
-            
-            // Hide immediately if empty
-            if (searchTerm.length === 0) {
-                hideSearchSuggestions();
-                updateProductView();
-                return;
-            }
-            
-            // Debounce search suggestions (250ms)
-            searchDebounceTimer = setTimeout(() => {
-                showIsolatedSearchSuggestions(searchTerm);
-            }, 250);
-            
-            // Don't update product view while typing - only on empty or selection
-        }
-    }
-    
-    // Isolated search suggestions with exact markup
-    function showIsolatedSearchSuggestions(searchTerm) {
-        const suggestionsPanel = document.getElementById('searchSuggestPanel');
-        if (!suggestionsPanel || !window.allProducts || window.allProducts.length === 0) {
-            hideSearchSuggestions();
-            return;
-        }
-        
-        // Get matching products with prioritization
-        const matches = [];
-        const maxSuggestions = 10;
-        const addedIds = new Set();
-        
-        // Prioritize name matches
-        window.allProducts.forEach(product => {
-            if (matches.length >= maxSuggestions) return;
-            if (addedIds.has(product.id)) return;
-            
-            const nameMatch = product.name.toLowerCase().includes(searchTerm);
-            const categoryMatch = product.category.toLowerCase().includes(searchTerm);
-            const subCategoryMatch = product.subCategory && product.subCategory.toLowerCase().includes(searchTerm);
-            
-            if (nameMatch || categoryMatch || subCategoryMatch) {
-                const priority = nameMatch ? 1 : (categoryMatch ? 2 : 3);
-                matches.push({ ...product, matchType: priority });
-                addedIds.add(product.id);
-            }
-        });
-        
-        // Sort by priority (name matches first)
-        matches.sort((a, b) => a.matchType - b.matchType);
-        
-        // Display suggestions with exact isolated markup
-        if (matches.length > 0) {
-            suggestionsPanel.innerHTML = matches.map(product => `
-                <div class="ssRow" data-id="${product.id}" role="button" tabindex="0">
-                    <img class="ssThumb" src="${product.img}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/40x40'">
-                    <div class="ssText">
-                        <div class="ssName">${highlightMatch(product.name, searchTerm)}</div>
-                        <div class="ssMeta"><span class="ssTag">${product.category}${product.subCategory ? ' • ' + product.subCategory : ''}</span></div>
-                    </div>
-                    <div class="ssPrice">৳${product.price}</div>
-                </div>
-            `).join('');
-            
-            suggestionsPanel.classList.add('isOpen');
-            suggestionsPanel.style.display = 'block';
-        } else {
-            hideSearchSuggestions();
-        }
-    }
-    
-    // Highlight matching text in suggestions
-    function highlightMatch(text, searchTerm) {
-        const regex = new RegExp(`(${searchTerm})`, 'gi');
-        return text.replace(regex, '<strong>$1</strong>');
-    }
-    
-    // Hide search suggestions with isolated panel
-    function hideSearchSuggestions() {
-        const suggestionsPanel = document.getElementById('searchSuggestPanel');
-        if (suggestionsPanel) {
-            suggestionsPanel.classList.remove('isOpen');
-            suggestionsPanel.style.display = 'none';
-            suggestionsPanel.innerHTML = '';
-        }
-    }
-    
-    // Select a search suggestion and open product details
-    function selectSearchSuggestion(productId, productName) {
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.value = productName;
-            filterState.searchText = productName;
-            hideSearchSuggestions();
             updateProductView();
-            
-            // Open product details using existing function
-            openProductDetails(parseInt(productId));
         }
     }
-    
+
     // Clear search function
     function clearSearch() {
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
             searchInput.value = "";
             filterState.searchText = "";
-            hideSearchSuggestions();
             updateProductView();
-        }
-    }
-    
-    // Keyboard navigation for search
-    function handleSearchKeyboard(event) {
-        const suggestionsPanel = document.getElementById('searchSuggestPanel');
-        const items = suggestionsPanel ? suggestionsPanel.querySelectorAll('.ssRow') : [];
-        let currentIndex = -1;
-        
-        // Find current highlighted item
-        items.forEach((item, index) => {
-            if (item.classList.contains('isHighlighted')) {
-                currentIndex = index;
-            }
-        });
-        
-        switch(event.key) {
-            case 'ArrowDown':
-                event.preventDefault();
-                items.forEach(item => item.classList.remove('isHighlighted'));
-                const nextIndex = (currentIndex + 1) % items.length;
-                items[nextIndex].classList.add('isHighlighted');
-                items[nextIndex].scrollIntoView({ block: 'nearest' });
-                break;
-                
-            case 'ArrowUp':
-                event.preventDefault();
-                items.forEach(item => item.classList.remove('isHighlighted'));
-                const prevIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
-                items[prevIndex].classList.add('isHighlighted');
-                items[prevIndex].scrollIntoView({ block: 'nearest' });
-                break;
-                
-            case 'Enter':
-                event.preventDefault();
-                if (currentIndex >= 0 && items[currentIndex]) {
-                    items[currentIndex].click();
-                }
-                break;
-                
-            case 'Escape':
-                event.preventDefault();
-                hideSearchSuggestions();
-                break;
         }
     }
 
@@ -1539,6 +1296,7 @@
         // Background analytics: details page opens
         trackProductAnalytics(p, 'views');
 
+     
         // --- TRACKING ---
         if (typeof fbq === 'function') {
             fbq('track', 'ViewContent', {
@@ -1580,6 +1338,7 @@
             ['S', 'M', 'L', 'XL'].forEach(s => {
                 const span = document.createElement('span');
                 span.innerText = s;
+                // Eikhane click korle shudhu visual change hobe, button block hobe na
                 span.onclick = function () {
                     sizeContainer.querySelectorAll('span').forEach(el => el.classList.remove('active'));
                     this.classList.add('active');
@@ -1636,6 +1395,7 @@
 
             bBtn.onclick = function (e) {
                 e.preventDefault();
+                // Eikhane amra puraton modal code muche direct triggerOrderFlow call korchi
                 triggerOrderFlow(p.id); 
             };
         }
@@ -1645,13 +1405,14 @@
         dPage.classList.add('active');
         document.body.style.overflow = 'hidden';
         dPage.scrollTop = 0;
-    }
+    } // <-- openProductDetails function eikhane shesh
 
-    // 7. Action Button Handlers
+    // 7. Action Button Handlers (Eigulo nouton add kora hoyeche)
     function handleAddToCartFromDetails() {
         const productName = document.getElementById('detName').innerText;
         const p = window.allProducts.find(item => item.name === productName);
         if (p) {
+            // Tumi tomar existing addToCart function ta eikhane call korbe
             if (typeof addToCart === "function") {
                 addToCart(p.id);
                 alert(`${p.name} added to cart!`);
@@ -1667,6 +1428,7 @@
         if (p) {
             if (typeof addToCart === "function") {
                 addToCart(p.id);
+                // Buy Now logic: Cart open kora ba Checkout e niye jawa
                 closeProductDetails();
                 alert("Proceeding to Checkout with " + p.name);
             }
@@ -1684,13 +1446,131 @@
         }
     }
 
+
+    /* --- ADVANCED FILTER LOGIC (TK & S/M/L/XL CONNECTED) --- */
+
+    // Global states for filters (kept for backward compatibility)
+    let currentCategory = 'All'; // Eta age thekei thakar kotha
+    let currentMaxPrice = 5000;
+
+    //  trending and viewed section//
+    // DEPRECATED: kept for reference; do not call.
+    function filterBySubCategory_deprecated1(subCatName) {
+
+        const filtered = window.allProducts.filter(p => p.subCategory === subCatName);
+
+        const grid = document.getElementById('productGrid');
+
+        if (!grid) return;
+
+        // Optional: Product section-er title change kora (jodi title-er id 'sectionTitle' hoy)
+
+        const title = document.getElementById('sectionTitle');
+
+        if (title) title.innerText = subCatName + " Selection";
+
+        grid.innerHTML = '';
+
+        if (filtered.length > 0) {
+
+            // PERFORMANCE OPTIMIZED: Use string builder instead of innerHTML +=
+            let html = '';
+            filtered.forEach(p => {
+                html += `
+                    <div class="product-card" onclick="openProductDetails(${p.id})">
+                        <div class="product-img-holder">
+                            <img src="${p.img}">
+                        </div>
+                        <div class="p-info">
+                            <h3 class="p-name">${p.name}</h3>
+                            <p class="p-price">TK-${p.price}</p>
+                        </div>
+                        ${buildSizeOptionsHTML(p)}
+                        <div class="button-group" style="display:flex; gap:8px; margin-top:8px;">
+                            <button class="action-btn buy-btn" onclick="event.stopPropagation(); triggerOrderFlow(${p.id})">Buy Now</button>
+                            <button class="cart-btn action-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Add to Cart</button>
+                        </div>
+                    </div>`;
+            });
+            grid.innerHTML = html;
+
+            grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        } else {
+
+            grid.innerHTML = `<p style="color:white; text-align:center; width:100%; padding: 50px 0;">No products found in ${subCatName}!</p>`;
+
+        }
+
+    }
+
+    function setupPagination(totalItems, itemsPerPage) {
+        const paginationContainer = document.getElementById('paginationBar');
+        if (!paginationContainer) return;
+
+        paginationContainer.innerHTML = '';
+        const pageCount = Math.ceil(totalItems / itemsPerPage);
+
+        if (pageCount <= 1) return;
+
+        // Previous button
+        const prevBtn = document.createElement('button');
+        prevBtn.innerHTML = '‹';
+        prevBtn.className = 'page-btn nav-btn prev-btn';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => {
+            if (currentPage > 1) {
+                currentPage -= 1;
+                displayProducts(currentPage);
+                window.scrollTo({ top: document.getElementById('productGrid').offsetTop - 100, behavior: 'smooth' });
+            }
+        };
+        paginationContainer.appendChild(prevBtn);
+
+        // Numbered buttons
+        for (let i = 1; i <= pageCount; i++) {
+            const btn = document.createElement('button');
+            btn.innerText = i;
+            btn.className = (i === currentPage) ? 'page-btn page-num active' : 'page-btn page-num';
+
+            btn.onclick = () => {
+                currentPage = i;
+                displayProducts(currentPage);
+                window.scrollTo({ top: document.getElementById('productGrid').offsetTop - 100, behavior: 'smooth' });
+            };
+            paginationContainer.appendChild(btn);
+        }
+
+        // Next button
+        const nextBtn = document.createElement('button');
+        nextBtn.innerHTML = '›';
+        nextBtn.className = 'page-btn nav-btn next-btn';
+        nextBtn.disabled = currentPage === pageCount;
+        nextBtn.onclick = () => {
+            if (currentPage < pageCount) {
+                currentPage += 1;
+                displayProducts(currentPage);
+                window.scrollTo({ top: document.getElementById('productGrid').offsetTop - 100, behavior: 'smooth' });
+            }
+        };
+        paginationContainer.appendChild(nextBtn);
+    }
+
     /* --- HARDWARE BACK BUTTON FIX --- */
+
+    // 1. Jokhon kono overlay open hobe, tokhon ei function-ta call korbe
+    function pushNewState() {
+        history.pushState({ overlayOpen: true }, "");
+    }
+
+    // 2. Browser-er back button click event listen kora
     window.onpopstate = function (event) {
         const menu = document.getElementById('menuOverlay');
         const detailsPage = document.getElementById('productDetailsPage');
         const cartOverlay = document.getElementById('cartSerialOverlay');
         const orderModal = document.getElementById('orderModal') || document.getElementById('socialOrderModal');
 
+        // Jodi kono overlay open thake, tobe sheta bondho korbe (site theke ber hobe na)
         if (menu && menu.classList.contains('active')) {
             toggleMenu();
         }
@@ -1705,16 +1585,18 @@
         }
     };
 
+    // 3. Tomar existing function-gulo te state push kora
+    // Eigulo shudhu niche add koro, main function edit korar dorkar nai
     const originalOpenDetails = openProductDetails;
     openProductDetails = function (id) {
-        history.pushState({ overlay: true }, "");
+        pushNewState();
         originalOpenDetails(id);
     };
 
     const originalToggleMenu = toggleMenu;
     toggleMenu = function () {
         if (!document.getElementById('menuOverlay').classList.contains('active')) {
-            history.pushState({ overlay: true }, "");
+            pushNewState();
         }
         originalToggleMenu();
     };
@@ -1722,10 +1604,125 @@
     const originalToggleCart = toggleCartDisplay;
     toggleCartDisplay = function () {
         if (!document.getElementById('cartSerialOverlay').classList.contains('active')) {
-            history.pushState({ overlay: true }, "");
+            pushNewState();
         }
         originalToggleCart();
     };
+
+    /* --- I DON'T KNOW WHAT I WANT (ROULETTE FEATURE) --- */
+    function spinForRandomProduct() {
+        const menu = document.getElementById('menuOverlay');
+        if (menu) {
+            menu.classList.remove('active');
+            document.body.classList.remove('menu-open');
+        }
+
+        const overlay = document.getElementById('rouletteOverlay');
+        const spinner = document.getElementById('rouletteSpinner');
+        const resultText = document.getElementById('rouletteResultText');
+
+        if (!overlay || !spinner || !resultText) return;
+
+        // Reset UI
+        resultText.classList.remove('show');
+        resultText.innerText = '';
+
+        // Generate an array of random product images to act as the "tape"
+        const spinItems = [];
+        const numSpins = 15; // Number of items it spins past before stopping
+
+        for (let i = 0; i < numSpins; i++) {
+            const randomP = window.allProducts[Math.floor(Math.random() * window.allProducts.length)];
+            spinItems.push(randomP);
+        }
+
+        // The final winning product ensures it exists
+        const winningProduct = spinItems[spinItems.length - 1];
+
+        // Inject HTML into spinner
+        spinner.innerHTML = spinItems.map(p => `<img src="${p.img}" alt="${p.name}">`).join('');
+
+        // Reset spin position
+        spinner.style.transition = 'none';
+        spinner.style.transform = 'translateY(0)';
+
+        // Show overlay
+        overlay.classList.add('active');
+
+        // Force reflow
+        void spinner.offsetWidth;
+
+        // Trigger spin animation
+        const imageHeights = 300; // Expected from CSS
+
+        spinner.style.transition = 'transform 2.5s cubic-bezier(0.15, 0.85, 0.3, 1)'; // Decelerating spin
+        spinner.classList.add('spinning-blur');
+
+        // Stop at the very last image
+        const finalOffset = -1 * imageHeights * (numSpins - 1);
+        spinner.style.transform = `translateY(${finalOffset}px)`;
+
+        // Wait for spin to finish
+        setTimeout(() => {
+            spinner.classList.remove('spinning-blur');
+            resultText.innerText = `You Discovered: ${winningProduct.name}`;
+            resultText.classList.add('show');
+
+            // Wait 1 second to let them read it, then open product
+            setTimeout(() => {
+                overlay.classList.remove('active');
+                openProductDetails(winningProduct.id);
+            }, 1200);
+
+        }, 2500); // Must match transition time
+    }
+
+
+    // State management with LocalStorage
+    let foundBalls = JSON.parse(localStorage.getItem('fifaBallsCollected')) || [];
+
+    function initEasterEgg() {
+        // Agey jeta paise oita hide kore dibe
+        foundBalls.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.style.display = 'none';
+        });
+    }
+
+    function collectBall(id) {
+        if (!foundBalls.includes(id)) {
+            foundBalls.push(id);
+            localStorage.setItem('fifaBallsCollected', JSON.stringify(foundBalls));
+            
+            // Visual feedback
+            const ball = document.getElementById(id);
+            ball.style.transform = "scale(2) rotate(360deg)";
+            ball.style.opacity = "0";
+            
+            setTimeout(() => {
+                ball.style.display = 'none';
+            }, 400);
+
+            // Toast message
+            if(foundBalls.length < 3) {
+                alert(`⚽ You found a World Cup Ball! (${foundBalls.length}/3)`);
+            } else {
+                showFifaReward();
+            }
+        }
+    }
+
+    function showFifaReward() {
+        document.getElementById('fifa-popup').style.display = 'flex';
+    }
+
+    function closeFifaPopup() {
+        document.getElementById('fifa-popup').style.display = 'none';
+    }
+
+    // Start the check on load
+    initEasterEgg();
+
 
     /* --- UNIVERSAL ORDER MODAL SYSTEM --- */
     let currentOrderContext = null;
@@ -1753,7 +1750,7 @@
         const sizeLabelPart = selectedSize ? `, Size: ${selectedSize}` : '';
         const safeSizeForContext = selectedSize || 'N/A';
 
-        // Context for single-product direct buy
+        // Context for single-product direct buy (Firebase + Telegram)
         currentOrderContext = {
             type: 'single',
             items: [{
@@ -1901,15 +1898,8 @@
             
             const orderResult = await createOrderInRTDB(sanitizedData);
             
-            console.log('🎯 Order Result:', orderResult);
-            
             // Show success with orderId
-            let successMessage = `Order created! Your Order ID: ${orderResult.orderId}`;
-            if (orderResult.fallback) {
-                successMessage += "\n(Note: Order saved locally due to connection issues)";
-            }
-            console.log('📱 Showing alert:', successMessage);
-            alert(`${successMessage}\n\nRedirecting to WhatsApp...`);
+            alert(`Order created! Your Order ID: ${orderResult.orderId}\n\nRedirecting to WhatsApp...`);
             
             // Build WhatsApp message with orderId
             const message = buildOrderMessage(orderResult.orderId, sanitizedData);
@@ -1966,11 +1956,7 @@
             const orderResult = await createOrderInRTDB(sanitizedData);
             
             // Show success with orderId
-            let successMessage = `Order created! Your Order ID: ${orderResult.orderId}`;
-            if (orderResult.fallback) {
-                successMessage += "\n(Note: Order saved locally due to connection issues)";
-            }
-            alert(`${successMessage}\n\nRedirecting to Messenger...`);
+            alert(`Order created! Your Order ID: ${orderResult.orderId}\n\nRedirecting to Messenger...`);
             
             // Build Messenger message with orderId
             const message = buildOrderMessage(orderResult.orderId, sanitizedData);
@@ -2156,29 +2142,18 @@
             
             const orderResult = await createOrderInRTDB(sanitizedData);
             
-            console.log('🎯 Direct Order Result:', orderResult);
-            
             // SECURITY: Telegram alerts disabled for public site
             // await sendTelegramAlert(cName, cPhone, cAddress, currentOrderContext, orderResult.orderId);
             
             // Show success with orderId
-            let successContent = `
+            document.getElementById('modalContent').innerHTML = `
                 <div style="padding:20px;">
                     <h2 style="color:#d4af37; margin-bottom:10px;">Order Placed Successfully!</h2>
                     <p style="color:#fff;">Thank you ${cName}, we received your order.</p>
-                    <p style="color:#d4af37; font-weight:bold; margin:10px 0;">Order ID: ${orderResult.orderId}</p>`;
-            
-            if (orderResult.fallback) {
-                successContent += `<p style="color:#ffa500; font-size:12px;">Note: Order saved locally due to connection issues</p>`;
-            }
-            
-            successContent += `
+                    <p style="color:#d4af37; font-weight:bold; margin:10px 0;">Order ID: ${orderResult.orderId}</p>
                     <p style="color:#aaa; font-size:14px;">We will contact you soon for confirmation.</p>
                     <button onclick="closeSocialModal()" style="margin-top:20px; background:#fff; color:#000; padding:10px 25px; border-radius:8px; border:none; font-weight:bold; cursor:pointer;">Close</button>
                 </div>`;
-            
-            console.log('📱 Showing success modal with Order ID:', orderResult.orderId);
-            document.getElementById('modalContent').innerHTML = successContent;
 
             // Clear cart if it was a cart order
             if (currentOrderContext.type === 'cart') {
@@ -2239,98 +2214,6 @@
         alert(`${pageName} page - Coming soon!`);
     }
 
-    // Add missing handleCategoryClick function
-    function handleCategoryClick(event, mainCat, subCat) {
-        event.preventDefault(); // Page jump stop korbe
-        filterByCategory(mainCat, subCat); // Filter logic call korbe
-
-        // Mobile-e menu auto bondho hobe
-        const menu = document.getElementById('menuOverlay');
-        if (menu) {
-            if (history.state && history.state.overlay) {
-                history.back();
-            } else {
-                menu.classList.remove('active');
-                document.body.classList.remove('menu-open');
-            }
-        }
-    }
-
-    // Add missing spinForRandomProduct function
-    function spinForRandomProduct() {
-        const menu = document.getElementById('menuOverlay');
-        if (menu) {
-            menu.classList.remove('active');
-            document.body.classList.remove('menu-open');
-        }
-
-        const overlay = document.getElementById('rouletteOverlay');
-        const spinner = document.getElementById('rouletteSpinner');
-        const resultText = document.getElementById('rouletteResultText');
-
-        if (!overlay || !spinner || !resultText) {
-            // Fallback: just pick a random product and open details
-            const randomProduct = window.allProducts[Math.floor(Math.random() * window.allProducts.length)];
-            if (randomProduct) {
-                openProductDetails(randomProduct.id);
-            }
-            return;
-        }
-
-        // Reset UI
-        resultText.classList.remove('show');
-        resultText.innerText = '';
-
-        // Generate an array of random product images to act as the "tape"
-        const spinItems = [];
-        const numSpins = 15; // Number of items it spins past before stopping
-
-        for (let i = 0; i < numSpins; i++) {
-            const randomP = window.allProducts[Math.floor(Math.random() * window.allProducts.length)];
-            spinItems.push(randomP);
-        }
-
-        // The final winning product ensures it exists
-        const winningProduct = spinItems[spinItems.length - 1];
-
-        // Inject HTML into spinner
-        spinner.innerHTML = spinItems.map(p => `<img src="${p.img}" alt="${p.name}">`).join('');
-
-        // Reset spin position
-        spinner.style.transition = 'none';
-        spinner.style.transform = 'translateY(0)';
-
-        // Show overlay
-        overlay.classList.add('active');
-
-        // Force reflow
-        void spinner.offsetWidth;
-
-        // Trigger spin animation
-        const imageHeights = 300; // Expected from CSS
-
-        spinner.style.transition = 'transform 2.5s cubic-bezier(0.15, 0.85, 0.3, 1)'; // Decelerating spin
-        spinner.classList.add('spinning-blur');
-
-        // Stop at the very last image
-        const finalOffset = -1 * imageHeights * (numSpins - 1);
-        spinner.style.transform = `translateY(${finalOffset}px)`;
-
-        // Wait for spin to finish
-        setTimeout(() => {
-            spinner.classList.remove('spinning-blur');
-            resultText.innerText = `You Discovered: ${winningProduct.name}`;
-            resultText.classList.add('show');
-
-            // Wait 1 second to let them read it, then open product
-            setTimeout(() => {
-                overlay.classList.remove('active');
-                openProductDetails(winningProduct.id);
-            }, 1200);
-
-        }, 2500); // Must match transition time
-    }
-
     // Export functions for inline handlers
     window.toggleMenu = toggleMenu;
     window.toggleCartDisplay = toggleCartDisplay;
@@ -2341,6 +2224,7 @@
     window.removeItem = removeItem;
     window.processCartCheckout = processCartCheckout;
     window.handleSingleBuy = handleSingleBuy;
+    window.spinForRandomProduct = spinForRandomProduct;
     window.triggerOrderFlow = triggerOrderFlow;
     window.triggerCartOrderFlow = triggerCartOrderFlow;
     window.showDirectOrderForm = showDirectOrderForm;
@@ -2354,6 +2238,9 @@
     window.filterByCategory = filterByCategory;
     window.filterBySubCategory = filterBySubCategory;
     window.updatePriceLabel = updatePriceLabel;
+    window.collectBall = collectBall;
+    window.showFifaReward = showFifaReward;
+    window.closeFifaPopup = closeFifaPopup;
     window.toggleSub = toggleSub;
     window.filterProducts = filterProducts;
     window.scrollToSection = scrollToSection;
@@ -2361,18 +2248,20 @@
     window.clearSearch = clearSearch;
     window.handleWhatsAppOrder = handleWhatsAppOrder;
     window.resetRateLimit = resetRateLimit;
-    window.spinForRandomProduct = spinForRandomProduct;
-    window.selectSearchSuggestion = selectSearchSuggestion;
-    window.hideSearchSuggestions = hideSearchSuggestions;
-    window.showPremiumSearchSuggestions = showPremiumSearchSuggestions;
-    window.handleSearchKeyboard = handleSearchKeyboard;
 
-    // CONSOLE LOG TO VERIFY PHASE 5 FEATURES
-    console.log('✅ PHASE 5 SCRIPT LOADED WITH ALL FEATURES:');
-    console.log('  📝 Order ID Generation: generateOrderId()');
-    console.log('  🔥 RTDB Order Creation: createOrderInRTDB()');
-    console.log('  🛡️  Security Features: Validation, Rate Limiting, Sanitization');
-    console.log('  🚫 Telegram Alerts Disabled: TELEGRAM_ENABLED = false');
-    console.log('  📦 Real Order System Active');
+    // Initialize search with new unified system
+    initSearch();
+
+    // Update search input handler to use unified system
+    const searchBar = document.getElementById('searchInput');
+    if (searchBar) {
+        searchBar.removeEventListener('input', applyAdvancedFilters); // Remove old handler
+        searchBar.addEventListener('input', handleSearchInput); // Add new unified handler
+    }
+
+    // Render products on load
+    document.addEventListener('DOMContentLoaded', () => {
+        updateProductView(); // Use unified system for initial load
+    });
 
 })();
