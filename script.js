@@ -2331,7 +2331,44 @@
         }, 2500); // Must match transition time
     }
 
-    // Export functions for inline handlers
+    // Enhanced search with animation integration
+    function showSearchSuggestions(suggestions) {
+        const panel = document.getElementById('searchSuggestPanel');
+        if (!panel) return;
+        
+        if (suggestions.length > 0) {
+            panel.innerHTML = suggestions.map(s => 
+                `<div class="search-suggestion-item" onclick="selectSuggestion('${s.replace(/'/g, "\\'")}')">${s}</div>`
+            ).join('');
+            panel.classList.add('show');
+        } else {
+            panel.classList.remove('show');
+        }
+    }
+    
+    function selectSuggestion(suggestion) {
+        const input = document.getElementById('searchInput');
+        if (input) {
+            input.value = suggestion;
+            document.getElementById('searchSuggestPanel').classList.remove('show');
+            // Trigger search if needed
+            if (window.performSearch) {
+                window.performSearch(suggestion);
+            }
+        }
+    }
+    
+    function hideSearchSuggestions() {
+        const panel = document.getElementById('searchSuggestPanel');
+        if (panel) {
+            panel.classList.remove('show');
+        }
+    }
+    
+    // Export new functions
+    window.showSearchSuggestions = showSearchSuggestions;
+    window.selectSuggestion = selectSuggestion;
+    window.hideSearchSuggestions = hideSearchSuggestions;
     window.toggleMenu = toggleMenu;
     window.toggleCartDisplay = toggleCartDisplay;
     window.addToCart = addToCart;

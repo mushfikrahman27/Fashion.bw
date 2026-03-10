@@ -28,6 +28,14 @@
                     <span class="nav-icon">📦</span>
                     <span>Orders</span>
                 </li>
+                <li class="nav-item" id="navProducts">
+                    <span class="nav-icon">🛍️</span>
+                    <span>Products</span>
+                </li>
+                <li class="nav-item" id="navInventory">
+                    <span class="nav-icon">📊</span>
+                    <span>Inventory</span>
+                </li>
                 <li class="nav-item" id="navMessages">
                     <span class="nav-icon">💬</span>
                     <span>Messages</span>
@@ -65,65 +73,115 @@
         <!-- Dashboard Content -->
         <div class="dashboard-body">
 
-            <!-- Statistical Overview -->
-            <div class="stats-grid">
-                <!-- Visitors Card -->
-                <div class="card card-stat">
-                    <div class="card-header">
-                        <div class="card-icon icon-visitors">👤</div>
-                        <div class="card-trend trend-up" id="visitorsTrend">
-                            <span id="visitorsTrendVal">+0%</span>
-                            <span>↑</span>
-                        </div>
-                    </div>
-                    <div class="card-info">
-                        <h3>Total Visitors</h3>
-                        <div class="card-value" id="totalVisitors">0</div>
-                        <p class="trend-subtext">vs yesterday</p>
-                    </div>
+            <!-- Bulk Action Bar (Hidden by default) -->
+            <div id="bulkActionBar" class="bulk-action-bar">
+                <div class="bulk-action-info">
+                    <span class="bulk-selected-count" id="bulkSelectedCount">0 selected</span>
+                    <span>products selected</span>
                 </div>
-
-                <!-- Orders Card -->
-                <div class="card card-stat">
-                    <div class="card-header">
-                        <div class="card-icon icon-orders">🛒</div>
-                        <div class="card-trend trend-up" id="ordersTrend">
-                            <span id="ordersTrendVal">+0%</span>
-                            <span>↑</span>
-                        </div>
-                    </div>
-                    <div class="card-info">
-                        <h3>Total Orders</h3>
-                        <div class="card-value" id="totalOrders">0</div>
-                        <div class="order-progress-sm"
-                            style="height:4px; background:#f1f5f9; border-radius:2px; margin-top:10px;">
-                            <div id="orderStatusProgress"
-                                style="width:0%; height:100%; background:var(--success); border-radius:2px; transition:width 1s;">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pending Orders Card (Interactive) -->
-                <div class="card card-stat clickable" id="pendingCard">
-                    <div class="card-header">
-                        <div class="card-icon icon-pending">⏳</div>
-                        <div class="badge-pending" id="pendingOrdersBadge">Action Needed</div>
-                    </div>
-                    <div class="card-info">
-                        <h3>Pending Orders</h3>
-                        <div class="card-value" id="pendingOrders" style="color: var(--warning);">0</div>
-                        <p class="trend-subtext">Click to view &amp; manage</p>
+                <div class="bulk-action-controls">
+                    <select id="bulkActionType" class="bulk-action-dropdown">
+                        <option value="">Choose action...</option>
+                        <option value="category">Change Category</option>
+                        <option value="status">Change Status</option>
+                        <option value="price">Adjust Price</option>
+                        <option value="stock">Adjust Stock</option>
+                        <option value="delete">Delete/Archive</option>
+                    </select>
+                    <div class="bulk-action-buttons">
+                        <button id="bulkApplyBtn" class="btn-bulk-apply" disabled>Apply</button>
+                        <button id="bulkClearBtn" class="btn-bulk-clear">Clear</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Performance Visualization -->
+            <!-- Enhanced Statistical Overview -->
+            <div class="stats-grid">
+                <!-- Total Orders Card -->
+                <div class="analytics-kpi">
+                    <div class="analytics-kpi-title">Total Orders</div>
+                    <div class="analytics-kpi-value" id="totalOrders">0</div>
+                    <div class="analytics-kpi-trend">
+                        <span id="ordersTrend">+0%</span>
+                        <span>↑</span>
+                    </div>
+                </div>
+
+                <!-- Revenue Card -->
+                <div class="analytics-kpi">
+                    <div class="analytics-kpi-title">Total Revenue</div>
+                    <div class="analytics-kpi-value" id="totalRevenue">৳0</div>
+                    <div class="analytics-kpi-trend">
+                        <span id="revenueTrend">+0%</span>
+                        <span>↑</span>
+                    </div>
+                </div>
+
+                <!-- Low Stock Items Card -->
+                <div class="analytics-kpi">
+                    <div class="analytics-kpi-title">Low Stock Items</div>
+                    <div class="analytics-kpi-value" id="lowStockCount">0</div>
+                    <div class="analytics-kpi-trend">Needs attention</div>
+                </div>
+
+                <!-- Top Product Card -->
+                <div class="analytics-kpi">
+                    <div class="analytics-kpi-title">Top Product</div>
+                    <div class="analytics-kpi-value" id="topProductName">-</div>
+                    <div class="analytics-kpi-trend" id="topProductSales">0 sales</div>
+                </div>
+            </div>
+
+            <!-- Enhanced Analytics Row -->
             <div class="content-row">
-                <!-- Main Analytics Chart -->
+                <!-- Top Products Panel -->
                 <div class="section-card">
                     <div class="section-card-header">
-                        <h2>Product Performance</h2>
+                        <h2>Top Selling Products</h2>
+                        <span class="badge-count" id="topProductsCount">0</span>
+                    </div>
+                    <div class="top-products-list" id="topProductsList">
+                        <div class="skeleton-list">
+                            <div class="skeleton" style="height:60px; margin-bottom:12px; border-radius:8px;"></div>
+                            <div class="skeleton" style="height:60px; border-radius:8px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Low Stock Alert Panel -->
+                <div class="section-card">
+                    <div class="section-card-header">
+                        <h2>Low Stock Alerts</h2>
+                        <span class="badge-count" id="lowStockAlertCount">0</span>
+                    </div>
+                    <div class="low-stock-list" id="lowStockList">
+                        <div class="skeleton-list">
+                            <div class="skeleton" style="height:60px; margin-bottom:12px; border-radius:8px;"></div>
+                            <div class="skeleton" style="height:60px; border-radius:8px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Orders Summary -->
+            <div class="content-row">
+                <div class="section-card">
+                    <div class="section-card-header">
+                        <h2>Recent Orders</h2>
+                        <span class="badge-count" id="recentOrdersCount">0</span>
+                    </div>
+                    <div class="recent-orders-list" id="recentOrdersList">
+                        <div class="skeleton-list">
+                            <div class="skeleton" style="height:60px; margin-bottom:12px; border-radius:8px;"></div>
+                            <div class="skeleton" style="height:60px; border-radius:8px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Chart -->
+                <div class="section-card">
+                    <div class="section-card-header">
+                        <h2>Sales Performance</h2>
                         <div class="chart-controls">
                             <select id="chartTimeline" class="mini-select">
                                 <option value="daily">Daily View</option>
@@ -136,24 +194,9 @@
                         <canvas id="productPerformanceChart"></canvas>
                     </div>
                 </div>
-
-                <!-- Priority Alerts -->
-                <div class="section-card">
-                    <div class="section-card-header">
-                        <h2>Priority Alerts</h2>
-                        <span class="badge-count" id="alertCount">0</span>
-                    </div>
-                    <div id="atRiskProducts" class="alert-list">
-                        <!-- Alert items injected by JS -->
-                        <div class="skeleton-list">
-                            <div class="skeleton" style="height:60px; margin-bottom:12px; border-radius:8px;"></div>
-                            <div class="skeleton" style="height:60px; border-radius:8px;"></div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            <!-- Detailed Rankings -->
+            <!-- Existing Content (Preserved) -->
             <div class="content-row">
                 <div class="section-card">
                     <div class="section-card-header">
@@ -245,8 +288,30 @@
     <!-- Confirm Modal placeholder -->
     <div id="confirmModal" style="display:none;"></div>
 
+    <!-- Bulk Edit Modal -->
+    <div id="bulkEditModal" class="bulk-edit-modal">
+        <div class="bulk-edit-content">
+            <div class="bulk-edit-header">
+                <h2 class="bulk-edit-title">Bulk Edit Products</h2>
+                <p class="bulk-edit-subtitle" id="bulkEditSubtitle">Selected products will be updated</p>
+            </div>
+            
+            <div class="bulk-edit-form" id="bulkEditForm">
+                <!-- Dynamic form fields will be inserted here -->
+            </div>
+            
+            <div class="bulk-edit-actions">
+                <button id="bulkEditCancel" class="btn-bulk-clear">Cancel</button>
+                <button id="bulkEditConfirm" class="btn-bulk-apply">Apply Changes</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Module JS -->
     <script type="module" src="js/dashboard-complete.js"></script>
+    
+    <!-- Phase 3 Admin Power Features -->
+    <script src="js/phase3-features.js"></script>
 
     <script>
         // Inline UI helpers (non-data logic)

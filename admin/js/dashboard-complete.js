@@ -54,20 +54,63 @@ class ToastManager {
 class FormValidator {
     static validateProduct(product) {
         const errors = [];
+        
+        // Name validation
         if (!product.name || product.name.trim().length < 2) {
             errors.push('Product name must be at least 2 characters');
         }
+        if (product.name && product.name.length > 100) {
+            errors.push('Product name must be less than 100 characters');
+        }
+        
+        // Price validation
         if (!product.price || product.price <= 0) {
             errors.push('Price must be greater than 0');
         }
+        if (product.price && product.price > 999999) {
+            errors.push('Price seems too high (maximum: $999,999)');
+        }
+        
+        // Category validation
         if (!product.category) {
             errors.push('Category is required');
         }
+        
+        // Stock validation
+        const stockValue = parseInt(product.stock) || 0;
+        if (stockValue < 0 || stockValue > 99999) {
+            errors.push('Stock must be between 0 and 99,999');
+        }
+        
+        // Description validation
+        if (product.description && product.description.length > 500) {
+            errors.push('Description must be less than 500 characters');
+        }
+        
         return errors;
     }
     
     static sanitizeInput(input) {
-        return input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+        if (!input) return '';
+        return input
+            .trim()
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+            .replace(/<[^>]*>/g, '');
+    }
+    
+    static validatePrice(price) {
+        const numPrice = parseFloat(price);
+        return !isNaN(numPrice) && numPrice > 0 && numPrice <= 999999;
+    }
+    
+    static validateStock(stock) {
+        const numStock = parseInt(stock);
+        return !isNaN(numStock) && numStock >= 0 && numStock <= 99999;
+    }
+    
+    static validateEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
     }
 }
 
@@ -78,6 +121,9 @@ class AdminDashboard {
         this.products = [];
         this.orders = [];
         this.categories = ['shirts', 'pants', 'accessories'];
+        this.selectedImageFile = null;
+        this.currentImageUrl = null;
+        this.settings = {};
         this.init();
     }
     
@@ -193,6 +239,7 @@ class AdminDashboard {
                 dashboard: 'Dashboard Overview',
                 orders: 'Order Management',
                 products: 'Product Management',
+                inventory: 'Inventory Management',
                 messages: 'Messages',
                 media: 'Media Manager',
                 settings: 'Settings'
@@ -215,8 +262,14 @@ class AdminDashboard {
             case 'products':
                 this.loadProductManagement();
                 break;
+            case 'inventory':
+                this.loadInventoryManagement();
+                break;
             case 'orders':
                 this.loadOrderManagement();
+                break;
+            case 'media':
+                this.loadMediaManager();
                 break;
             case 'settings':
                 this.loadSettings();
@@ -225,7 +278,7 @@ class AdminDashboard {
                 this.loadDashboardContent();
         }
     }
-    
+
     async loadInitialData() {
         try {
             // Load products
@@ -247,6 +300,14 @@ class AdminDashboard {
                 this.orders = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
                 this.updateDashboardStats();
                 this.updatePendingOrdersPanel();
+            });
+            
+            // Load settings
+            const settingsRef = dbRef(db, 'settings');
+            onValue(settingsRef, (snapshot) => {
+                const data = snapshot.val();
+                this.settings = data || {};
+                this.populateSettingsForms();
             });
             
             // Load analytics data (simulate user activity tracking)
@@ -827,6 +888,21 @@ class AdminDashboard {
                             <label>Description</label>
                             <textarea name="description" rows="3"></textarea>
                         </div>
+                        <div class="form-group">
+                            <label>Product Image</label>
+                            <div class="image-upload-area">
+                                <input type="file" id="productImage" name="image" accept="image/*" style="display: none;">
+                                <div id="imagePreview" class="image-preview">
+                                    <div class="image-placeholder">
+                                        <span>📷</span>
+                                        <p>Click to upload product image</p>
+                                    </div>
+                                </div>
+                                <button type="button" id="selectImageBtn" class="btn-secondary">Select Image</button>
+                                <button type="button" id="removeImageBtn" class="btn-secondary danger" style="display: none;">Remove Image</button>
+                            </div>
+                            <div id="imageUploadStatus" class="upload-status"></div>
+                        </div>
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="btn-primary">Save Product</button>
@@ -901,22 +977,65 @@ class AdminDashboard {
         if (categoryFilter) {
             categoryFilter.addEventListener('change', () => this.filterProducts());
         }
+        
+        // Image upload handlers
+        const selectImageBtn = section.querySelector('#selectImageBtn');
+        const removeImageBtn = section.querySelector('#removeImageBtn');
+        const productImageInput = section.querySelector('#productImage');
+        const imagePreview = section.querySelector('#imagePreview');
+        
+        if (selectImageBtn && productImageInput) {
+            selectImageBtn.addEventListener('click', () => productImageInput.click());
+        }
+        
+        if (productImageInput) {
+            productImageInput.addEventListener('change', (e) => this.handleImageSelect(e));
+        }
+        
+        if (removeImageBtn) {
+            removeImageBtn.addEventListener('click', () => this.removeSelectedImage());
+        }
+        
+        if (imagePreview) {
+            imagePreview.addEventListener('click', () => productImageInput?.click());
+        }
     }
     
     showProductForm(product = null) {
         const form = document.getElementById('productForm');
         const formTitle = document.querySelector('#productManagement h2');
         
+        // Reset image upload state
+        this.resetImageUpload();
+        
         if (product) {
             // Edit mode
             formTitle.textContent = 'Edit Product';
-            const formData = new FormData(document.getElementById('productDataForm'));
-            Object.keys(product).forEach(key => {
-                const input = formData.get(key);
-                if (input) {
-                    input.value = product[key] || '';
-                }
-            });
+            
+            // Populate form fields
+            const nameInput = form.querySelector('input[name="name"]');
+            const priceInput = form.querySelector('input[name="price"]');
+            const categorySelect = form.querySelector('select[name="category"]');
+            const stockInput = form.querySelector('input[name="stock"]');
+            const descriptionTextarea = form.querySelector('textarea[name="description"]');
+            
+            if (nameInput) nameInput.value = product.name || '';
+            if (priceInput) priceInput.value = product.price || '';
+            if (categorySelect) categorySelect.value = product.category || '';
+            if (stockInput) stockInput.value = product.stock || 0;
+            if (descriptionTextarea) descriptionTextarea.value = product.description || '';
+            
+            // Show existing image if available
+            if (product.imgUrl || product.img) {
+                this.currentImageUrl = product.imgUrl || product.img;
+                const imagePreview = document.getElementById('imagePreview');
+                const removeBtn = document.getElementById('removeImageBtn');
+                
+                imagePreview.innerHTML = `
+                    <img src="${this.currentImageUrl}" alt="Current product image" style="max-width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px;">
+                `;
+                removeBtn.style.display = 'inline-block';
+            }
         } else {
             // Add mode
             formTitle.textContent = 'Add Product';
@@ -932,29 +1051,143 @@ class AdminDashboard {
         form.style.display = 'none';
         document.getElementById('productDataForm').reset();
         delete form.dataset.editingId;
+        this.resetImageUpload();
+    }
+    
+    handleImageSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            ToastManager.show('Please select an image file', 'error');
+            return;
+        }
+        
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            ToastManager.show('Image size should be less than 5MB', 'error');
+            return;
+        }
+        
+        this.selectedImageFile = file;
+        this.showImagePreview(file);
+    }
+    
+    showImagePreview(file) {
+        const reader = new FileReader();
+        const imagePreview = document.getElementById('imagePreview');
+        const removeBtn = document.getElementById('removeImageBtn');
+        
+        reader.onload = (e) => {
+            imagePreview.innerHTML = `
+                <img src="${e.target.result}" alt="Product preview" style="max-width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px;">
+            `;
+            removeBtn.style.display = 'inline-block';
+        };
+        
+        reader.readAsDataURL(file);
+    }
+    
+    removeSelectedImage() {
+        this.selectedImageFile = null;
+        this.currentImageUrl = null;
+        const imagePreview = document.getElementById('imagePreview');
+        const removeBtn = document.getElementById('removeImageBtn');
+        const productImageInput = document.getElementById('productImage');
+        
+        imagePreview.innerHTML = `
+            <div class="image-placeholder">
+                <span>📷</span>
+                <p>Click to upload product image</p>
+            </div>
+        `;
+        removeBtn.style.display = 'none';
+        if (productImageInput) {
+            productImageInput.value = '';
+        }
+    }
+    
+    resetImageUpload() {
+        this.selectedImageFile = null;
+        this.currentImageUrl = null;
+        this.removeSelectedImage();
+    }
+    
+    async uploadProductImage(file) {
+        if (!file) return null;
+        
+        try {
+            const fileName = `products/${Date.now()}_${file.name}`;
+            const imageRef = storageRef(storage, fileName);
+            
+            // Show upload status
+            const statusDiv = document.getElementById('imageUploadStatus');
+            if (statusDiv) {
+                statusDiv.innerHTML = '<div class="upload-progress">Uploading image...</div>';
+            }
+            
+            await uploadBytes(imageRef, file);
+            const downloadURL = await getDownloadURL(imageRef);
+            
+            if (statusDiv) {
+                statusDiv.innerHTML = '<div class="upload-success">✓ Image uploaded successfully</div>';
+            }
+            
+            return downloadURL;
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            const statusDiv = document.getElementById('imageUploadStatus');
+            if (statusDiv) {
+                statusDiv.innerHTML = '<div class="upload-error">✗ Failed to upload image</div>';
+            }
+            return null;
+        }
     }
     
     async handleProductSubmit(e) {
         e.preventDefault();
         
-        const formData = new FormData(e.target);
-        const productData = {
-            name: FormValidator.sanitizeInput(formData.get('name')),
-            price: parseFloat(formData.get('price')),
-            category: formData.get('category'),
-            stock: parseInt(formData.get('stock')) || 0,
-            description: FormValidator.sanitizeInput(formData.get('description')),
-            status: 'active'
-        };
-        
-        // Validate
-        const errors = FormValidator.validateProduct(productData);
-        if (errors.length > 0) {
-            ToastManager.show(errors.join(', '), 'error');
-            return;
-        }
+        // Disable submit button to prevent double submission
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
         
         try {
+            const formData = new FormData(e.target);
+            const productData = {
+                name: FormValidator.sanitizeInput(formData.get('name')),
+                price: parseFloat(formData.get('price')),
+                category: formData.get('category'),
+                stock: parseInt(formData.get('stock')) || 0,
+                description: FormValidator.sanitizeInput(formData.get('description')),
+                status: 'active'
+            };
+            
+            // Validate
+            const errors = FormValidator.validateProduct(productData);
+            if (errors.length > 0) {
+                ToastManager.show(errors.join(', '), 'error');
+                return;
+            }
+            
+            // Handle image upload
+            let imageUrl = this.currentImageUrl; // Keep existing image if editing
+            if (this.selectedImageFile) {
+                imageUrl = await this.uploadProductImage(this.selectedImageFile);
+                if (!imageUrl && this.selectedImageFile) {
+                    ToastManager.show('Failed to upload image', 'error');
+                    return;
+                }
+            }
+            
+            // Add image URL to product data
+            if (imageUrl) {
+                productData.imgUrl = imageUrl;
+                productData.img = imageUrl; // For frontend compatibility
+            }
+            
             const form = document.getElementById('productForm');
             const editingId = form.dataset.editingId;
             
@@ -970,6 +1203,7 @@ class AdminDashboard {
                 const newProductRef = push(dbRef(db, 'products'));
                 await set(newProductRef, {
                     ...productData,
+                    id: newProductRef.key, // Add ID for frontend compatibility
                     createdAt: Date.now()
                 });
                 ToastManager.show('Product added successfully', 'success');
@@ -981,6 +1215,10 @@ class AdminDashboard {
         } catch (error) {
             console.error('Error saving product:', error);
             ToastManager.show('Error saving product', 'error');
+        } finally {
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
         }
     }
     
@@ -988,27 +1226,47 @@ class AdminDashboard {
         const tbody = document.getElementById('productTableBody');
         if (!tbody) return;
         
+        if (this.products.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <div style="margin-bottom: 16px;">📦</div>
+                        <div>No products found</div>
+                        <div style="font-size: 14px; margin-top: 8px;">Add your first product to get started</div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
         tbody.innerHTML = '';
         
         this.products.forEach(product => {
             const row = document.createElement('tr');
+            const imageUrl = product.imgUrl || product.img;
+            
             row.innerHTML = `
                 <td>
                     <div class="product-info">
-                        <strong>${product.name}</strong>
-                        ${product.description ? `<br><small>${product.description}</small>` : ''}
+                        <div class="product-row">
+                            ${imageUrl ? `<img src="${imageUrl}" alt="${product.name}" class="product-thumbnail">` : '<div class="product-thumbnail-placeholder">📷</div>'}
+                            <div class="product-details">
+                                <strong>${product.name || 'Unnamed Product'}</strong>
+                                ${product.description ? `<br><small>${product.description}</small>` : ''}
+                            </div>
+                        </div>
                     </div>
                 </td>
-                <td>$${product.price.toFixed(2)}</td>
+                <td>$${(product.price || 0).toFixed(2)}</td>
                 <td>
-                    <span class="badge ${product.stock <= 10 ? 'warning' : 'success'}">
-                        ${product.stock} units
+                    <span class="badge ${(product.stock || 0) <= 10 ? 'warning' : 'success'}">
+                        ${(product.stock || 0)} units
                     </span>
                 </td>
-                <td>${product.category}</td>
+                <td>${product.category || 'Uncategorized'}</td>
                 <td>
                     <span class="badge ${product.status === 'active' ? 'success' : 'muted'}">
-                        ${product.status}
+                        ${product.status || 'active'}
                     </span>
                 </td>
                 <td>
@@ -1030,17 +1288,41 @@ class AdminDashboard {
     }
     
     async deleteProduct(productId) {
-        if (!confirm('Are you sure you want to delete this product?')) {
+        const product = this.products.find(p => p.id === productId);
+        if (!product) {
+            ToastManager.show('Product not found', 'error');
+            return;
+        }
+        
+        // Create a more detailed confirmation dialog
+        const confirmMessage = `Are you sure you want to delete "${product.name}"?\n\nThis action cannot be undone.\n\nProduct details:\n- Price: $${product.price.toFixed(2)}\n- Category: ${product.category}\n- Stock: ${product.stock || 0} units`;
+        
+        if (!confirm(confirmMessage)) {
             return;
         }
         
         try {
+            // Show loading state
+            const deleteBtn = document.querySelector(`button[onclick="dashboard.deleteProduct('${productId}')"]`);
+            if (deleteBtn) {
+                deleteBtn.disabled = true;
+                deleteBtn.textContent = 'Deleting...';
+            }
+            
             await remove(dbRef(db, `products/${productId}`));
-            ToastManager.show('Product deleted successfully', 'success');
+            ToastManager.show(`Product "${product.name}" deleted successfully`, 'success');
             this.renderProductTable();
+            
         } catch (error) {
             console.error('Error deleting product:', error);
-            ToastManager.show('Error deleting product', 'error');
+            ToastManager.show('Error deleting product. Please try again.', 'error');
+            
+            // Restore button state
+            const deleteBtn = document.querySelector(`button[onclick="dashboard.deleteProduct('${productId}')"]`);
+            if (deleteBtn) {
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = 'Delete';
+            }
         }
     }
     
@@ -1093,6 +1375,422 @@ class AdminDashboard {
         }
     }
     
+    loadInventoryManagement() {
+        const dashboardBody = document.querySelector('.dashboard-body');
+        if (!dashboardBody) return;
+        
+        // Hide dashboard content
+        dashboardBody.style.display = 'none';
+        
+        // Create or show inventory management section
+        let inventorySection = document.getElementById('inventoryManagement');
+        if (!inventorySection) {
+            inventorySection = this.createInventoryManagementSection();
+            dashboardBody.parentNode.appendChild(inventorySection);
+        }
+        
+        inventorySection.style.display = 'block';
+        this.renderInventoryTable();
+    }
+    
+    createInventoryManagementSection() {
+        const section = document.createElement('div');
+        section.id = 'inventoryManagement';
+        section.className = 'admin-section';
+        section.innerHTML = `
+            <div class="section-header">
+                <h2>Inventory Management</h2>
+                <div class="inventory-summary" id="inventorySummary">
+                    <div class="summary-card">
+                        <span class="summary-label">Total Products</span>
+                        <span class="summary-value" id="totalProductsCount">0</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="summary-label">Low Stock</span>
+                        <span class="summary-value warning" id="lowStockCount">0</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="summary-label">Out of Stock</span>
+                        <span class="summary-value danger" id="outOfStockCount">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="inventory-controls">
+                <div class="search-filter-row">
+                    <input type="text" id="inventorySearch" placeholder="Search products...">
+                    <select id="stockStatusFilter">
+                        <option value="">All Status</option>
+                        <option value="in-stock">In Stock</option>
+                        <option value="low-stock">Low Stock</option>
+                        <option value="out-of-stock">Out of Stock</option>
+                    </select>
+                    <select id="categoryFilter">
+                        <option value="">All Categories</option>
+                        <option value="shirts">Shirts</option>
+                        <option value="pants">Pants</option>
+                        <option value="accessories">Accessories</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="inventory-list">
+                <div class="table-responsive">
+                    <table class="admin-table inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Current Stock</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                            <!-- Products loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+        
+        // Add event listeners for inventory management
+        this.setupInventoryEventListeners(section);
+        
+        return section;
+    }
+    
+    setupInventoryEventListeners(section) {
+        // Search and filter
+        const searchInput = section.querySelector('#inventorySearch');
+        const statusFilter = section.querySelector('#stockStatusFilter');
+        const categoryFilter = section.querySelector('#categoryFilter');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', () => this.filterInventory());
+        }
+        
+        if (statusFilter) {
+            statusFilter.addEventListener('change', () => this.filterInventory());
+        }
+        
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', () => this.filterInventory());
+        }
+    }
+    
+    getStockStatus(stock) {
+        const stockValue = stock || 0;
+        if (stockValue === 0) return 'out-of-stock';
+        if (stockValue <= 10) return 'low-stock';
+        return 'in-stock';
+    }
+    
+    getStockStatusBadge(stock) {
+        const status = this.getStockStatus(stock);
+        const stockValue = stock || 0;
+        
+        const badges = {
+            'in-stock': `<span class="badge success">${stockValue} units</span>`,
+            'low-stock': `<span class="badge warning">${stockValue} units</span>`,
+            'out-of-stock': `<span class="badge danger">Out of Stock</span>`
+        };
+        
+        return badges[status] || badges['out-of-stock'];
+    }
+    
+    renderInventoryTable() {
+        const tbody = document.getElementById('inventoryTableBody');
+        if (!tbody) return;
+        
+        if (this.products.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <div style="margin-bottom: 16px;">📦</div>
+                        <div>No products found</div>
+                        <div style="font-size: 14px; margin-top: 8px;">Add products to manage inventory</div>
+                    </td>
+                </tr>
+            `;
+            this.updateInventorySummary();
+            return;
+        }
+        
+        tbody.innerHTML = '';
+        
+        this.products.forEach(product => {
+            const row = document.createElement('tr');
+            const imageUrl = product.imgUrl || product.img;
+            const stockStatus = this.getStockStatus(product.stock);
+            
+            // Add row class based on stock status for visual emphasis
+            if (stockStatus === 'low-stock') {
+                row.classList.add('low-stock-row');
+            } else if (stockStatus === 'out-of-stock') {
+                row.classList.add('out-of-stock-row');
+            }
+            
+            row.innerHTML = `
+                <td>
+                    <div class="product-info">
+                        <div class="product-row">
+                            ${imageUrl ? `<img src="${imageUrl}" alt="${product.name}" class="product-thumbnail">` : '<div class="product-thumbnail-placeholder">📷</div>'}
+                            <div class="product-details">
+                                <strong>${product.name || 'Unnamed Product'}</strong>
+                                ${product.description ? `<br><small>${product.description}</small>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td>${product.category || 'Uncategorized'}</td>
+                <td>
+                    <div class="stock-display">
+                        <span class="stock-number">${product.stock || 0}</span>
+                        <small class="stock-unit">units</small>
+                    </div>
+                </td>
+                <td>${this.getStockStatusBadge(product.stock)}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-sm primary" onclick="dashboard.openStockUpdate('${product.id}')">Update Stock</button>
+                        <button class="btn-sm" onclick="dashboard.editProduct('${product.id}')">Edit Product</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+        this.updateInventorySummary();
+    }
+    
+    updateInventorySummary() {
+        const totalProducts = this.products.length;
+        const lowStockProducts = this.products.filter(p => this.getStockStatus(p.stock) === 'low-stock').length;
+        const outOfStockProducts = this.products.filter(p => this.getStockStatus(p.stock) === 'out-of-stock').length;
+        
+        const totalProductsEl = document.getElementById('totalProductsCount');
+        const lowStockEl = document.getElementById('lowStockCount');
+        const outOfStockEl = document.getElementById('outOfStockCount');
+        
+        if (totalProductsEl) totalProductsEl.textContent = totalProducts;
+        if (lowStockEl) lowStockEl.textContent = lowStockProducts;
+        if (outOfStockEl) outOfStockEl.textContent = outOfStockProducts;
+    }
+    
+    filterInventory() {
+        const searchTerm = document.getElementById('inventorySearch')?.value.toLowerCase() || '';
+        const statusFilter = document.getElementById('stockStatusFilter')?.value || '';
+        const categoryFilter = document.getElementById('categoryFilter')?.value || '';
+        
+        const filteredProducts = this.products.filter(product => {
+            const matchesSearch = product.name.toLowerCase().includes(searchTerm) ||
+                                 (product.description && product.description.toLowerCase().includes(searchTerm));
+            const matchesStatus = !statusFilter || this.getStockStatus(product.stock) === statusFilter;
+            const matchesCategory = !categoryFilter || product.category === categoryFilter;
+            
+            return matchesSearch && matchesStatus && matchesCategory;
+        });
+        
+        // Re-render table with filtered products
+        const tbody = document.getElementById('inventoryTableBody');
+        if (tbody) {
+            tbody.innerHTML = '';
+            
+            if (filteredProducts.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            <div style="margin-bottom: 16px;">🔍</div>
+                            <div>No products found</div>
+                            <div style="font-size: 14px; margin-top: 8px;">Try adjusting your filters</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            filteredProducts.forEach(product => {
+                const row = document.createElement('tr');
+                const imageUrl = product.imgUrl || product.img;
+                const stockStatus = this.getStockStatus(product.stock);
+                
+                if (stockStatus === 'low-stock') {
+                    row.classList.add('low-stock-row');
+                } else if (stockStatus === 'out-of-stock') {
+                    row.classList.add('out-of-stock-row');
+                }
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="product-info">
+                            <div class="product-row">
+                                ${imageUrl ? `<img src="${imageUrl}" alt="${product.name}" class="product-thumbnail">` : '<div class="product-thumbnail-placeholder">📷</div>'}
+                                <div class="product-details">
+                                    <strong>${product.name || 'Unnamed Product'}</strong>
+                                    ${product.description ? `<br><small>${product.description}</small>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${product.category || 'Uncategorized'}</td>
+                    <td>
+                        <div class="stock-display">
+                            <span class="stock-number">${product.stock || 0}</span>
+                            <small class="stock-unit">units</small>
+                        </div>
+                    </td>
+                    <td>${this.getStockStatusBadge(product.stock)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-sm primary" onclick="dashboard.openStockUpdate('${product.id}')">Update Stock</button>
+                            <button class="btn-sm" onclick="dashboard.editProduct('${product.id}')">Edit Product</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+    }
+    
+    openStockUpdate(productId) {
+        const product = this.products.find(p => p.id === productId);
+        if (!product) {
+            ToastManager.show('Product not found', 'error');
+            return;
+        }
+        
+        // Create and show stock update modal
+        this.showStockUpdateModal(product);
+    }
+    
+    showStockUpdateModal(product) {
+        // Remove existing modal if present
+        const existingModal = document.getElementById('stockUpdateModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Create modal
+        const modal = document.createElement('div');
+        modal.id = 'stockUpdateModal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Update Stock - ${product.name}</h3>
+                    <button class="modal-close" onclick="dashboard.closeStockUpdateModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="stock-update-form">
+                        <div class="product-info-summary">
+                            ${product.imgUrl || product.img ? `<img src="${product.imgUrl || product.img}" alt="${product.name}" class="summary-thumbnail">` : '<div class="summary-thumbnail-placeholder">📷</div>'}
+                            <div class="summary-details">
+                                <strong>${product.name}</strong><br>
+                                <small>Category: ${product.category || 'Uncategorized'}</small><br>
+                                <small>Current Stock: <span class="current-stock">${product.stock || 0}</span> units</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="newStockQuantity">New Stock Quantity</label>
+                            <input type="number" id="newStockQuantity" min="0" max="99999" value="${product.stock || 0}" class="stock-input">
+                            <small class="form-help">Enter the new stock quantity (0-99,999)</small>
+                        </div>
+                        
+                        <div class="stock-status-preview" id="stockStatusPreview">
+                            <span class="preview-label">Status will be:</span>
+                            <span class="preview-badge" id="previewBadge">${this.getStockStatusBadge(product.stock)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="dashboard.closeStockUpdateModal()">Cancel</button>
+                    <button type="button" class="btn-primary" id="saveStockBtn" onclick="dashboard.saveStockUpdate('${product.id}')">Update Stock</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Setup event listeners
+        const stockInput = document.getElementById('newStockQuantity');
+        if (stockInput) {
+            stockInput.addEventListener('input', () => this.updateStockPreview());
+            stockInput.focus();
+            stockInput.select();
+        }
+        
+        // Close modal on overlay click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeStockUpdateModal();
+            }
+        });
+    }
+    
+    updateStockPreview() {
+        const stockInput = document.getElementById('newStockQuantity');
+        const previewBadge = document.getElementById('previewBadge');
+        
+        if (stockInput && previewBadge) {
+            const newStock = parseInt(stockInput.value) || 0;
+            previewBadge.innerHTML = this.getStockStatusBadge(newStock);
+        }
+    }
+    
+    closeStockUpdateModal() {
+        const modal = document.getElementById('stockUpdateModal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+    
+    async saveStockUpdate(productId) {
+        const stockInput = document.getElementById('newStockQuantity');
+        const saveBtn = document.getElementById('saveStockBtn');
+        
+        if (!stockInput || !saveBtn) return;
+        
+        const newStock = parseInt(stockInput.value);
+        
+        // Validate
+        if (isNaN(newStock) || newStock < 0 || newStock > 99999) {
+            ToastManager.show('Please enter a valid stock quantity (0-99,999)', 'error');
+            return;
+        }
+        
+        // Disable button and show loading
+        const originalText = saveBtn.textContent;
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Updating...';
+        
+        try {
+            await update(dbRef(db, `products/${productId}`), {
+                stock: newStock,
+                updatedAt: Date.now()
+            });
+            
+            ToastManager.show('Stock updated successfully', 'success');
+            this.closeStockUpdateModal();
+            this.renderInventoryTable();
+            
+            // Also update product management table if it's visible
+            const productTableBody = document.getElementById('productTableBody');
+            if (productTableBody) {
+                this.renderProductTable();
+            }
+            
+        } catch (error) {
+            console.error('Error updating stock:', error);
+            ToastManager.show('Error updating stock', 'error');
+        } finally {
+            // Restore button
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalText;
+        }
+    }
+    
     loadOrderManagement() {
         const dashboardBody = document.querySelector('.dashboard-body');
         if (!dashboardBody) return;
@@ -1118,57 +1816,79 @@ class AdminDashboard {
         section.innerHTML = `
             <div class="section-header">
                 <h2>Order Management</h2>
-                <div class="order-filters">
+                <div class="order-summary-cards">
+                    <div class="summary-card">
+                        <span class="summary-label">Total Orders</span>
+                        <span class="summary-value" id="totalOrdersCount">0</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="summary-label">Pending</span>
+                        <span class="summary-value warning" id="pendingOrdersCount">0</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="summary-label">Revenue</span>
+                        <span class="summary-value" id="totalRevenue">$0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="order-controls">
+                <div class="search-filter-row">
+                    <input type="text" id="orderSearch" placeholder="Search by order ID or customer name...">
                     <select id="orderStatusFilter">
-                        <option value="">All Orders</option>
+                        <option value="">All Status</option>
                         <option value="pending">Pending</option>
                         <option value="processing">Processing</option>
                         <option value="shipped">Shipped</option>
                         <option value="delivered">Delivered</option>
                         <option value="cancelled">Cancelled</option>
                     </select>
+                    <select id="orderDateFilter">
+                        <option value="">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                    </select>
                 </div>
             </div>
             
-            <div class="order-stats">
-                <div class="stat-card">
-                    <h3>Total Orders</h3>
-                    <span id="totalOrdersCount">0</span>
+            <div class="order-list">
+                <div class="table-responsive">
+                    <table class="admin-table order-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderTableBody">
+                            <!-- Orders loaded here -->
+                        </tbody>
+                    </table>
                 </div>
-                <div class="stat-card">
-                    <h3>Pending Orders</h3>
-                    <span id="pendingOrdersCount">0</span>
-                </div>
-                <div class="stat-card">
-                    <h3>Revenue</h3>
-                    <span id="totalRevenue">$0</span>
-                </div>
-            </div>
-            
-            <div class="table-responsive">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Customer</th>
-                            <th>Items</th>
-                            <th>Total</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="orderTableBody">
-                        <!-- Orders loaded here -->
-                    </tbody>
-                </table>
             </div>
         `;
         
         // Add event listeners
         const statusFilter = section.querySelector('#orderStatusFilter');
+        const dateFilter = section.querySelector('#orderDateFilter');
+        const searchInput = section.querySelector('#orderSearch');
+        
         if (statusFilter) {
             statusFilter.addEventListener('change', () => this.filterOrders());
+        }
+        
+        if (dateFilter) {
+            dateFilter.addEventListener('change', () => this.filterOrders());
+        }
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', () => this.filterOrders());
         }
         
         return section;
@@ -1178,24 +1898,71 @@ class AdminDashboard {
         const tbody = document.getElementById('orderTableBody');
         if (!tbody) return;
         
+        if (this.orders.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <div style="margin-bottom: 16px;">📦</div>
+                        <div>No orders found</div>
+                        <div style="font-size: 14px; margin-top: 8px;">Orders will appear here when customers make purchases</div>
+                    </td>
+                </tr>
+            `;
+            this.updateOrderStats();
+            return;
+        }
+        
         tbody.innerHTML = '';
         
         this.orders.forEach(order => {
             const row = document.createElement('tr');
+            const orderDate = new Date(order.createdAt || order.timestamp);
+            
+            // Add row class based on status for visual emphasis
+            if (order.status === 'pending') {
+                row.classList.add('pending-order-row');
+            } else if (order.status === 'cancelled') {
+                row.classList.add('cancelled-order-row');
+            }
+            
             row.innerHTML = `
-                <td><strong>#${order.orderId || order.id}</strong></td>
-                <td>${order.customer?.name || 'N/A'}</td>
-                <td>${order.items?.length || 0} items</td>
-                <td>$${(order.totals?.total || 0).toFixed(2)}</td>
+                <td>
+                    <div class="order-id-cell">
+                        <strong>#${order.orderId || order.id}</strong>
+                        <small>${orderDate.toLocaleDateString()}</small>
+                    </div>
+                </td>
+                <td>
+                    <div class="customer-cell">
+                        <strong>${order.customer?.name || 'N/A'}</strong>
+                        ${order.customer?.phone ? `<br><small>${order.customer.phone}</small>` : ''}
+                    </div>
+                </td>
+                <td>
+                    <div class="items-cell">
+                        <span class="item-count">${order.items?.length || 0} items</span>
+                        ${order.items?.length > 0 ? `<br><small>${order.items.slice(0, 2).map(item => item.name || item.productName).join(', ')}${order.items.length > 2 ? '...' : ''}</small>` : ''}
+                    </div>
+                </td>
+                <td>
+                    <div class="total-cell">
+                        <strong>$${(order.totals?.total || 0).toFixed(2)}</strong>
+                    </div>
+                </td>
                 <td>
                     <span class="badge ${this.getStatusBadgeClass(order.status)}">
                         ${order.status || 'pending'}
                     </span>
                 </td>
-                <td>${new Date(order.createdAt || order.timestamp).toLocaleDateString()}</td>
+                <td>
+                    <div class="date-cell">
+                        <span>${orderDate.toLocaleDateString()}</span>
+                        <br><small>${orderDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                    </div>
+                </td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn-sm" onclick="dashboard.viewOrderDetails('${order.id}')">View</button>
+                        <button class="btn-sm primary" onclick="dashboard.viewOrderDetails('${order.id}')">View</button>
                         <select class="status-select" onchange="dashboard.updateOrderStatus('${order.id}', this.value)">
                             <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
                             <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processing</option>
@@ -1260,37 +2027,115 @@ class AdminDashboard {
         const order = this.orders.find(o => o.id === orderId);
         if (!order) return;
         
-        // Create order details modal
+        // Remove existing modal if present
+        const existingModal = document.getElementById('orderDetailsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Create enhanced order details modal
         const modal = document.createElement('div');
+        modal.id = 'orderDetailsModal';
         modal.className = 'modal-overlay';
+        const orderDate = new Date(order.createdAt || order.timestamp);
+        
         modal.innerHTML = `
-            <div class="modal-content">
+            <div class="modal-content order-details-modal">
                 <div class="modal-header">
-                    <h3>Order Details - #${order.orderId || order.id}</h3>
-                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                    <div class="order-header-info">
+                        <h3>Order Details</h3>
+                        <div class="order-meta">
+                            <span class="order-number">#${order.orderId || order.id}</span>
+                            <span class="badge ${this.getStatusBadgeClass(order.status)}">${order.status || 'pending'}</span>
+                        </div>
+                    </div>
+                    <button class="modal-close" onclick="dashboard.closeOrderDetails()">×</button>
                 </div>
                 <div class="modal-body">
-                    <div class="order-details">
-                        <div class="detail-section">
+                    <div class="order-details-grid">
+                        <!-- Customer Information -->
+                        <div class="detail-card">
                             <h4>Customer Information</h4>
-                            <p><strong>Name:</strong> ${order.customer?.name || 'N/A'}</p>
-                            <p><strong>Phone:</strong> ${order.customer?.phone || 'N/A'}</p>
-                            <p><strong>Address:</strong> ${order.customer?.address || 'N/A'}</p>
-                        </div>
-                        <div class="detail-section">
-                            <h4>Order Items</h4>
-                            ${order.items?.map(item => `
-                                <div class="order-item">
-                                    <span>${item.name || item.productName}</span>
-                                    <span>${item.quantity} × $${item.price || 0}</span>
+                            <div class="customer-details">
+                                <div class="detail-row">
+                                    <span class="label">Name:</span>
+                                    <span class="value">${order.customer?.name || 'N/A'}</span>
                                 </div>
-                            `).join('') || '<p>No items found</p>'}
+                                <div class="detail-row">
+                                    <span class="label">Phone:</span>
+                                    <span class="value">${order.customer?.phone || 'N/A'}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="label">Address:</span>
+                                    <span class="value">${order.customer?.address || 'N/A'}</span>
+                                </div>
+                                ${order.customer?.note ? `
+                                <div class="detail-row">
+                                    <span class="label">Note:</span>
+                                    <span class="value">${order.customer.note}</span>
+                                </div>
+                                ` : ''}
+                            </div>
                         </div>
-                        <div class="detail-section">
+                        
+                        <!-- Order Items -->
+                        <div class="detail-card">
+                            <h4>Order Items (${order.items?.length || 0})</h4>
+                            <div class="order-items-list">
+                                ${order.items?.map(item => `
+                                    <div class="order-item-row">
+                                        <div class="item-info">
+                                            <span class="item-name">${item.name || item.productName}</span>
+                                            <span class="item-details">Qty: ${item.quantity || item.qty || 1} × $${(item.price || 0).toFixed(2)}</span>
+                                        </div>
+                                        <span class="item-total">$${((item.price || 0) * (item.quantity || item.qty || 1)).toFixed(2)}</span>
+                                    </div>
+                                `).join('') || '<div class="empty-items">No items found</div>'}
+                            </div>
+                        </div>
+                        
+                        <!-- Order Summary -->
+                        <div class="detail-card">
                             <h4>Order Summary</h4>
-                            <p><strong>Subtotal:</strong> $${(order.totals?.subtotal || 0).toFixed(2)}</p>
-                            <p><strong>Delivery:</strong> $${(order.totals?.deliveryCharge || 0).toFixed(2)}</p>
-                            <p><strong>Total:</strong> $${(order.totals?.total || 0).toFixed(2)}</p>
+                            <div class="order-summary">
+                                <div class="summary-row">
+                                    <span class="label">Subtotal:</span>
+                                    <span class="value">$${(order.totals?.subtotal || 0).toFixed(2)}</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span class="label">Delivery:</span>
+                                    <span class="value">$${(order.totals?.deliveryCharge || 0).toFixed(2)}</span>
+                                </div>
+                                <div class="summary-row total-row">
+                                    <span class="label">Total:</span>
+                                    <span class="value total-amount">$${(order.totals?.total || 0).toFixed(2)}</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span class="label">Order Date:</span>
+                                    <span class="value">${orderDate.toLocaleDateString()} ${orderDate.toLocaleTimeString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Status Update -->
+                        <div class="detail-card">
+                            <h4>Update Status</h4>
+                            <div class="status-update-section">
+                                <div class="current-status">
+                                    <span class="label">Current Status:</span>
+                                    <span class="badge ${this.getStatusBadgeClass(order.status)}">${order.status || 'pending'}</span>
+                                </div>
+                                <div class="status-actions">
+                                    <select id="newStatusSelect" class="status-select-large">
+                                        <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                        <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processing</option>
+                                        <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                                        <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                                        <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                    </select>
+                                    <button class="btn-primary" onclick="dashboard.updateOrderStatusFromModal('${order.id}')">Update Status</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1298,35 +2143,149 @@ class AdminDashboard {
         `;
         
         document.body.appendChild(modal);
+        
+        // Close modal on overlay click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeOrderDetails();
+            }
+        });
+    }
+    
+    closeOrderDetails() {
+        const modal = document.getElementById('orderDetailsModal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+    
+    async updateOrderStatusFromModal(orderId) {
+        const statusSelect = document.getElementById('newStatusSelect');
+        if (!statusSelect) return;
+        
+        const newStatus = statusSelect.value;
+        await this.updateOrderStatus(orderId, newStatus);
+        
+        // Close modal after successful update
+        this.closeOrderDetails();
     }
     
     filterOrders() {
         const statusFilter = document.getElementById('orderStatusFilter')?.value || '';
+        const dateFilter = document.getElementById('orderDateFilter')?.value || '';
+        const searchTerm = document.getElementById('orderSearch')?.value.toLowerCase() || '';
         
-        const filteredOrders = statusFilter 
-            ? this.orders.filter(order => order.status === statusFilter)
-            : this.orders;
+        let filteredOrders = this.orders;
+        
+        // Apply status filter
+        if (statusFilter) {
+            filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
+        }
+        
+        // Apply date filter
+        if (dateFilter) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay());
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            
+            filteredOrders = filteredOrders.filter(order => {
+                const orderDate = new Date(order.createdAt || order.timestamp);
+                
+                switch(dateFilter) {
+                    case 'today':
+                        return orderDate >= today;
+                    case 'week':
+                        return orderDate >= weekStart;
+                    case 'month':
+                        return orderDate >= monthStart;
+                    default:
+                        return true;
+                }
+            });
+        }
+        
+        // Apply search filter
+        if (searchTerm) {
+            filteredOrders = filteredOrders.filter(order => {
+                const orderId = (order.orderId || order.id || '').toString().toLowerCase();
+                const customerName = (order.customer?.name || '').toLowerCase();
+                const customerPhone = (order.customer?.phone || '').toLowerCase();
+                
+                return orderId.includes(searchTerm) || 
+                       customerName.includes(searchTerm) || 
+                       customerPhone.includes(searchTerm);
+            });
+        }
         
         // Re-render table with filtered orders
         const tbody = document.getElementById('orderTableBody');
         if (tbody) {
             tbody.innerHTML = '';
+            
+            if (filteredOrders.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            <div style="margin-bottom: 16px;">🔍</div>
+                            <div>No orders found</div>
+                            <div style="font-size: 14px; margin-top: 8px;">Try adjusting your filters</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
             filteredOrders.forEach(order => {
                 const row = document.createElement('tr');
+                const orderDate = new Date(order.createdAt || order.timestamp);
+                
+                // Add row class based on status for visual emphasis
+                if (order.status === 'pending') {
+                    row.classList.add('pending-order-row');
+                } else if (order.status === 'cancelled') {
+                    row.classList.add('cancelled-order-row');
+                }
+                
                 row.innerHTML = `
-                    <td><strong>#${order.orderId || order.id}</strong></td>
-                    <td>${order.customer?.name || 'N/A'}</td>
-                    <td>${order.items?.length || 0} items</td>
-                    <td>$${(order.totals?.total || 0).toFixed(2)}</td>
+                    <td>
+                        <div class="order-id-cell">
+                            <strong>#${order.orderId || order.id}</strong>
+                            <small>${orderDate.toLocaleDateString()}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="customer-cell">
+                            <strong>${order.customer?.name || 'N/A'}</strong>
+                            ${order.customer?.phone ? `<br><small>${order.customer.phone}</small>` : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="items-cell">
+                            <span class="item-count">${order.items?.length || 0} items</span>
+                            ${order.items?.length > 0 ? `<br><small>${order.items.slice(0, 2).map(item => item.name || item.productName).join(', ')}${order.items.length > 2 ? '...' : ''}</small>` : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="total-cell">
+                            <strong>$${(order.totals?.total || 0).toFixed(2)}</strong>
+                        </div>
+                    </td>
                     <td>
                         <span class="badge ${this.getStatusBadgeClass(order.status)}">
                             ${order.status || 'pending'}
                         </span>
                     </td>
-                    <td>${new Date(order.createdAt || order.timestamp).toLocaleDateString()}</td>
+                    <td>
+                        <div class="date-cell">
+                            <span>${orderDate.toLocaleDateString()}</span>
+                            <br><small>${orderDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                        </div>
+                    </td>
                     <td>
                         <div class="action-buttons">
-                            <button class="btn-sm" onclick="dashboard.viewOrderDetails('${order.id}')">View</button>
+                            <button class="btn-sm primary" onclick="dashboard.viewOrderDetails('${order.id}')">View</button>
                             <select class="status-select" onchange="dashboard.updateOrderStatus('${order.id}', this.value)">
                                 <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
                                 <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processing</option>
@@ -1365,65 +2324,149 @@ class AdminDashboard {
         section.className = 'admin-section';
         section.innerHTML = `
             <div class="section-header">
-                <h2>Settings</h2>
+                <h2>Store Settings</h2>
+                <p>Manage your store configuration and preferences</p>
             </div>
             
             <div class="settings-grid">
+                <!-- Store Information -->
                 <div class="settings-card">
                     <h3>Store Information</h3>
+                    <p class="settings-description">Basic information about your store</p>
                     <form id="storeSettingsForm">
                         <div class="form-group">
-                            <label>Store Name</label>
-                            <input type="text" name="storeName" value="POLICIA">
+                            <label for="storeName">Store Name *</label>
+                            <input type="text" id="storeName" name="storeName" required>
+                            <small class="form-help">This name appears on your store and receipts</small>
                         </div>
                         <div class="form-group">
-                            <label>Store Email</label>
-                            <input type="email" name="storeEmail" value="info@policia.com">
+                            <label for="storeDescription">Store Description</label>
+                            <textarea id="storeDescription" name="storeDescription" rows="3" placeholder="Brief description of your store"></textarea>
+                            <small class="form-help">Optional: Describe what your store offers</small>
                         </div>
                         <div class="form-group">
-                            <label>Store Phone</label>
-                            <input type="tel" name="storePhone" value="+880 1234 567890">
+                            <label for="storeEmail">Contact Email *</label>
+                            <input type="email" id="storeEmail" name="storeEmail" required>
+                            <small class="form-help">Customer support and contact email</small>
                         </div>
                         <div class="form-group">
-                            <label>Store Address</label>
-                            <textarea name="storeAddress" rows="3">Dhaka, Bangladesh</textarea>
+                            <label for="storePhone">Contact Phone *</label>
+                            <input type="tel" id="storePhone" name="storePhone" required>
+                            <small class="form-help">Customer support phone number</small>
                         </div>
-                        <button type="submit" class="btn-primary">Save Settings</button>
+                        <div class="form-group">
+                            <label for="storeAddress">Store Address</label>
+                            <textarea id="storeAddress" name="storeAddress" rows="2" placeholder="Physical store address"></textarea>
+                            <small class="form-help">Optional: Physical store location</small>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary" id="saveStoreBtn">Save Store Info</button>
+                        </div>
                     </form>
                 </div>
                 
+                <!-- Operational Settings -->
+                <div class="settings-card">
+                    <h3>Operational Settings</h3>
+                    <p class="settings-description">How your store operates</p>
+                    <form id="operationalSettingsForm">
+                        <div class="form-group">
+                            <label for="currency">Default Currency</label>
+                            <select id="currency" name="currency">
+                                <option value="USD">USD - US Dollar</option>
+                                <option value="BDT">BDT - Bangladeshi Taka</option>
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="GBP">GBP - British Pound</option>
+                            </select>
+                            <small class="form-help">Currency used for pricing and orders</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="deliveryCharge">Default Delivery Charge</label>
+                            <input type="number" id="deliveryCharge" name="deliveryCharge" min="0" step="0.01" placeholder="0.00">
+                            <small class="form-help">Standard delivery fee for orders</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="storeOpen" name="storeOpen">
+                                <span>Store is currently accepting orders</span>
+                            </label>
+                            <small class="form-help">Turn off to temporarily pause order acceptance</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="enableWhatsApp" name="enableWhatsApp">
+                                <span>Enable WhatsApp ordering</span>
+                            </label>
+                            <small class="form-help">Allow customers to order via WhatsApp</small>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary" id="saveOperationalBtn">Save Operational Settings</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Notification Settings -->
                 <div class="settings-card">
                     <h3>Notification Settings</h3>
+                    <p class="settings-description">Email and order notifications</p>
                     <form id="notificationSettingsForm">
                         <div class="form-group">
                             <label class="checkbox-label">
-                                <input type="checkbox" name="newOrderNotifications" checked>
+                                <input type="checkbox" id="newOrderNotifications" name="newOrderNotifications">
                                 <span>Notify on new orders</span>
                             </label>
+                            <small class="form-help">Send email notifications for new orders</small>
                         </div>
                         <div class="form-group">
                             <label class="checkbox-label">
-                                <input type="checkbox" name="lowStockNotifications" checked>
-                                <span>Notify on low stock</span>
+                                <input type="checkbox" id="customerNotifications" name="customerNotifications">
+                                <span>Send customer order confirmations</span>
                             </label>
+                            <small class="form-help">Automatically email customers about their orders</small>
                         </div>
                         <div class="form-group">
                             <label class="checkbox-label">
-                                <input type="checkbox" name="customerNotifications" checked>
-                                <span>Send customer notifications</span>
+                                <input type="checkbox" id="lowStockNotifications" name="lowStockNotifications">
+                                <span>Low inventory alerts</span>
                             </label>
+                            <small class="form-help">Get notified when items run low on stock</small>
                         </div>
-                        <button type="submit" class="btn-primary">Save Settings</button>
+                        <div class="form-group">
+                            <label for="notificationEmail">Notification Email</label>
+                            <input type="email" id="notificationEmail" name="notificationEmail" placeholder="admin@store.com">
+                            <small class="form-help">Email address for receiving notifications</small>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary" id="saveNotificationBtn">Save Notification Settings</button>
+                        </div>
                     </form>
                 </div>
                 
+                <!-- System Information -->
                 <div class="settings-card">
                     <h3>System Information</h3>
+                    <p class="settings-description">About your admin panel</p>
                     <div class="system-info">
-                        <p><strong>Admin Panel Version:</strong> 1.0.0</p>
-                        <p><strong>Last Updated:</strong> ${new Date().toLocaleDateString()}</p>
-                        <p><strong>Firebase Status:</strong> <span class="badge success">Connected</span></p>
-                        <p><strong>Storage Used:</strong> Calculating...</p>
+                        <div class="info-row">
+                            <span class="label">Admin Panel Version:</span>
+                            <span class="value">1.0.0</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Last Updated:</span>
+                            <span class="value" id="lastUpdated">Never</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Total Products:</span>
+                            <span class="value" id="totalProductsInfo">0</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Total Orders:</span>
+                            <span class="value" id="totalOrdersInfo">0</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Firebase Status:</span>
+                            <span class="value status-connected">Connected</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1431,10 +2474,15 @@ class AdminDashboard {
         
         // Add event listeners
         const storeForm = section.querySelector('#storeSettingsForm');
+        const operationalForm = section.querySelector('#operationalSettingsForm');
         const notificationForm = section.querySelector('#notificationSettingsForm');
         
         if (storeForm) {
             storeForm.addEventListener('submit', (e) => this.handleSettingsSubmit(e, 'store'));
+        }
+        
+        if (operationalForm) {
+            operationalForm.addEventListener('submit', (e) => this.handleSettingsSubmit(e, 'operational'));
         }
         
         if (notificationForm) {
@@ -1444,17 +2492,173 @@ class AdminDashboard {
         return section;
     }
     
+    populateSettingsForms() {
+        // Store Information
+        const storeSettings = this.settings.store || {};
+        document.getElementById('storeName').value = storeSettings.name || 'POLICIA';
+        document.getElementById('storeDescription').value = storeSettings.description || '';
+        document.getElementById('storeEmail').value = storeSettings.email || '';
+        document.getElementById('storePhone').value = storeSettings.phone || '';
+        document.getElementById('storeAddress').value = storeSettings.address || '';
+        
+        // Operational Settings
+        const operationalSettings = this.settings.operational || {};
+        document.getElementById('currency').value = operationalSettings.currency || 'USD';
+        document.getElementById('deliveryCharge').value = operationalSettings.deliveryCharge || '';
+        document.getElementById('storeOpen').checked = operationalSettings.storeOpen !== false; // default true
+        document.getElementById('enableWhatsApp').checked = operationalSettings.enableWhatsApp || false;
+        
+        // Notification Settings
+        const notificationSettings = this.settings.notifications || {};
+        document.getElementById('newOrderNotifications').checked = notificationSettings.newOrderNotifications !== false; // default true
+        document.getElementById('customerNotifications').checked = notificationSettings.customerNotifications !== false; // default true
+        document.getElementById('lowStockNotifications').checked = notificationSettings.lowStockNotifications !== false; // default true
+        document.getElementById('notificationEmail').value = notificationSettings.email || '';
+        
+        // Update system info
+        this.updateSystemInfo();
+    }
+    
+    updateSystemInfo() {
+        const lastUpdatedEl = document.getElementById('lastUpdated');
+        const totalProductsEl = document.getElementById('totalProductsInfo');
+        const totalOrdersEl = document.getElementById('totalOrdersInfo');
+        
+        if (lastUpdatedEl && this.settings.lastUpdated) {
+            lastUpdatedEl.textContent = new Date(this.settings.lastUpdated).toLocaleString();
+        }
+        
+        if (totalProductsEl) {
+            totalProductsEl.textContent = this.products.length;
+        }
+        
+        if (totalOrdersEl) {
+            totalOrdersEl.textContent = this.orders.length;
+        }
+    }
+    
     async handleSettingsSubmit(e, type) {
         e.preventDefault();
         
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        
+        // Disable button and show loading
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+        
         try {
-            // Here you would save settings to Firebase
-            // For now, just show success message
-            ToastManager.show(`${type.charAt(0).toUpperCase() + type.slice(1)} settings saved successfully`, 'success');
+            const formData = new FormData(form);
+            let settingsUpdate = {};
+            
+            switch(type) {
+                case 'store':
+                    settingsUpdate = {
+                        store: {
+                            name: FormValidator.sanitizeInput(formData.get('storeName')),
+                            description: FormValidator.sanitizeInput(formData.get('storeDescription')),
+                            email: FormValidator.sanitizeInput(formData.get('storeEmail')),
+                            phone: FormValidator.sanitizeInput(formData.get('storePhone')),
+                            address: FormValidator.sanitizeInput(formData.get('storeAddress'))
+                        }
+                    };
+                    
+                    // Validate store settings
+                    const errors = this.validateStoreSettings(settingsUpdate.store);
+                    if (errors.length > 0) {
+                        ToastManager.show(errors.join(', '), 'error');
+                        return;
+                    }
+                    break;
+                    
+                case 'operational':
+                    settingsUpdate = {
+                        operational: {
+                            currency: formData.get('currency'),
+                            deliveryCharge: parseFloat(formData.get('deliveryCharge')) || 0,
+                            storeOpen: formData.get('storeOpen') === 'on',
+                            enableWhatsApp: formData.get('enableWhatsApp') === 'on'
+                        }
+                    };
+                    break;
+                    
+                case 'notification':
+                    settingsUpdate = {
+                        notifications: {
+                            newOrderNotifications: formData.get('newOrderNotifications') === 'on',
+                            customerNotifications: formData.get('customerNotifications') === 'on',
+                            lowStockNotifications: formData.get('lowStockNotifications') === 'on',
+                            email: FormValidator.sanitizeInput(formData.get('notificationEmail'))
+                        }
+                    };
+                    
+                    // Validate notification email if provided
+                    if (settingsUpdate.notifications.email && !FormValidator.validateEmail(settingsUpdate.notifications.email)) {
+                        ToastManager.show('Please enter a valid notification email', 'error');
+                        return;
+                    }
+                    break;
+            }
+            
+            // Add timestamp
+            settingsUpdate.lastUpdated = Date.now();
+            
+            // Save to Firebase
+            await update(dbRef(db, 'settings'), {
+                ...this.settings,
+                ...settingsUpdate
+            });
+            
+            ToastManager.show(`${this.getSettingsTypeName(type)} saved successfully`, 'success');
+            
         } catch (error) {
             console.error('Error saving settings:', error);
             ToastManager.show('Error saving settings', 'error');
+        } finally {
+            // Restore button
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
         }
+    }
+    
+    getSettingsTypeName(type) {
+        const names = {
+            store: 'Store information',
+            operational: 'Operational settings',
+            notification: 'Notification settings'
+        };
+        return names[type] || 'Settings';
+    }
+    
+    validateStoreSettings(storeSettings) {
+        const errors = [];
+        
+        if (!storeSettings.name || storeSettings.name.trim().length < 2) {
+            errors.push('Store name must be at least 2 characters');
+        }
+        
+        if (storeSettings.name && storeSettings.name.length > 100) {
+            errors.push('Store name must be less than 100 characters');
+        }
+        
+        if (!storeSettings.email || !FormValidator.validateEmail(storeSettings.email)) {
+            errors.push('Please enter a valid email address');
+        }
+        
+        if (!storeSettings.phone || storeSettings.phone.trim().length < 10) {
+            errors.push('Please enter a valid phone number');
+        }
+        
+        if (storeSettings.description && storeSettings.description.length > 500) {
+            errors.push('Store description must be less than 500 characters');
+        }
+        
+        if (storeSettings.address && storeSettings.address.length > 200) {
+            errors.push('Store address must be less than 200 characters');
+        }
+        
+        return errors;
     }
     
     updateDashboardStats() {

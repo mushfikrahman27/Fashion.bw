@@ -1,3 +1,231 @@
+/* --- MOBILE-FIRST ANIMATION VARIABLES --- */
+:root {
+    /* Animation timing for mobile-first approach */
+    --hero-reveal-duration: 0.6s;
+    --card-reveal-duration: 0.5s;
+    --micro-interaction-duration: 0.2s;
+    --stagger-delay: 0.15s;
+}
+
+/* --- PREFERRED REDUCED MOTION SUPPORT --- */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --hero-reveal-duration: 0.1s;
+        --card-reveal-duration: 0.1s;
+        --micro-interaction-duration: 0.1s;
+        --stagger-delay: 0.05s;
+    }
+}
+
+/* --- HERO SECTION MOBILE ANIMATIONS --- */
+.hero-title {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: heroTitleReveal var(--hero-reveal-duration) ease-out forwards;
+    animation-delay: 0.2s;
+}
+
+.hero-subtitle {
+    opacity: 0;
+    transform: translateY(15px);
+    animation: heroSubtitleReveal var(--hero-reveal-duration) ease-out forwards;
+    animation-delay: 0.4s;
+}
+
+.hero-cta {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: heroCTAReveal var(--hero-reveal-duration) ease-out forwards;
+    animation-delay: 0.6s;
+}
+
+@keyframes heroTitleReveal {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes heroSubtitleReveal {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes heroCTAReveal {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- FEATURED COLLECTION MOBILE ANIMATIONS --- */
+.promo-card {
+    opacity: 0;
+    transform: translateY(25px);
+    animation: featuredCardReveal var(--card-reveal-duration) ease-out forwards;
+}
+
+.promo-card.large-card {
+    animation-delay: 0.1s;
+}
+
+.promo-card.small-card:nth-child(1) {
+    animation-delay: 0.2s;
+}
+
+.promo-card.small-card:nth-child(2) {
+    animation-delay: 0.3s;
+}
+
+@keyframes featuredCardReveal {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- PRODUCT CARD MOBILE ANIMATIONS --- */
+.product-card {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: productCardReveal var(--card-reveal-duration) ease-out forwards;
+}
+
+.product-card:nth-child(1) { animation-delay: 0.05s; }
+.product-card:nth-child(2) { animation-delay: 0.1s; }
+.product-card:nth-child(3) { animation-delay: 0.15s; }
+.product-card:nth-child(4) { animation-delay: 0.2s; }
+.product-card:nth-child(5) { animation-delay: 0.25s; }
+.product-card:nth-child(6) { animation-delay: 0.3s; }
+.product-card:nth-child(7) { animation-delay: 0.35s; }
+.product-card:nth-child(8) { animation-delay: 0.4s; }
+
+@keyframes productCardReveal {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- TRUST BOX MOBILE ANIMATIONS --- */
+.policy-feature-card {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: trustBoxReveal var(--card-reveal-duration) ease-out forwards;
+}
+
+.policy-feature-card:nth-child(1) { animation-delay: 0.1s; }
+.policy-feature-card:nth-child(2) { animation-delay: 0.2s; }
+.policy-feature-card:nth-child(3) { animation-delay: 0.3s; }
+.policy-feature-card:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes trustBoxReveal {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- SEARCH SUGGESTIONS ANIMATION --- */
+.searchSuggestPanel {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity var(--micro-interaction-duration) ease-out, 
+                transform var(--micro-interaction-duration) ease-out;
+}
+
+.searchSuggestPanel.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.search-suggestion-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(23, 64, 42, 0.1);
+    transition: background-color var(--micro-interaction-duration) ease-out;
+}
+
+.search-suggestion-item:hover {
+    background-color: rgba(23, 64, 42, 0.05);
+}
+
+.search-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+/* --- CART DRAWER ENHANCED ANIMATION --- */
+.cart-serial-overlay {
+    opacity: 0;
+    transform: translateX(100%);
+    transition: opacity 0.3s ease-out, 
+                transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cart-serial-overlay.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* --- PRODUCT MODAL ENHANCED ANIMATION --- */
+.details-container {
+    opacity: 0;
+    transform: scale(0.98);
+    transition: opacity 0.3s ease-out, 
+                transform 0.3s ease-out;
+}
+
+#productDetailsPage.active .details-container {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* --- BUTTON MICRO-INTERACTIONS --- */
+.action-btn:active,
+.det-btn:active,
+.hero-cta:active,
+.pill:active {
+    transform: scale(0.96);
+    transition: transform var(--micro-interaction-duration) ease-out;
+}
+
+/* --- MOBILE OPTIMIZATIONS --- */
+@media (max-width: 768px) {
+    :root {
+        --hero-reveal-duration: 0.4s;
+        --card-reveal-duration: 0.35s;
+        --stagger-delay: 0.1s;
+    }
+    
+    /* Reduce animation intensity on mobile */
+    .product-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .promo-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .policy-feature-card:hover {
+        transform: translateY(-4px);
+    }
+}
+
+/* --- GLOBAL ANIMATION SAFETY --- */
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent layout shifts during animations */
+.product-grid,
+.promo-grid,
+.policy-features-grid {
+    min-height: 100px;
+}
+
 /* --- 1. GLOBAL VARIABLES & RESET --- */
 :root {
     /* Luxury Forest & Rose Palette */
@@ -1536,62 +1764,89 @@ body.cart-open {
 .policy-features-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    gap: 24px;
     max-width: 1000px;
     height: auto;
     margin: 0 auto;
 }
 
 .policy-feature-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 25px;
+    background: var(--surface-white);
+    border: 1px solid rgba(23, 64, 42, 0.08);
+    border-radius: 20px;
+    padding: 32px 24px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 20px rgba(23, 64, 42, 0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+.policy-feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-forest), var(--accent-rose));
+    opacity: 0;
+    transition: opacity 0.4s ease;
 }
 
 .policy-feature-card:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    background: var(--surface-white);
+    border-color: rgba(23, 64, 42, 0.15);
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px rgba(23, 64, 42, 0.12);
+}
+
+.policy-feature-card:hover::before {
+    opacity: 1;
 }
 
 .policy-icon {
     font-size: 2.8rem;
-    margin-bottom: 18px;
-    font-size: 2.5rem;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     display: block;
-    filter: grayscale(1);
-    transition: all 0.3s ease;
+    filter: grayscale(0);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-shadow: 0 2px 8px rgba(23, 64, 42, 0.1);
 }
 
 .policy-feature-card:hover .policy-icon {
     filter: grayscale(0);
-    transform: scale(1.1);
+    transform: scale(1.05);
+    text-shadow: 0 4px 12px rgba(23, 64, 42, 0.15);
 }
 
 .policy-title {
     font-family: 'Playfair Display', serif;
     font-size: 1.3rem;
     font-weight: 700;
-    color: #ffffff;
-    margin: 0 0 10px 0;
+    color: var(--text-primary);
+    margin: 0 0 12px 0;
     text-transform: uppercase;
     letter-spacing: 1px;
+    transition: color 0.4s ease;
 }
 
 .policy-description {
     font-family: 'Montserrat', sans-serif;
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-secondary);
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.6;
+    transition: color 0.4s ease;
+}
+
+.policy-feature-card:hover .policy-title {
+    color: var(--primary-brand);
+}
+
+.policy-feature-card:hover .policy-description {
+    color: var(--text-primary);
 }
 
 /* Mobile Responsive for Policy & Features */
@@ -1601,12 +1856,13 @@ body.cart-open {
     }
     
     .policy-features-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px;
     }
     
     .policy-feature-card {
-        padding: 25px 20px;
+        padding: 24px 16px;
+        border-radius: 16px;
     }
     
     .menu-text {
@@ -1614,16 +1870,30 @@ body.cart-open {
     }
     
     .policy-icon {
-        font-size: 2rem;
-        margin-bottom: 12px;
+        font-size: 2.2rem;
+        margin-bottom: 16px;
     }
     
     .policy-title {
         font-size: 1.1rem;
+        margin-bottom: 10px;
     }
     
     .policy-description {
         font-size: 0.8rem;
+        line-height: 1.5;
+    }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 480px) {
+    .policy-features-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .policy-feature-card {
+        padding: 20px 16px;
     }
 }
 
