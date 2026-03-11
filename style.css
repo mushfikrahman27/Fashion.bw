@@ -3537,118 +3537,206 @@ footer {
         color: #000;
     }
 
-    /* --- DESKTOP EXCLUSIVE FIXES (NO MOBILE TOUCH) --- */
-    @media screen and (min-width: 769px) {
-        .details-overlay {
-            overflow-y: scroll !important;
-            /* Forces scrollbar behavior on desktop */
-        }
+    /* --- DESKTOP/LAPTOP PRODUCT DETAILS CLEANUP --- */
 
+    /* Tablet / Small Laptop: 769px-1023px */
+    @media screen and (min-width: 769px) and (max-width: 1023px) {
         .details-container {
-            padding-top: 80px !important;
-            height: auto !important;
-            /* Allow container to grow with content */
+            max-width: 900px;
+            padding: 80px 4% 40px;
         }
-
+        
         .details-content-wrapper {
-            display: grid !important;
-            grid-template-columns: 550px 1fr !important;
-            /* Limits the image width strictly */
-            gap: 60px !important;
-            align-items: start !important;
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 40px;
+            align-items: start;
         }
-
+        
+        .details-gallery {
+            min-width: 400px;
+        }
+        
         .main-img-box {
-            height: 600px !important;
-            /* Prevents the "Full Screen Image" bug */
-            position: sticky !important;
-            top: 20px;
+            max-height: 500px;
+            aspect-ratio: 3/4;
         }
-
-        .cool-back-btn {
-            background: #1a1a1a !important;
-            /* Ensures button is visible against black */
-            border: 1px solid #444 !important;
-            left: 40px !important;
-            top: 25px !important;
-        }
-    }
-
-    /* Desktop Only - Enhanced Layout */
-    @media (min-width: 1025px) {
-        #productDetailsPage {
-            display: block !important;
-            /* let children handle flex */
-            height: 100vh;
-            overflow-y: auto;
-            /* scroll overlay */
-            padding: 40px;
-            box-sizing: border-box;
-            background-color: #0a0a0a;
-        }
-
-        .details-container {
+        
+        .thumbnail-strip {
             display: flex;
             flex-direction: row;
-            gap: 60px;
-            width: 100%;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 4px 0;
         }
-
-        .details-gallery {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            min-width: 500px;
-            max-width: 600px;
+        
+        .thumbnail-strip img {
+            width: 60px;
+            height: 65px;
+            flex-shrink: 0;
         }
-
-        .details-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-            min-width: 400px;
-            max-width: 600px;
+        
+        #detName {
+            font-size: 2rem;
         }
-
-        .details-content-wrapper {
-            display: block !important;
-            /* Override grid for better desktop layout */
+        
+        .det-price {
+            font-size: 1.6rem;
         }
-
-        /* Vertical thumbnails */
-        #thumbnailStrip {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-height: 400px;
-            overflow-y: auto;
+        
+        .cool-back-btn {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            background: var(--surface-white) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--border-subtle) !important;
+            padding: 12px 16px;
+            border-radius: 8px;
+            z-index: 10;
         }
-
-        /* Buttons visible */
-        .det-actions {
-            display: flex;
-            gap: 20px;
-            margin-top: auto;
-            /* push to bottom if needed */
-        }
-
-        /* Related products section */
+        
         .related-section {
-            width: 100%;
-            max-width: 1400px;
-            margin: 40px auto 0;
+            max-width: 900px;
         }
-
+        
         .related-section .product-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+    }
+    
+    /* Desktop: 1024px-1439px */
+    @media screen and (min-width: 1024px) and (max-width: 1439px) {
+        .details-container {
+            max-width: 1200px;
+            padding: 80px 5% 60px;
+        }
+        
+        .details-content-wrapper {
             display: grid;
+            grid-template-columns: 480px 1fr;
+            gap: 50px;
+            align-items: start;
+        }
+        
+        .details-gallery {
+            min-width: 480px;
+        }
+        
+        .main-img-box {
+            max-height: 600px;
+            aspect-ratio: 3/4;
+        }
+        
+        .thumbnail-strip {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+        
+        .thumbnail-strip img {
+            width: 70px;
+            height: 75px;
+            flex-shrink: 0;
+        }
+        
+        #detName {
+            font-size: 2.2rem;
+        }
+        
+        .det-price {
+            font-size: 1.8rem;
+        }
+        
+        .cool-back-btn {
+            position: absolute;
+            left: 30px;
+            top: 25px;
+            background: var(--surface-white) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--border-subtle) !important;
+            padding: 14px 18px;
+            border-radius: 8px;
+            z-index: 10;
+        }
+        
+        .related-section {
+            max-width: 1200px;
+        }
+        
+        .related-section .product-grid {
             grid-template-columns: repeat(4, 1fr);
             gap: 24px;
-            padding: 0;
+        }
+    }
+    
+    /* Large Desktop: 1440px+ */
+    @media screen and (min-width: 1440px) {
+        .details-container {
+            max-width: 1400px;
+            padding: 100px 5% 80px;
+        }
+        
+        .details-content-wrapper {
+            display: grid;
+            grid-template-columns: 550px 1fr;
+            gap: 60px;
+            align-items: start;
+        }
+        
+        .details-gallery {
+            min-width: 550px;
+        }
+        
+        .main-img-box {
+            max-height: 650px;
+            aspect-ratio: 3/4;
+        }
+        
+        .thumbnail-strip {
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+        
+        .thumbnail-strip img {
+            width: 80px;
+            height: 85px;
+            flex-shrink: 0;
+        }
+        
+        #detName {
+            font-size: 2.5rem;
+        }
+        
+        .det-price {
+            font-size: 2rem;
+        }
+        
+        .cool-back-btn {
+            position: absolute;
+            left: 40px;
+            top: 30px;
+            background: var(--surface-white) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--border-subtle) !important;
+            padding: 16px 20px;
+            border-radius: 8px;
+            z-index: 10;
+        }
+        
+        .related-section {
+            max-width: 1400px;
+        }
+        
+        .related-section .product-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
         }
     }
 
@@ -3680,22 +3768,18 @@ footer {
         }
     }
 
-    /* --- RELATED PRODUCTS: ORIGINAL PROPORTIONS FIX --- */
-
+    /* --- RELATED PRODUCTS CLEANUP --- */
     #relatedGrid.product-grid {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important;
-        /* Strictly 2 per row */
         gap: 15px !important;
         align-items: start !important;
-        /* Critical: Stops cards from stretching vertically */
         justify-content: start !important;
         width: 100% !important;
         padding: 20px 0 !important;
     }
 
     #relatedGrid .product-card {
-        /* Resetting any forced stretching */
         height: fit-content !important;
         display: block !important;
         width: 100% !important;
@@ -3704,28 +3788,16 @@ footer {
     }
 
     #relatedGrid .product-card img {
-        /* Maintain original aspect ratio */
         width: 100% !important;
         height: auto !important;
         aspect-ratio: 3 / 4 !important;
-        /* Adjust to 1/1 if your original cards were square */
         object-fit: cover !important;
         display: block !important;
     }
 
-    /* Ensure info section doesn't add weird padding */
     #relatedGrid .product-card .details-info {
         padding: 20px !important;
     }
-
-    /* Desktop: Switch to 4 per row but keep same logic */
-    @media screen and (min-width: 1025px) {
-        #relatedGrid.product-grid {
-            grid-template-columns: repeat(4, 1fr) !important;
-            gap: 25px !important;
-        }
-    }
-
 
     /* --- ISOLATED SEARCH SUGGESTIONS PANEL --- */
     #searchSuggestPanel {
