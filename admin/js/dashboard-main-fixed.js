@@ -1,10 +1,30 @@
 // admin/js/dashboard-main-fixed.js - CONSOLIDATED ADMIN DASHBOARD ARCHITECTURE
 // This is now the single source of truth for admin dashboard functionality
 
+console.log('🔍 ADMIN DEBUG: Admin dashboard script loaded successfully!');
+
+// Test Firebase write permission
+setTimeout(() => {
+    try {
+        const testRef = dbRef(db, 'test-write');
+        set(testRef, { 
+            message: 'Admin can write to Firebase', 
+            timestamp: Date.now() 
+        }).then(() => {
+            console.log('✅ ADMIN DEBUG: Firebase write test SUCCESS - admin can save to database');
+        }).catch(error => {
+            console.error('❌ ADMIN DEBUG: Firebase write test FAILED - admin cannot save:', error);
+        });
+    } catch (error) {
+        console.error('❌ ADMIN DEBUG: Firebase test setup failed:', error);
+    }
+}, 2000);
+
 import { auth, db, storage } from '../../firebase-config.js';
 import { 
     ref as dbRef, 
     onValue, 
+    off,
     update, 
     remove, 
     push, 
@@ -480,9 +500,11 @@ class NavigationController {
             this.navigateTo('settings');
         });
         
-        // Messages nav (placeholder)
+        // Messages nav
+        // Navigates to the messages section (currently a structured placeholder shell)
         document.getElementById('navMessages')?.addEventListener('click', () => {
-            showToast('Messaging system coming soon', 'info');
+            this.navigateTo('messages');
+            showToast('Messaging center is not connected to a backend yet. This section is prepared for future real messages.', 'info');
         });
         
         // Logout
@@ -587,7 +609,8 @@ class NavigationController {
             products: 'Product Management',
             inventory: 'Inventory Management',
             media: 'Media Manager',
-            settings: 'Settings'
+            settings: 'Settings',
+            messages: 'Messages'
         };
         
         const titleElement = document.querySelector('.topbar-title h1');
@@ -856,10 +879,14 @@ class ProductManager {
         if (searchInput) {
             searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
         }
+        const searchBtn = document.getElementById('productSearchBtn');
+        if (searchBtn && searchInput) {
+            searchBtn.addEventListener('click', () => this.handleSearch(searchInput.value));
+        }
         
         // Filter functionality
-        const categoryFilter = document.getElementById('categoryFilter');
-        const statusFilter = document.getElementById('statusFilter');
+        const categoryFilter = document.getElementById('productFilterCategory');
+        const statusFilter = document.getElementById('productFilterStatus');
         if (categoryFilter) {
             categoryFilter.addEventListener('change', () => this.applyFilters());
         }
@@ -914,7 +941,23 @@ class ProductManager {
                 ...product
             }));
                 
+            // Set up real-time listener for automatic updates
+            if (this.productsListener) {
+                off(this.productsListener);
+            }
+            
+            this.productsListener = onValue(productsRef, (snapshot) => {
+                const updatedData = snapshot.val() || {};
+                this.products = Object.entries(updatedData).map(([id, product]) => ({
+                    id,
+                    ...product
+                }));
+                this.renderProducts();
+                console.log('🔄 Admin products updated in real-time');
+            });
+                
             this.renderProducts();
+            this.updateStockSummary(this.products);
             this.showLoading(false);
                 
         } catch (error) {
@@ -925,27 +968,176 @@ class ProductManager {
     }
         
     handleSearch(searchTerm) {
-        const filtered = this.getFilteredProducts().filter(product => 
-            product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.category.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        console.log('🔍 Unified search triggered with term:', searchTerm);
+        console.log('📦 Available products:', this.products?.length || 0);
+        
+        // If no products loaded, try to load them first
+        if (!this.products || this.products.length === 0) {
+            console.log('⚠️ No products loaded, attempting to load...');
+            this.loadProducts().then(() => {
+                console.log('📦 Products loaded:', this.products?.length || 0);
+                this.performUnifiedSearch(searchTerm);
+            });
+            return;
+        }
+        
+        this.performUnifiedSearch(searchTerm);
+    }
+    
+    performUnifiedSearch(searchTerm) {
+        if (!searchTerm || searchTerm.trim() === '') {
+            console.log('🔄 Empty search, showing all products');
+            this.renderFilteredProducts(this.products);
+            this.updateStockSummary(this.products);
+            this.hideSearchResults();
+            return;
+        }
+        
+        const searchLower = searchTerm.toLowerCase().trim();
+        console.log('🔍 Searching for:', searchLower);
+        
+        const filtered = this.products.filter(product => {
+            // Primary search: product name
+            const nameMatch = product.name && product.name.toLowerCase().includes(searchLower);
+            
+            // Secondary search: category
+            const categoryMatch = product.category && product.category.toLowerCase().includes(searchLower);
+            
+            // Tertiary search: subCategory
+            const subCategoryMatch = product.subCategory && product.subCategory.toLowerCase().includes(searchLower);
+            
+            // Optional search: color
+            const colorMatch = product.color && product.color.toLowerCase().includes(searchLower);
+            
+            const matches = nameMatch || categoryMatch || subCategoryMatch || colorMatch;
+            
+            if (matches) {
+                console.log(`✅ Match found: ${product.name} (${product.category}/${product.subCategory})`);
+            }
+            
+            return matches;
+        });
+        
+        console.log(`🎯 Search results: ${filtered.length} products found`);
         this.renderFilteredProducts(filtered);
+        this.updateStockSummary(filtered);
+        
+        // Show search results dropdown
+        this.showSearchResults(filtered, searchTerm);
+    }
+    
+    showSearchResults(results, searchTerm) {
+        const dropdown = document.getElementById('searchResultsDropdown');
+        if (!dropdown) return;
+        
+        if (!searchTerm || searchTerm.trim() === '') {
+            this.hideSearchResults();
+            return;
+        }
+        
+        if (results.length === 0) {
+            dropdown.innerHTML = '<div class="no-search-results">No matching products found</div>';
+            dropdown.style.display = 'block';
+            return;
+        }
+        
+        // Limit results to prevent UI overflow
+        const maxResults = 8;
+        const limitedResults = results.slice(0, maxResults);
+        
+        dropdown.innerHTML = limitedResults.map(product => `
+            <div class="search-result-item" onclick="window.dashboardApp.productManager.selectSearchResult('${product.id}')">
+                <img src="${product.img || product.imgUrl || product.image || 'https://via.placeholder.com/40'}" alt="${product.name}" class="search-result-image">
+                <div class="search-result-info">
+                    <div class="search-result-name">${product.name}</div>
+                    <div class="search-result-meta">
+                        <span class="search-result-category">${product.category}</span>
+                        <span class="search-result-price">৳${product.price}</span>
+                    </div>
+                </div>
+                <button class="search-result-edit-btn" onclick="event.stopPropagation(); window.dashboardApp.productManager.editProduct('${product.id}')">Edit</button>
+            </div>
+        `).join('');
+        
+        dropdown.style.display = 'block';
+    }
+    
+    hideSearchResults() {
+        const dropdown = document.getElementById('searchResultsDropdown');
+        if (dropdown) {
+            dropdown.style.display = 'none';
+        }
+    }
+    
+    selectSearchResult(productId) {
+        // Hide search results
+        this.hideSearchResults();
+        
+        // Clear search input
+        const searchInput = document.getElementById('productSearchInput');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        
+        // Edit the selected product
+        this.editProduct(productId);
     }
         
     applyFilters() {
         const filtered = this.getFilteredProducts();
         this.renderFilteredProducts(filtered);
+        this.updateStockSummary(filtered);
     }
         
     getFilteredProducts() {
-        const categoryFilter = document.getElementById('categoryFilter')?.value || '';
-        const statusFilter = document.getElementById('statusFilter')?.value || '';
+        const categoryFilter = document.getElementById('productFilterCategory')?.value || '';
+        const statusFilter = document.getElementById('productFilterStatus')?.value || '';
+        const stockFilter = document.getElementById('stockFilter')?.value || '';
             
         return this.products.filter(product => {
+            // Category filter
             const matchesCategory = !categoryFilter || product.category === categoryFilter;
-            const matchesStatus = !statusFilter || this.getProductStatus(product) === statusFilter;
-            return matchesCategory && matchesStatus;
+            
+            // Status filter (inactive uses stored status; others use derived stock status)
+            const matchesStatus = !statusFilter || (
+                statusFilter === 'inactive'
+                    ? (product.status === 'inactive')
+                    : this.getProductStatus(product) === statusFilter
+            );
+            
+            // Stock filter
+            let matchesStock = true;
+            if (stockFilter === 'in-stock') {
+                matchesStock = (product.stock || 0) > 0;
+            } else if (stockFilter === 'low-stock') {
+                matchesStock = (product.stock || 0) <= 5 && (product.stock || 0) > 0;
+            } else if (stockFilter === 'out-of-stock') {
+                matchesStock = (product.stock || 0) === 0;
+            }
+            
+            return matchesCategory && matchesStatus && matchesStock;
         });
+    }
+    
+    updateStockSummary(products) {
+        const lowStockCount = products.filter(p => (p.stock || 0) <= 5 && (p.stock || 0) > 0).length;
+        const outOfStockCount = products.filter(p => (p.stock || 0) === 0).length;
+        
+        const stockSummary = document.getElementById('stockSummary');
+        const lowStockElement = document.getElementById('lowStockCount');
+        const outOfStockElement = document.getElementById('outOfStockCount');
+        
+        if (stockSummary && lowStockElement && outOfStockElement) {
+            lowStockElement.textContent = lowStockCount;
+            outOfStockElement.textContent = outOfStockCount;
+            
+            // Show summary only if there are issues
+            if (lowStockCount > 0 || outOfStockCount > 0) {
+                stockSummary.style.display = 'block';
+            } else {
+                stockSummary.style.display = 'none';
+            }
+        }
     }
         
     getProductStatus(product) {
@@ -953,6 +1145,13 @@ class ProductManager {
         if (stock === 0) return 'out-of-stock';
         if (stock <= 5) return 'low-stock';
         return 'active';
+    }
+    
+    getStockClass(product) {
+        const stock = product.stock || 0;
+        if (stock === 0) return 'out-of-stock';
+        if (stock <= 5) return 'low-stock';
+        return 'in-stock';
     }
         
     handleSelectAll(checked) {
@@ -1153,22 +1352,33 @@ class ProductManager {
     }
     
     renderFilteredProducts(products) {
+        console.log('🎨 Rendering products:', products.length, 'items');
         const tableBody = document.getElementById('productsTableBody');
         const emptyState = document.getElementById('productsEmpty');
         const loading = document.getElementById('productsLoading');
         
-        if (!tableBody) return;
+        console.log('🔍 Elements found:', {
+            tableBody: !!tableBody,
+            emptyState: !!emptyState,
+            loading: !!loading
+        });
         
+        if (!tableBody) {
+            console.error('❌ productsTableBody not found!');
+            return;
+        }
+
         if (loading) loading.style.display = 'none';
-        
+        const tableWrapper = document.querySelector('.products-list-container .products-table-wrapper');
         if (products.length === 0) {
             tableBody.innerHTML = '';
             if (emptyState) emptyState.style.display = 'block';
+            if (tableWrapper) tableWrapper.style.display = 'none';
             return;
         }
-        
         if (emptyState) emptyState.style.display = 'none';
-        
+        if (tableWrapper) tableWrapper.style.display = '';
+
         tableBody.innerHTML = products.map(product => `
             <tr>
                 <td class="checkbox-column">
@@ -1177,24 +1387,60 @@ class ProductManager {
                            onchange="window.dashboardApp.productManager.handleProductSelection('${product.id}', this.checked)">
                 </td>
                 <td class="image-column">
-                    <img src="${product.image || 'https://via.placeholder.com/50'}" alt="${product.name}" 
+                    <img src="${product.img || product.imgUrl || product.image || 'https://via.placeholder.com/50'}" alt="${product.name}" 
                          style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">
                 </td>
                 <td class="name-column">${product.name}</td>
                 <td class="category-column">${product.category}</td>
+                <td class="subcategory-column">${product.subCategory || '-'}</td>
                 <td class="price-column">৳${(product.price || 0).toLocaleString()}</td>
-                <td class="stock-column">${product.stock || 0}</td>
+                <td class="stock-column">
+                    <span class="${this.getStockClass(product)}">${product.stock || 0}</span>
+                </td>
                 <td class="status-column">
                     <span class="status-badge ${this.getProductStatus(product)}">
                         ${this.getProductStatus(product)}
                     </span>
                 </td>
+                <td class="date-column">${product.createdAt ? new Date(product.createdAt).toLocaleDateString() : '-'}</td>
                 <td class="actions-column">
                     <button class="btn-sm secondary" onclick="window.dashboardApp.productManager.editProduct('${product.id}')">Edit</button>
                     <button class="btn-sm danger" onclick="window.dashboardApp.productManager.deleteProduct('${product.id}')">Delete</button>
                 </td>
             </tr>
         `).join('');
+    }
+
+    convertToCSV(products) {
+        const esc = (v) => {
+            const s = String(v ?? '');
+            if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+            return s;
+        };
+        const headers = ['id', 'name', 'category', 'subCategory', 'price', 'stock', 'status'];
+        const lines = [headers.join(',')];
+        products.forEach((p) => {
+            lines.push([
+                esc(p.id),
+                esc(p.name),
+                esc(p.category),
+                esc(p.subCategory),
+                esc(p.price),
+                esc(p.stock),
+                esc(p.status)
+            ].join(','));
+        });
+        return lines.join('\n');
+    }
+
+    downloadCSV(csv, filename) {
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
     }
     
     async exportProducts() {
@@ -1207,26 +1453,6 @@ class ProductManager {
             console.error('Error exporting products:', error);
             showToast('Error exporting products', 'error');
         }
-        
-        // Category filter
-        const categoryFilter = document.getElementById('categoryFilter')?.value;
-        if (categoryFilter) {
-            filtered = filtered.filter(product => product.category === categoryFilter);
-        }
-        
-        // Status filter
-        const statusFilter = document.getElementById('statusFilter')?.value;
-        if (statusFilter) {
-            filtered = filtered.filter(product => product.status === statusFilter);
-        }
-        
-        return filtered;
-    }
-    
-    getStockClass(stock) {
-        if (stock <= 0) return 'out-of-stock';
-        if (stock <= 5) return 'low-stock';
-        return 'in-stock';
     }
     
     showAddProductForm() {
@@ -1234,6 +1460,8 @@ class ProductManager {
         this.resetForm();
         document.getElementById('productFormTitle').textContent = 'Add New Product';
         document.getElementById('productFormModal').classList.add('active');
+        this.setupCategorySubcategoryLogic();
+        this.setupImageUpload();
         document.body.style.overflow = 'hidden';
     }
     
@@ -1251,19 +1479,33 @@ class ProductManager {
     populateForm(product) {
         document.getElementById('productName').value = product.name || '';
         document.getElementById('productCategory').value = product.category || '';
-        document.getElementById('productPrice').value = product.price || '';
+        document.getElementById('productPrice').value = product.price != null && product.price !== '' ? String(product.price) : '';
         document.getElementById('productStock').value = product.stock || '';
         document.getElementById('productStatus').value = product.status || 'active';
         document.getElementById('productSize').value = product.size || '';
         document.getElementById('productDescription').value = product.description || '';
+        document.getElementById('productColor').value = product.color || '';
         
-        // Set image if exists
-        if (product.image) {
+        // Setup category/subcategory for editing
+        this.setupCategorySubcategoryLogic();
+        
+        // Trigger category change to populate subcategory
+        const categorySelect = document.getElementById('productCategory');
+        categorySelect.dispatchEvent(new Event('change'));
+        
+        // Set subcategory after options are populated
+        setTimeout(() => {
+            document.getElementById('productSubCategory').value = product.subCategory || '';
+        }, 100);
+        
+        // Set image if exists - check both img and image fields
+        const imageUrl = product.img || product.image;
+        if (imageUrl) {
             const preview = document.getElementById('productImagePreviewImg');
             const placeholder = document.getElementById('imagePlaceholder');
             const removeBtn = document.getElementById('removeImageBtn');
             
-            preview.src = product.image;
+            preview.src = imageUrl;
             preview.style.display = 'block';
             placeholder.style.display = 'none';
             removeBtn.style.display = 'inline-block';
@@ -1284,8 +1526,18 @@ class ProductManager {
         placeholder.style.display = 'block';
         removeBtn.style.display = 'none';
         
+        // Clear uploaded file
+        this.uploadedImageFile = null;
+        
         // Clear errors
-        document.querySelectorAll('.form-error').forEach(error => error.textContent = '');
+        document.querySelectorAll('.form-error').forEach(error => {
+            error.textContent = '';
+            error.style.display = 'none';
+        });
+        
+        // Reset submission state
+        this.isSubmitting = false;
+        this.currentEditingProduct = null;
     }
     
     closeProductForm() {
@@ -1294,15 +1546,30 @@ class ProductManager {
         this.resetForm();
     }
     
-    async handleProductSubmit(e) {
-        e.preventDefault();
+    async handleProductSubmit() {
+        console.log('🔍 ADMIN DEBUG: handleProductSubmit called!');
         
-        if (!this.validateForm()) return;
+        // Prevent duplicate submissions
+        if (this.isSubmitting) {
+            return;
+        }
+        
+        this.isSubmitting = true;
+        console.log('🔍 ADMIN DEBUG: isSubmitting set to true');
+        
+        if (!this.validateForm()) {
+            console.log('🔍 ADMIN DEBUG: Validation failed - returning');
+            this.isSubmitting = false;
+            return;
+        }
+        
+        console.log('🔍 ADMIN DEBUG: Validation passed - proceeding with save');
         
         try {
             const formData = this.getFormData();
+            console.log('🔍 ADMIN DEBUG: Form data retrieved:', formData);
             
-            // Show loading
+            // Show loading and disable button
             const saveBtn = document.getElementById('saveProductBtn');
             const originalText = saveBtn.textContent;
             saveBtn.disabled = true;
@@ -1310,10 +1577,12 @@ class ProductManager {
             
             if (this.currentEditingProduct) {
                 // Update existing product
+                console.log('🔍 ADMIN DEBUG: Updating existing product:', this.currentEditingProduct.id);
                 await this.updateProduct(this.currentEditingProduct.id, formData);
                 showToast('Product updated successfully', 'success');
             } else {
                 // Add new product
+                console.log('🔍 ADMIN DEBUG: Adding new product');
                 await this.addProduct(formData);
                 showToast('Product added successfully', 'success');
             }
@@ -1322,79 +1591,325 @@ class ProductManager {
             await this.loadProducts();
             
         } catch (error) {
-            console.error('Error saving product:', error);
-            showToast('Error saving product', 'error');
+            console.error('🔍 ADMIN DEBUG: Error in handleProductSubmit:', error);
+            console.error('🔍 ADMIN DEBUG: Full error details:', error);
+            showToast('Error saving product: ' + (error.message || 'Unknown error'), 'error');
         } finally {
+            console.log('🔍 ADMIN DEBUG: Finally block - resetting form state');
+            this.isSubmitting = false;
             const saveBtn = document.getElementById('saveProductBtn');
             saveBtn.disabled = false;
-            saveBtn.textContent = 'Save Product';
+            saveBtn.textContent = saveBtn.textContent === 'Saving...' ? 'Save Product' : saveBtn.textContent;
         }
     }
     
+    // Category/SubCategory mapping
+    categorySubcategoryMap = {
+        'Women': ['Bags', 'Most Viewed', 'Dress', 'Trending', 'Shoes'],
+        'Men': ['Sneakers', 'Shoes', 'Shirt', 'Sunglasses', 'Bags', 'Hoodie'],
+        'Collection': ['Watches', 'Belts', 'Caps']
+    };
+
+    setupCategorySubcategoryLogic() {
+        const categorySelect = document.getElementById('productCategory');
+        const subCategorySelect = document.getElementById('productSubCategory');
+        if (!categorySelect || !subCategorySelect) return;
+        if (this._categorySubBound) {
+            categorySelect.dispatchEvent(new Event('change'));
+            return;
+        }
+        this._categorySubBound = true;
+        categorySelect.addEventListener('change', () => {
+            const selectedCategory = categorySelect.value;
+            subCategorySelect.innerHTML = '<option value="">Select SubCategory</option>';
+            
+            if (selectedCategory && this.categorySubcategoryMap[selectedCategory]) {
+                this.categorySubcategoryMap[selectedCategory].forEach(sub => {
+                    const option = document.createElement('option');
+                    option.value = sub;
+                    option.textContent = sub;
+                    subCategorySelect.appendChild(option);
+                });
+            }
+        });
+    }
+
+    setupImageUpload() {
+        const imageInput = document.getElementById('productImage');
+        const previewImg = document.getElementById('productImagePreviewImg');
+        const placeholder = document.getElementById('imagePlaceholder');
+        const removeBtn = document.getElementById('removeImageBtn');
+        if (!imageInput) return;
+        if (this._imageUploadBound) return;
+        this._imageUploadBound = true;
+        
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                this.validateAndPreviewImage(file);
+            }
+        });
+        
+        // Click to upload
+        const uploadArea = document.querySelector('.image-upload-area');
+        if (uploadArea) {
+            uploadArea.addEventListener('click', (e) => {
+                if (e.target.tagName !== 'INPUT') {
+                    imageInput.click();
+                }
+            });
+        }
+    }
+
+    validateAndPreviewImage(file) {
+        const previewImg = document.getElementById('productImagePreviewImg');
+        const placeholder = document.getElementById('imagePlaceholder');
+        const removeBtn = document.getElementById('removeImageBtn');
+        
+        // Validate file type
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+            this.showFieldError('productImage', 'Please upload a valid image file (JPG, PNG, WebP)');
+            return false;
+        }
+        
+        // Validate file size (5MB max)
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            this.showFieldError('productImage', 'Image size must be less than 5MB');
+            return false;
+        }
+        
+        // Clear previous error
+        this.clearFieldError('productImage');
+        
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewImg.src = e.target.result;
+            previewImg.style.display = 'block';
+            placeholder.style.display = 'none';
+            removeBtn.style.display = 'inline-block';
+            this.uploadedImageFile = file;
+        };
+        reader.readAsDataURL(file);
+        
+        return true;
+    }
+
+    removeImage() {
+        const previewImg = document.getElementById('productImagePreviewImg');
+        const placeholder = document.getElementById('imagePlaceholder');
+        const removeBtn = document.getElementById('removeImageBtn');
+        const imageInput = document.getElementById('productImage');
+        
+        previewImg.src = '';
+        previewImg.style.display = 'none';
+        placeholder.style.display = 'block';
+        removeBtn.style.display = 'none';
+        imageInput.value = '';
+        this.uploadedImageFile = null;
+    }
+
+    async uploadProductImage(file) {
+        if (!file) return null;
+        
+        try {
+            const fileRef = storageRef(storage, `products/${Date.now()}_${file.name}`);
+            const uploadResult = await uploadBytes(fileRef, file);
+            const downloadURL = await getDownloadURL(uploadResult.ref);
+            return downloadURL;
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            throw error;
+        }
+    }
+
+    showFieldError(fieldId, message) {
+        const errorElement = document.getElementById(`${fieldId}Error`);
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+    }
+
+    clearFieldError(fieldId) {
+        const errorElement = document.getElementById(`${fieldId}Error`);
+        if (errorElement) {
+            errorElement.textContent = '';
+            errorElement.style.display = 'none';
+        }
+    }
+
     validateForm() {
+        console.log('🔍 ADMIN DEBUG: Starting form validation...');
         let isValid = true;
         
         // Clear previous errors
         document.querySelectorAll('.form-error').forEach(error => error.textContent = '');
         
-        // Validate name
+        // Get form values with proper validation
         const name = document.getElementById('productName').value.trim();
-        if (!name) {
-            document.getElementById('productNameError').textContent = 'Product name is required';
+        const category = document.getElementById('productCategory').value.trim();
+        const subCategory = document.getElementById('productSubCategory').value.trim();
+        const price = document.getElementById('productPrice').value.trim();
+        const stock = document.getElementById('productStock').value.trim();
+        
+        console.log('🔍 ADMIN DEBUG: Form values:', { name, category, subCategory, price, stock });
+        
+        // Validate required fields with edge cases
+        if (!name || name.length < 2) {
+            console.log('🔍 ADMIN DEBUG: Name validation failed:', name);
+            this.showFieldError('productName', 'Product name must be at least 2 characters');
             isValid = false;
         }
         
-        // Validate category
-        const category = document.getElementById('productCategory').value;
         if (!category) {
-            document.getElementById('productCategoryError').textContent = 'Category is required';
+            console.log('🔍 ADMIN DEBUG: Category validation failed:', category);
+            this.showFieldError('productCategory', 'Category is required');
             isValid = false;
         }
         
-        // Validate price
-        const price = parseFloat(document.getElementById('productPrice').value);
-        if (isNaN(price) || price < 0) {
-            document.getElementById('productPriceError').textContent = 'Valid price is required';
+        if (!subCategory) {
+            console.log('🔍 ADMIN DEBUG: SubCategory validation failed:', subCategory);
+            this.showFieldError('productSubCategory', 'SubCategory is required');
             isValid = false;
         }
         
-        // Validate stock
-        const stock = parseInt(document.getElementById('productStock').value);
-        if (isNaN(stock) || stock < 0) {
-            document.getElementById('productStockError').textContent = 'Valid stock quantity is required';
+        // Price validation
+        const priceNum = parseFloat(price);
+        if (!price || isNaN(priceNum) || priceNum <= 0) {
+            console.log('🔍 ADMIN DEBUG: Price validation failed:', price, priceNum);
+            this.showFieldError('productPrice', 'Price must be greater than 0');
+            isValid = false;
+        } else if (priceNum > 999999) {
+            console.log('🔍 ADMIN DEBUG: Price too high:', priceNum);
+            this.showFieldError('productPrice', 'Price seems too high');
             isValid = false;
         }
         
+        // Stock validation
+        const stockNum = parseInt(stock);
+        if (stock === '' || isNaN(stockNum) || stockNum < 0) {
+            console.log('🔍 ADMIN DEBUG: Stock validation failed:', stock, stockNum);
+            this.showFieldError('productStock', 'Stock must be 0 or greater');
+            isValid = false;
+        } else if (stockNum > 99999) {
+            this.showFieldError('productStock', 'Stock quantity seems too high');
+            isValid = false;
+        }
+        
+        // Image validation for new products
+        if (!this.uploadedImageFile && !this.currentEditingProduct) {
+            console.log('🔍 ADMIN DEBUG: Image validation failed - no image uploaded');
+            this.showFieldError('productImage', 'Product image is required');
+            isValid = false;
+        }
+        
+        console.log('🔍 ADMIN DEBUG: Validation result:', isValid);
         return isValid;
     }
     
     getFormData() {
         return {
             name: document.getElementById('productName').value.trim(),
-            category: document.getElementById('productCategory').value,
-            price: parseFloat(document.getElementById('productPrice').value),
-            stock: parseInt(document.getElementById('productStock').value),
-            status: document.getElementById('productStatus').value,
-            size: document.getElementById('productSize').value.trim(),
+            category: document.getElementById('productCategory').value.trim(),
+            subCategory: document.getElementById('productSubCategory').value.trim(),
+            price: parseFloat(document.getElementById('productPrice').value).toFixed(2), // Always 2 decimal places
+            stock: parseInt(document.getElementById('productStock').value) || 0,
+            color: document.getElementById('productColor').value.trim(),
             description: document.getElementById('productDescription').value.trim(),
-            image: document.getElementById('productImagePreviewImg').src || '',
-            updatedAt: Date.now()
+            status: document.getElementById('productStatus').value || 'active',
+            size: document.getElementById('productSize').value.trim()
         };
     }
     
     async addProduct(productData) {
-        const productsRef = dbRef(db, 'products');
-        const newProductRef = push(productsRef);
-        await set(newProductRef, {
-            ...productData,
-            createdAt: Date.now(),
-            id: newProductRef.key
-        });
+        try {
+            console.log('🔍 ADMIN DEBUG: Starting addProduct with data:', productData);
+            
+            // Upload image first if provided
+            let imageUrl = '';
+            if (this.uploadedImageFile) {
+                showToast('Uploading image...', 'info');
+                imageUrl = await this.uploadProductImage(this.uploadedImageFile);
+                console.log('🔍 ADMIN DEBUG: Image uploaded to:', imageUrl);
+            }
+            
+            const priceNum = parseFloat(productData.price);
+            // Create product object with frontend-compatible structure
+            const productObject = {
+                id: '', // Will be set by Firebase key
+                name: productData.name,
+                price: priceNum,
+                img: imageUrl || 'images/placeholder.jpg', // Frontend expects img field
+                category: productData.category,
+                subCategory: productData.subCategory,
+                color: productData.color || 'Default',
+                description: productData.description || '',
+                stock: productData.stock,
+                status: productData.status || 'active',
+                size: productData.size || '',
+                createdAt: Date.now(),
+                isActive: true // Frontend filters for active products
+            };
+            
+            console.log('🔍 ADMIN DEBUG: Product object to save:', productObject);
+            
+            // Save to Firebase
+            console.log('🔍 ADMIN DEBUG: Saving to Firebase path: products');
+            const productsRef = dbRef(db, 'products');
+            console.log('🔍 ADMIN DEBUG: Firebase products ref created');
+            
+            const newProductRef = push(productsRef);
+            console.log('🔍 ADMIN DEBUG: New product ref created with key:', newProductRef.key);
+            
+            const finalProductData = {
+                ...productObject,
+                id: newProductRef.key
+            };
+            console.log('🔍 ADMIN DEBUG: Final data to set:', finalProductData);
+            
+            await set(newProductRef, finalProductData);
+            console.log('🔍 ADMIN DEBUG: Product saved successfully to Firebase with key:', newProductRef.key);
+            
+            return newProductRef.key;
+        } catch (error) {
+            console.error('🔍 ADMIN DEBUG: Error adding product:', error);
+            console.error('🔍 ADMIN DEBUG: Full error details:', error);
+            throw error;
+        }
     }
     
     async updateProduct(productId, productData) {
-        const productRef = dbRef(db, `products/${productId}`);
-        await update(productRef, productData);
+        try {
+            // For editing, we need to handle image updates carefully
+            let updateData = { ...productData };
+            
+            // Handle image update
+            if (this.uploadedImageFile) {
+                // New image uploaded - upload it
+                showToast('Uploading new image...', 'info');
+                const imageUrl = await this.uploadProductImage(this.uploadedImageFile);
+                updateData.img = imageUrl;
+                updateData.updatedAt = Date.now();
+            } else if (!this.currentEditingProduct?.img && !this.uploadedImageFile) {
+                // No existing image and no new image - use placeholder
+                updateData.img = 'images/placeholder.jpg';
+            }
+            // If no new image and existing image exists, keep existing img (don't overwrite)
+            
+            // Ensure frontend compatibility (numeric price for DB rules; site maps to display string)
+            updateData.price = parseFloat(updateData.price);
+            updateData.isActive = updateData.status === 'active';
+            
+            const productRef = dbRef(db, `products/${productId}`);
+            await update(productRef, updateData);
+            
+        } catch (error) {
+            console.error('Error updating product:', error);
+            throw error;
+        }
     }
     
     deleteProduct(productId) {
@@ -1432,98 +1947,6 @@ class ProductManager {
         this.productToDelete = null;
     }
     
-    handleImageUpload(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        // Validate file
-        if (!file.type.startsWith('image/')) {
-            showToast('Please select an image file', 'error');
-            return;
-        }
-        
-        if (file.size > 5 * 1024 * 1024) {
-            showToast('Image size should be less than 5MB', 'error');
-            return;
-        }
-        
-        // Show preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const preview = document.getElementById('productImagePreviewImg');
-            const placeholder = document.getElementById('imagePlaceholder');
-            const removeBtn = document.getElementById('removeImageBtn');
-            
-            preview.src = e.target.result;
-            preview.style.display = 'block';
-            placeholder.style.display = 'none';
-            removeBtn.style.display = 'inline-block';
-        };
-        reader.readAsDataURL(file);
-    }
-    
-    removeImage() {
-        const preview = document.getElementById('productImagePreviewImg');
-        const placeholder = document.getElementById('imagePlaceholder');
-        const removeBtn = document.getElementById('removeImageBtn');
-        const imageInput = document.getElementById('productImage');
-        
-        preview.src = '';
-        preview.style.display = 'none';
-        placeholder.style.display = 'block';
-        removeBtn.style.display = 'none';
-        imageInput.value = '';
-    }
-    
-    handleSearch(e) {
-        this.renderProducts();
-    }
-    
-    applyFilters() {
-        this.renderProducts();
-    }
-    
-    handleSelectAll(e) {
-        const checkboxes = document.querySelectorAll('.product-checkbox');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = e.target.checked;
-            if (e.target.checked) {
-                this.selectedProducts.add(checkbox.dataset.productId);
-            } else {
-                this.selectedProducts.delete(checkbox.dataset.productId);
-            }
-        });
-        this.updateBulkActionBar();
-    }
-    
-    handleProductSelect(productId) {
-        const checkbox = document.querySelector(`.product-checkbox[data-product-id="${productId}"]`);
-        if (checkbox.checked) {
-            this.selectedProducts.add(productId);
-        } else {
-            this.selectedProducts.delete(productId);
-        }
-        
-        // Update select all checkbox
-        const selectAll = document.getElementById('selectAllProducts');
-        const allCheckboxes = document.querySelectorAll('.product-checkbox');
-        selectAll.checked = this.selectedProducts.size === allCheckboxes.length;
-        
-        this.updateBulkActionBar();
-    }
-    
-    updateBulkActionBar() {
-        const bulkBar = document.getElementById('bulkActionBar');
-        const selectedCount = document.getElementById('bulkSelectedCount');
-        
-        if (this.selectedProducts.size > 0) {
-            bulkBar.style.display = 'flex';
-            selectedCount.textContent = this.selectedProducts.size;
-        } else {
-            bulkBar.style.display = 'none';
-        }
-    }
-    
     showLoading(show) {
         const loading = document.getElementById('productsLoading');
         const tableWrapper = document.querySelector('.products-table-wrapper');
@@ -1557,7 +1980,7 @@ class OrderManager {
             searchInput.addEventListener('input', (e) => this.handleSearch(e));
         }
         
-        const statusFilter = document.getElementById('statusFilter');
+        const statusFilter = document.getElementById('orderStatusFilter');
         if (statusFilter) {
             statusFilter.addEventListener('change', () => this.applyFilters());
         }
@@ -1679,7 +2102,7 @@ class OrderManager {
         }
         
         // Status filter
-        const statusFilter = document.getElementById('statusFilter')?.value;
+        const statusFilter = document.getElementById('orderStatusFilter')?.value;
         if (statusFilter) {
             filtered = filtered.filter(order => order.status === statusFilter);
         }
@@ -1839,7 +2262,7 @@ class OrderManager {
     
     clearFilters() {
         document.getElementById('orderSearchInput').value = '';
-        document.getElementById('statusFilter').value = '';
+        document.getElementById('orderStatusFilter').value = '';
         document.getElementById('dateFilter').value = '';
         this.renderOrders();
     }
@@ -1884,7 +2307,7 @@ class InventoryManager {
             stockStatusFilter.addEventListener('change', () => this.applyFilters());
         }
         
-        const categoryFilter = document.getElementById('categoryFilter');
+        const categoryFilter = document.getElementById('inventoryCategoryFilter');
         if (categoryFilter) {
             categoryFilter.addEventListener('change', () => this.applyFilters());
         }
@@ -2066,7 +2489,7 @@ class InventoryManager {
         }
         
         // Category filter
-        const categoryFilter = document.getElementById('categoryFilter')?.value;
+        const categoryFilter = document.getElementById('inventoryCategoryFilter')?.value;
         if (categoryFilter) {
             filtered = filtered.filter(product => product.category === categoryFilter);
         }
@@ -2216,7 +2639,7 @@ class InventoryManager {
     clearFilters() {
         document.getElementById('inventorySearchInput').value = '';
         document.getElementById('stockStatusFilter').value = '';
-        document.getElementById('categoryFilter').value = '';
+        document.getElementById('inventoryCategoryFilter').value = '';
         this.renderInventory();
     }
     
@@ -2413,10 +2836,10 @@ class MediaManager {
                 // Create unique filename
                 const timestamp = Date.now();
                 const filename = `${timestamp}_${file.name}`;
-                const storageRef = storageRef(storage, `media/${filename}`);
+                const mediaRef = storageRef(storage, `media/${filename}`);
                 
                 // Upload to Firebase Storage
-                const uploadTask = uploadBytesResumable(storageRef, file);
+                const uploadTask = uploadBytesResumable(mediaRef, file);
                 
                 await new Promise((resolve, reject) => {
                     uploadTask.on('state_changed', 
@@ -3245,12 +3668,42 @@ class AdminDashboard {
 
 let dashboardApp;
 
+// Add test function to window for debugging
+window.testProductSearch = function() {
+    console.log('🧪 Testing product search...');
+    console.log('Dashboard app exists:', !!window.dashboardApp);
+    console.log('Product manager exists:', !!window.dashboardApp?.productManager);
+    console.log('Products loaded:', window.dashboardApp?.productManager?.products?.length || 0);
+    
+    if (window.dashboardApp?.productManager?.products?.length > 0) {
+        console.log('Sample product:', window.dashboardApp.productManager.products[0]);
+        // Test search with first product name
+        const testName = window.dashboardApp.productManager.products[0].name;
+        console.log('Testing search with:', testName);
+        window.dashboardApp.productManager.handleSearch(testName);
+    } else {
+        console.log('❌ No products loaded to test with');
+    }
+};
+
 function initializeDashboard() {
     dashboardApp = new AdminDashboard();
     window.dashboardApp = dashboardApp;
     
     // Setup mobile menu
     setupMobileMenu();
+    
+    // Add click outside handler to hide search results
+    document.addEventListener('click', (event) => {
+        const dropdown = document.getElementById('searchResultsDropdown');
+        const searchContainer = document.querySelector('.products-search');
+        
+        if (dropdown && searchContainer && !searchContainer.contains(event.target)) {
+            if (window.dashboardApp && window.dashboardApp.productManager) {
+                window.dashboardApp.productManager.hideSearchResults();
+            }
+        }
+    });
     
     // Make some methods globally available for inline handlers
     window.openPendingOrdersPanel = () => dashboardApp.openPendingOrdersPanel();

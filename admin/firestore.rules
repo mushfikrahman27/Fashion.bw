@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+    
+    function isValidProduct(data) {
+      return data.keys().hasAll(['name', 'price']) &&
+             data.name is string &&
+             data.name.size() > 0 &&
+             data.price is number &&
+             data.price > 0 &&
+             (data.keys().hasAll(['stock']) ? data.stock is number && data.stock >= 0 : true);
+    }
+    
+    function isValidOrder(data) {
+      return data.keys().hasAll(['customerId', 'total', 'status']) &&
+             data.customerId is string &&
+             data.customerId.size() > 0 &&
+             data.total is number &&
+             data.total > 0 &&
+             data.status in ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+    }
+    
+    function isValidSettings(data) {
+      return data.keys().hasAll(['siteName', 'contactEmail']) &&
+             data.siteName is string &&
+             data.siteName.size() > 0 &&
+             data.contactEmail is string &&
+             data.contactEmail.matches('.+@.+\\..+');
+    }
+    
+    // Products collection - admin only with validation
+    match /products/{productId} {
+      allow read, write: if isAdmin() && 
+        (request.method == 'create' ? isValidProduct(resourceData) :
+         request.method == 'update' ? isValidProduct(resourceData) : true);
+    }
+    
+    // Orders collection - admin only with validation
+    match /orders/{orderId} {
+      allow read, write: if isAdmin() && 
+        (request.method == 'create' ? isValidOrder(resourceData) :
+         request.method == 'update' ? resourceData.diff(resource).affectedKeys().hasOnly(['status']) : true);
+      
+      // Status history subcollection
+      match /statusHistory/{historyId} {
+        allow read, write: if isAdmin();
+      }
+    }
+    
+    // Inventory collection - admin only
+    match /inventory/{itemId} {
+      allow read, write: if isAdmin() &&
+        (request.method == 'update' ? resourceData.stock is number && resourceData.stock >= 0 : true);
+    }
+    
+    // Users collection - read only for admins
+    match /users/{userId} {
+      allow read: if isAdmin();
+      allow write: if false; // Users managed through Auth, not direct DB writes
+    }
+    
+    // Messages collection - admin only
+    match /messages/{messageId} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Settings document - only specific admin UID can write
+    match /settings/{settingId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin() && 
+        request.auth.uid == 'ADMIN_UID_HERE' && // Replace with actual admin UID
+        isValidSettings(resourceData);
+    }
+    
+    // Media collection - admin only
+    match /media/{mediaId} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Deny all other access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

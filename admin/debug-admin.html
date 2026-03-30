@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .error { background: #ffebee; color: #c62828; padding: 10px; border-radius: 5px; }
+        .success { background: #e8f5e8; color: #2e7d32; padding: 10px; border-radius: 5px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Admin Panel Debug Tool</h1>
+    
+    <div class="debug">
+        <h3>Step 1: Test Firebase Connection</h3>
+        <button onclick="testFirebase()">Test Firebase Config</button>
+        <div id="firebaseResult"></div>
+    </div>
+    
+    <div class="debug">
+        <h3>Step 2: Test Authentication</h3>
+        <button onclick="testAuth()">Test Auth Status</button>
+        <div id="authResult"></div>
+    </div>
+    
+    <div class="debug">
+        <h3>Step 3: Test Dashboard Load</h3>
+        <button onclick="testDashboard()">Test Dashboard</button>
+        <div id="dashboardResult"></div>
+    </div>
+    
+    <div class="debug">
+        <h3>Step 4: Open Admin Panel</h3>
+        <button onclick="window.open('dashboard-complete.html', '_blank')">Open Admin Panel</button>
+    </div>
+
+    <script type="module">
+        // Test Firebase connection
+        async function testFirebase() {
+            const result = document.getElementById('firebaseResult');
+            try {
+                const { db, auth } = await import('../../firebase-config.js');
+                result.innerHTML = '<div class="success">✅ Firebase config loaded successfully</div>';
+                console.log('Firebase test:', { db, auth });
+            } catch (error) {
+                result.innerHTML = '<div class="error">❌ Firebase config failed: ' + error.message + '</div>';
+                console.error('Firebase error:', error);
+            }
+        }
+        
+        // Test authentication
+        async function testAuth() {
+            const result = document.getElementById('authResult');
+            try {
+                const { auth, onAuthStateChanged } = await import('../../firebase-config.js');
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        result.innerHTML = '<div class="success">✅ User authenticated: ' + user.email + '</div>';
+                    } else {
+                        result.innerHTML = '<div class="error">❌ No user authenticated</div>';
+                    }
+                });
+            } catch (error) {
+                result.innerHTML = '<div class="error">❌ Auth test failed: ' + error.message + '</div>';
+                console.error('Auth error:', error);
+            }
+        }
+        
+        // Test dashboard load
+        async function testDashboard() {
+            const result = document.getElementById('dashboardResult');
+            try {
+                // Test if dashboard script loads
+                const response = await fetch('js/dashboard-complete.js');
+                if (response.ok) {
+                    result.innerHTML = '<div class="success">✅ Dashboard script accessible</div>';
+                } else {
+                    result.innerHTML = '<div class="error">❌ Dashboard script not accessible</div>';
+                }
+            } catch (error) {
+                result.innerHTML = '<div class="error">❌ Dashboard test failed: ' + error.message + '</div>';
+                console.error('Dashboard error:', error);
+            }
+        }
+        
+        // Auto-run tests
+        console.log('Debug tool loaded - run tests to identify issues');
+    </script>
+</body>
+</html>

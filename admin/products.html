@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Inventory - INARAH</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/inventory.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">INARAH</div>
+        
+        <a href="dashboard-new.html" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="orders.html" class="nav-item">
+            <i class="fas fa-shopping-bag"></i>
+            <span>Orders</span>
+        </a>
+        <a href="products.html" class="nav-item active">
+            <i class="fas fa-box"></i>
+            <span>Stock</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+            <i class="fas fa-user-cog"></i>
+            <span>Admin</span>
+        </a>
+    </aside>
+
+    <main class="main-content">
+        <h2 style="font-family: 'Playfair Display'; margin-bottom: 25px;">Product Inventory</h2>
+
+        <div id="product-grid" class="product-grid">
+            <p id="product-loader" style="text-align: center; color: #666; grid-column: 1/-1;">Loading products...</p>
+        </div>
+
+        <!-- Search Insights Section -->
+        <section class="insights-section">
+            <h3 style="font-family: 'Playfair Display'; margin: 20px 0;">Customer Demand</h3>
+            <div id="search-insights-list" class="insight-container">
+                <p style="color:#666; font-size:0.8rem;">Analyzing customer searches...</p>
+            </div>
+        </section>
+    </main>
+
+    <style>
+    .insight-item {
+        background: rgba(255,255,255,0.03);
+        padding: 12px 20px;
+        border-radius: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    .search-count { color: var(--gold); font-weight: bold; }
+    </style>
+
+    <script type="module" src="js/inventory-analytics.js"></script>
+</body>
+</html>

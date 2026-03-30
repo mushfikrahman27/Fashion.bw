@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Configuration - INARAH</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/settings.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">INARAH</div>
+        
+        <a href="dashboard-new.html" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="orders.html" class="nav-item">
+            <i class="fas fa-shopping-bag"></i>
+            <span>Orders</span>
+        </a>
+        <a href="products.html" class="nav-item">
+            <i class="fas fa-box"></i>
+            <span>Stock</span>
+        </a>
+        <a href="settings.html" class="nav-item active">
+            <i class="fas fa-user-cog"></i>
+            <span>Admin</span>
+        </a>
+    </aside>
+
+    <main class="main-content">
+        <h2 style="font-family: 'Playfair Display'; margin-bottom: 25px;">Store Configuration</h2>
+
+        <div class="settings-grid">
+            <div class="config-card">
+                <label>Homepage Banner URL</label>
+                <input type="text" id="config-banner-url" class="config-input" placeholder="Paste image link here...">
+                <p style="font-size: 0.6rem; color: #666; margin-top: 5px;">*Recommended: 1920x1080px</p>
+            </div>
+
+            <div class="config-card">
+                <label>Promo Message (Top Bar)</label>
+                <input type="text" id="config-promo-text" class="config-input" placeholder="e.g. 20% OFF ALL ITEMS!">
+            </div>
+
+            <div class="config-card">
+                <label>Delivery Fee (TK)</label>
+                <input type="number" id="config-delivery-fee" class="config-input" placeholder="e.g. 80">
+            </div>
+
+            <button class="btn-save-settings" onclick="saveInarahSettings()">Update Storefront</button>
+        </div>
+    </main>
+
+    <script type="module" src="js/settings-sync.js"></script>
+</body>
+</html>

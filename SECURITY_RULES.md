@@ -1,6 +1,6 @@
-# Firebase Security Rules - Policia E-commerce
+# Firebase Security Rules - Inarah E-commerce
 
-This file contains the production-ready Firebase Realtime Database and Storage security rules for the Policia e-commerce application.
+This file contains the production-ready Firebase Realtime Database and Storage security rules for the Inarah e-commerce application.
 
 ## Database Paths Used in Codebase
 

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Connection Test - INARAH</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #050505; color: #fff; }
+        .test-section { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .info { color: #2196F3; }
+        button { background: #c5a059; color: #000; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 10px 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Firebase Connection Test</h1>
+    
+    <div class="test-section">
+        <h3>1. Database Connection Test</h3>
+        <div id="connection-status">Testing connection...</div>
+        <button onclick="testConnection()">Test Connection</button>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Orders Data Test</h3>
+        <div id="orders-status">Checking orders...</div>
+        <button onclick="testOrders()">Check Orders</button>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Create Test Order</h3>
+        <div id="create-status">Ready to create test order...</div>
+        <button onclick="createTestOrder()">Create Test Order</button>
+    </div>
+
+    <div class="test-section">
+        <h3>4. Console Log</h3>
+        <div id="console-log" style="background: #000; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <script type="module">
+        import { db } from '../firebase-config.js';
+        import { ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('console-log');
+            logDiv.innerHTML += `<div class="${type}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function testConnection() {
+            const statusDiv = document.getElementById('connection-status');
+            try {
+                const testRef = ref(db, 'test');
+                set(testRef, { connected: true, timestamp: Date.now() })
+                    .then(() => {
+                        statusDiv.innerHTML = '<span class="success">✅ Firebase Connected Successfully!</span>';
+                        log('Firebase connection test passed');
+                    })
+                    .catch(err => {
+                        statusDiv.innerHTML = '<span class="error">❌ Firebase Connection Failed!</span>';
+                        log('Firebase connection error: ' + err.message, 'error');
+                    });
+            } catch (err) {
+                statusDiv.innerHTML = '<span class="error">❌ Configuration Error!</span>';
+                log('Firebase config error: ' + err.message, 'error');
+            }
+        }
+
+        function testOrders() {
+            const statusDiv = document.getElementById('orders-status');
+            const ordersRef = ref(db, 'orders');
+            
+            onValue(ordersRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    const orderCount = Object.keys(data).length;
+                    statusDiv.innerHTML = `<span class="success">✅ Found ${orderCount} orders</span>`;
+                    log('Orders data received: ' + JSON.stringify(data, null, 2));
+                } else {
+                    statusDiv.innerHTML = '<span class="info">ℹ️ No orders found</span>';
+                    log('No orders in database');
+                }
+            }, (error) => {
+                statusDiv.innerHTML = '<span class="error">❌ Orders Read Error!</span>';
+                log('Orders read error: ' + error.message, 'error');
+            });
+        }
+
+        function createTestOrder() {
+            const statusDiv = document.getElementById('create-status');
+            const ordersRef = ref(db, 'orders');
+            
+            const testOrder = {
+                orderId: 'TEST-' + Date.now(),
+                createdAt: Date.now(),
+                status: 'pending',
+                channel: 'test',
+                customer: {
+                    name: 'Test Customer',
+                    phone: '+880123456789',
+                    address: '123 Test Street, Dhaka, Bangladesh'
+                },
+                items: [
+                    { name: 'Test Product', quantity: 1, price: 1000 }
+                ],
+                totals: {
+                    subtotal: 1000,
+                    deliveryCharge: 80,
+                    total: 1080
+                }
+            };
+
+            push(ordersRef, testOrder)
+                .then((result) => {
+                    statusDiv.innerHTML = `<span class="success">✅ Test order created! ID: ${result.key}</span>`;
+                    log('Test order created: ' + JSON.stringify(testOrder, null, 2));
+                })
+                .catch(err => {
+                    statusDiv.innerHTML = '<span class="error">❌ Failed to create test order!</span>';
+                    log('Test order creation failed: ' + err.message, 'error');
+                });
+        }
+
+        // Auto-run tests
+        window.onload = () => {
+            log('Firebase Connection Test Tool Loaded');
+            testConnection();
+            setTimeout(testOrders, 1000);
+        };
+
+        // Make functions global
+        window.testConnection = testConnection;
+        window.testOrders = testOrders;
+        window.createTestOrder = createTestOrder;
+    </script>
+</body>
+</html>

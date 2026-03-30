@@ -1,0 +1,100 @@
+/* admin/css/main.css */
+:root {
+    --bg: #050505;
+    --card-bg: rgba(20, 20, 20, 0.95);
+    --gold: #c5a059;
+    --text: #ffffff;
+    --border: rgba(197, 160, 89, 0.15);
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding-bottom: 70px; /* Space for mobile bottom-nav */
+}
+
+/* --- MOBILE BOTTOM NAV (Default) --- */
+.sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 70px;
+    background: #000;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1000;
+}
+
+.sidebar-brand { display: none; } /* Hide Brand on mobile nav */
+
+.nav-item {
+    color: #666;
+    text-decoration: none;
+    font-size: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.nav-item span { font-size: 0.65rem; text-transform: uppercase; }
+.nav-item.active { color: var(--gold); }
+
+/* --- DESKTOP ADAPTATION --- */
+@media (min-width: 1024px) {
+    body { padding-bottom: 0; padding-left: 260px; }
+    
+    .sidebar {
+        top: 0;
+        left: 0;
+        width: 260px;
+        height: 100vh;
+        flex-direction: column;
+        justify-content: flex-start;
+        border-top: none;
+        border-right: 1px solid var(--border);
+    }
+
+    .sidebar-brand { 
+        display: block; 
+        padding: 40px 20px; 
+        font-family: 'Playfair Display', serif;
+        color: var(--gold);
+        font-size: 1.8rem;
+        letter-spacing: 4px;
+    }
+
+    .nav-item {
+        width: 100%;
+        padding: 20px 30px;
+        flex-direction: row;
+        font-size: 1rem;
+    }
+    .nav-item span { font-size: 0.9rem; }
+}
+
+/* --- DASHBOARD GRID --- */
+.main-content { padding: 20px; }
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 columns on mobile */
+    gap: 15px;
+}
+
+@media (min-width: 768px) {
+    .stat-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+}

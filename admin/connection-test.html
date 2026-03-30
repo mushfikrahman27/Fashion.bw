@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin-Frontend Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .product-count {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Admin-Frontend Connection Test</h1>
+        
+        <div class="product-count" id="productCount">Loading...</div>
+        
+        <button class="btn" onclick="testConnection()">🧪 Test Connection</button>
+        <button class="btn" onclick="testMigration()">📋 Check Migration Status</button>
+        <button class="btn" onclick="clearLog()">🗑️ Clear Log</button>
+        
+        <div id="log" class="log">Test results will appear here...</div>
+    </div>
+
+    <!-- Firebase Configuration -->
+    <script type="module">
+        import { db } from '../firebase-config.js';
+        
+        // Override console.log to show in page
+        const originalLog = console.log;
+        const logDiv = document.getElementById('log');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            logDiv.textContent += args.join(' ') + '\n';
+            logDiv.scrollTop = logDiv.scrollHeight;
+        };
+        
+        console.error = function(...args) {
+            originalLog.apply(console, args);
+            logDiv.textContent += '❌ ERROR: ' + args.join(' ') + '\n';
+            logDiv.scrollTop = logDiv.scrollHeight;
+        };
+
+        function clearLog() {
+            logDiv.textContent = 'Test results will appear here...\n';
+        }
+
+        async function testConnection() {
+            clearLog();
+            console.log('🔍 TESTING ADMIN-FRONTEND CONNECTION...');
+            
+            try {
+                const { ref, get } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+                const productsRef = ref(db, 'products');
+                const snapshot = await get(productsRef);
+                const productsData = snapshot.val() || {};
+                const productCount = Object.keys(productsData).length;
+                
+                console.log(`📊 Firebase products count: ${productCount}`);
+                document.getElementById('productCount').textContent = `${productCount} Products in Firebase`;
+                
+                if (productCount === 0) {
+                    console.log('⚠️ WARNING: No products found in Firebase');
+                    console.log('💡 SOLUTION: Run migration tool first');
+                } else {
+                    console.log('✅ SUCCESS: Products found in Firebase');
+                    
+                    // Test product structure compatibility
+                    const sampleProducts = Object.values(productsData).slice(0, 3);
+                    console.log('🔍 Sample product structures:');
+                    
+                    sampleProducts.forEach((product, index) => {
+                        console.log(`Product ${index + 1}:`);
+                        console.log(`  - Name: ${product.name || 'MISSING'}`);
+                        console.log(`  - Category: ${product.category || 'MISSING'}`);
+                        console.log(`  - SubCategory: ${product.subCategory || 'MISSING'}`);
+                        console.log(`  - Price: ${product.price || 'MISSING'}`);
+                        console.log(`  - Image: ${product.img || product.image || 'MISSING'}`);
+                        console.log(`  - Status: ${product.status || 'MISSING'}`);
+                        console.log(`  - Active: ${product.isActive !== false ? 'YES' : 'NO'}`);
+                        console.log('');
+                    });
+                    
+                    // Check field compatibility
+                    const compatibleFields = sampleProducts.every(product => {
+                        return product.name && 
+                               product.category && 
+                               product.subCategory && 
+                               product.price && 
+                               (product.img || product.image);
+                    });
+                    
+                    if (compatibleFields) {
+                        console.log('✅ Field compatibility: PASSED');
+                    } else {
+                        console.log('❌ Field compatibility: FAILED - missing required fields');
+                    }
+                }
+                
+            } catch (error) {
+                console.error('❌ Connection test failed:', error);
+            }
+        }
+
+        async function testMigration() {
+            clearLog();
+            console.log('🔍 TESTING MIGRATION STATUS...');
+            
+            try {
+                const { ref, get } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+                const productsRef = ref(db, 'products');
+                const snapshot = await get(productsRef);
+                const productsData = snapshot.val() || {};
+                
+                // Count by category
+                const categoryCounts = {};
+                Object.values(productsData).forEach(product => {
+                    const cat = product.category || 'Unknown';
+                    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+                });
+                
+                console.log('📊 Migration Status Report:');
+                Object.entries(categoryCounts).forEach(([category, count]) => {
+                    console.log(`  ${category}: ${count} products`);
+                });
+                
+                console.log(`\n📈 Total: ${Object.keys(productsData).length} products in Firebase`);
+                
+                // Check for migrated products (with createdAt timestamps)
+                const migratedProducts = Object.values(productsData).filter(p => p.createdAt);
+                const legacyProducts = Object.values(productsData).filter(p => !p.createdAt);
+                
+                console.log(`🆕 Migrated products: ${migratedProducts.length}`);
+                console.log(`📦 Legacy products: ${legacyProducts.length}`);
+                
+                if (migratedProducts.length > 0) {
+                    console.log('✅ Migration appears successful');
+                } else {
+                    console.log('⚠️ No migrated products found - run migration tool');
+                }
+                
+            } catch (error) {
+                console.error('❌ Migration test failed:', error);
+            }
+        }
+
+        // Auto-run connection test on page load
+        window.addEventListener('load', testConnection);
+    </script>
+</body>
+</html>

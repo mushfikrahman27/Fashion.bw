@@ -1,0 +1,51 @@
+/* admin/css/orders.css */
+
+.order-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding-bottom: 100px; /* Space for bottom nav */
+}
+
+.order-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    position: relative;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.order-id { color: var(--gold); font-weight: bold; font-size: 0.8rem; }
+.order-price { font-size: 1.4rem; font-weight: 800; margin: 10px 0; }
+
+.customer-info {
+    font-size: 0.9rem;
+    color: #bbb;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+/* Big buttons for thumbs */
+.action-group {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-action {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.btn-approve { background: var(--gold); color: #000; }
+.btn-cancel { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid #ff4d4d; }

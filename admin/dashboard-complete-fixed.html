@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - FashionForAll</title>
+    <link rel="stylesheet" href="css/admin-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar Navigation -->
+        <nav class="dashboard-sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-store"></i>
+                    <span>FashionForAll</span>
+                </div>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item" id="navDashboard">
+                    <a href="#dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item" id="navProducts">
+                    <a href="#products">
+                        <i class="fas fa-box"></i>
+                        <span>Products</span>
+                    </a>
+                </li>
+                <li class="nav-item" id="navInventory">
+                    <a href="#inventory">
+                        <i class="fas fa-warehouse"></i>
+                        <span>Inventory</span>
+                    </a>
+                </li>
+                <li class="nav-item" id="navOrders">
+                    <a href="#orders">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Orders</span>
+                    </a>
+                </li>
+                <li class="nav-item" id="navMedia">
+                    <a href="#media">
+                        <i class="fas fa-images"></i>
+                        <span>Media</span>
+                    </a>
+                </li>
+                <li class="nav-item" id="navSettings">
+                    <a href="#settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item" id="navMessages">
+                    <a href="#messages">
+                        <i class="fas fa-envelope"></i>
+                        <span>Messages</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="admin-profile">
+                    <img src="https://via.placeholder.com/40x40" alt="Admin">
+                    <div class="profile-info">
+                        <span class="profile-name">Admin User</span>
+                        <span class="profile-role">Administrator</span>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Admin Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="search-bar">
+                        <input type="text" placeholder="Search...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="header-actions">
+                        <button class="notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+            
+            <!-- Mobile Menu Overlay -->
+            <div class="mobile-menu-overlay" onclick="toggleMobileMenu()"></div>
+
+            <!-- ADMIN SECTION CONTAINERS -->
+            
+            <!-- Dashboard Section -->
+            <div id="dashboardSection" class="section-content" style="display: block;">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+
+            <!-- Product Management Section -->
+            <div id="productSection" class="section-content" style="display: none;">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+
+            <!-- Inventory Management Section -->
+            <div id="inventorySection" class="section-content" style="display: none;">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+
+            <!-- Order Management Section -->
+            <div id="orderSection" class="section-content" style="display: none;">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+
+            <!-- Media Manager Section -->
+            <div id="mediaSection" class="section-content" style="display: none;">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settingsSection" class="section-content" style="display: none;">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+
+            <!-- Messages Section -->
+            <div id="messagesSection" class="section-content" style="display: none;">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Modal Container -->
+    <div id="modalContainer"></div>
+
+    <!-- Product Form Modal (for add/edit) -->
+    <div id="productFormModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="productFormTitle">Add Product</h2>
+                <button class="modal-close" onclick="window.dashboard.closeProductForm()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productName">Product Name</label>
+                            <input type="text" id="productName" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productCategory">Category</label>
+                            <select id="productCategory" name="category" required>
+                                <option value="">Select Category</option>
+                                <option value="Women">Women</option>
+                                <option value="Men">Men</option>
+                                <option value="Collection">Collection</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productPrice">Price</label>
+                            <input type="number" id="productPrice" name="price" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productStock">Stock</label>
+                            <input type="number" id="productStock" name="stock" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productColor">Color</label>
+                            <input type="text" id="productColor" name="color" placeholder="e.g., Navy, Black, Red">
+                        </div>
+                        <div class="form-group">
+                            <label for="productSize">Size</label>
+                            <input type="text" id="productSize" name="size" placeholder="e.g., S, M, L, XL">
+                        </div>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="productDescription">Description</label>
+                        <textarea id="productDescription" name="description" rows="4" placeholder="Product description..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Product Image</label>
+                        <div class="image-upload-area">
+                            <div class="image-preview" id="productImagePreview">
+                                <img id="productImagePreviewImg" src="" alt="" style="display: none;">
+                                <div class="image-placeholder" id="imagePlaceholder">
+                                    <span>📷</span>
+                                    <p>Click to upload image</p>
+                                </div>
+                            </div>
+                            <input type="file" id="productImage" name="image" accept="image/*" style="display: none;">
+                            <button type="button" class="btn-secondary" onclick="document.getElementById('productImage').click()">Choose Image</button>
+                            <button type="button" class="btn-secondary" id="removeImageBtn" onclick="window.dashboard.removeImage()" style="display: none;">Remove Image</button>
+                        </div>
+                        <span class="form-error" id="productImageError"></span>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="window.dashboard.closeProductForm()">Cancel</button>
+                        <button type="button" class="btn-primary" id="saveProductBtn" onclick="window.dashboard.saveProduct()">Save Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="confirm-modal" style="display: none;">
+        <div class="confirm-content">
+            <div class="confirm-header">
+                <h3>Delete Product</h3>
+                <button class="modal-close" onclick="window.dashboard.closeDeleteConfirm()">&times;</button>
+            </div>
+            <div class="confirm-body">
+                <p>Are you sure you want to delete "<span id="deleteProductName"></span>"?</p>
+                <p>This action cannot be undone.</p>
+            </div>
+            <div class="confirm-actions">
+                <button class="btn-secondary" onclick="window.dashboard.closeDeleteConfirm()">Cancel</button>
+                <button class="btn-danger" id="confirmDeleteBtn">Delete Product</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide-in Panel: Pending Orders -->
+    <div id="pendingOrdersOverlay" class="side-panel-overlay">
+        <aside class="side-panel">
+            <div class="side-panel-header">
+                <h2>Pending Orders</h2>
+                <button class="btn-close-panel" onclick="closePendingOrdersPanel()">&times;</button>
+            </div>
+            <div id="pendingOrdersList" class="side-panel-scrollable">
+                <!-- Orders injected by JS -->
+            </div>
+        </aside>
+    </div>
+
+    <!-- Confirm Modal placeholder -->
+    <div id="confirmModal" style="display:none;"></div>
+
+    <!-- Bulk Edit Modal -->
+    <div id="bulkEditModal" class="bulk-edit-modal">
+        <div class="bulk-edit-content">
+            <div class="bulk-edit-header">
+                <h2 class="bulk-edit-title">Bulk Edit Products</h2>
+                <p class="bulk-edit-subtitle" id="bulkEditSubtitle">Selected products will be updated</p>
+            </div>
+            
+            <div class="bulk-edit-form" id="bulkEditForm">
+                <!-- Dynamic form fields will be inserted here -->
+            </div>
+            
+            <div class="bulk-edit-actions">
+                <button id="bulkEditCancel" class="btn-bulk-clear">Cancel</button>
+                <button id="bulkEditConfirm" class="btn-bulk-apply">Apply Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Module JS -->
+    <script type="module" src="js/dashboard-complete-working.js"></script>
+
+    <script>
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.dashboard-sidebar');
+            const overlay = document.querySelector('.mobile-menu-overlay');
+            
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            }
+        }
+        
+        // Inline UI helpers (non-data logic)
+        function closePendingOrdersPanel() {
+            document.getElementById('pendingOrdersOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    </script>
+</body>
+</html>

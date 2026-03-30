@@ -281,18 +281,22 @@ class AdminDashboard {
 
     async loadInitialData() {
         try {
-            // Load products
+            // Load products from Firebase (same as website)
             const productsRef = dbRef(db, 'products');
             onValue(productsRef, (snapshot) => {
                 const data = snapshot.val();
                 this.products = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+                console.log('Products loaded from Firebase:', this.products.length, 'products');
+                this.renderProducts();
                 this.updateDashboardStats();
                 this.updateProductPerformance();
                 this.updateTopViewedProducts();
                 this.updateTopCartProducts();
                 this.updatePriorityAlerts();
+            }, {
+                onlyOnce: false
             });
-            
+
             // Load orders
             const ordersRef = dbRef(db, 'orders');
             onValue(ordersRef, (snapshot) => {
@@ -1503,17 +1507,19 @@ class AdminDashboard {
         const tbody = document.getElementById('inventoryTableBody');
         if (!tbody) return;
         
+        // Update inventory summary
+        this.updateInventoryStats();
+        
         if (this.products.length === 0) {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
                         <div style="margin-bottom: 16px;">📦</div>
-                        <div>No products found</div>
-                        <div style="font-size: 14px; margin-top: 8px;">Add products to manage inventory</div>
+                        <div>No inventory data found</div>
+                        <div style="font-size: 0.9rem; margin-top: 8px;">Add products to see inventory here</div>
                     </td>
                 </tr>
             `;
-            this.updateInventorySummary();
             return;
         }
         
@@ -1521,48 +1527,48 @@ class AdminDashboard {
         
         this.products.forEach(product => {
             const row = document.createElement('tr');
-            const imageUrl = product.imgUrl || product.img;
-            const stockStatus = this.getStockStatus(product.stock);
-            
-            // Add row class based on stock status for visual emphasis
-            if (stockStatus === 'low-stock') {
-                row.classList.add('low-stock-row');
-            } else if (stockStatus === 'out-of-stock') {
-                row.classList.add('out-of-stock-row');
-            }
+            const stockClass = this.getStockClass(product.stock);
             
             row.innerHTML = `
                 <td>
-                    <div class="product-info">
-                        <div class="product-row">
-                            ${imageUrl ? `<img src="${imageUrl}" alt="${product.name}" class="product-thumbnail">` : '<div class="product-thumbnail-placeholder">📷</div>'}
-                            <div class="product-details">
-                                <strong>${product.name || 'Unnamed Product'}</strong>
-                                ${product.description ? `<br><small>${product.description}</small>` : ''}
-                            </div>
+                    <div class="inventory-product-info">
+                        <img src="${product.img || 'https://via.placeholder.com/40'}" alt="${product.name}" class="inventory-product-image">
+                        <div>
+                            <div class="inventory-product-name">${product.name}</div>
+                            <div class="inventory-product-category">${product.category}</div>
                         </div>
                     </div>
                 </td>
-                <td>${product.category || 'Uncategorized'}</td>
                 <td>
-                    <div class="stock-display">
-                        <span class="stock-number">${product.stock || 0}</span>
-                        <small class="stock-unit">units</small>
-                    </div>
+                    <span class="stock-badge ${stockClass}">${product.stock}</span>
                 </td>
-                <td>${this.getStockStatusBadge(product.stock)}</td>
+                <td>$${product.price ? product.price.toFixed(2) : '0.00'}</td>
                 <td>
-                    <div class="action-buttons">
-                        <button class="btn-sm primary" onclick="dashboard.openStockUpdate('${product.id}')">Update Stock</button>
-                        <button class="btn-sm" onclick="dashboard.editProduct('${product.id}')">Edit Product</button>
-                    </div>
+                    <span class="status-badge ${product.status === 'active' ? 'active' : 'inactive'}">${product.status}</span>
+                </td>
+                <td>
+                    <button class="btn-sm" onclick="window.dashboard.updateStock('${product.id}')">Update Stock</button>
                 </td>
             `;
             tbody.appendChild(row);
         });
-        
-        this.updateInventorySummary();
     }
+    
+    updateInventoryStats() {
+        const totalProductsEl = document.getElementById('totalProductsCount');
+        const lowStockEl = document.getElementById('lowStockCount');
+        const outOfStockEl = document.getElementById('outOfStockCount');
+        
+        if (totalProductsEl) totalProductsEl.textContent = this.products.length;
+        
+        const lowStock = this.products.filter(p => p.stock <= 10 && p.stock > 0).length;
+        const outOfStock = this.products.filter(p => p.stock === 0).length;
+        
+        if (lowStockEl) lowStockEl.textContent = lowStock;
+        if (outOfStockEl) outOfStockEl.textContent = outOfStock;
+    }
+    
+    getStockClass(stock) {
     
     updateInventorySummary() {
         const totalProducts = this.products.length;
@@ -2784,6 +2790,7 @@ class AdminDashboard {
 // Initialize dashboard
 const dashboard = new AdminDashboard();
 window.dashboard = dashboard;
+dashboard.init();
 
 // Make functions globally available for onclick handlers
 window.closePendingOrdersPanel = function() {

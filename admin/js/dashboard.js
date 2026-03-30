@@ -1,23 +1,90 @@
-// admin/js/dashboard.js
-import { auth, db, storage } from '../../firebase-config.js';
-import { ref as dbRef, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-import { ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+// ============================================
+// DASHBOARD REAL-TIME UPDATES
+// js/dashboard.js
+// ============================================
 
-/** ════════════════════════════════════════════════════
-    1. SECURITY & AUTH
-    ════════════════════════════════════════════════════ */
-onAuthStateChanged(auth, (user) => {
-    if (!user) {
-        window.location.href = "index.html";
+import { getCollectionRef } from './firebase-paths.js';
+import { registerFirestoreListener } from './utils/cleanup-manager.js';
+import { showToast, showError } from './utils/ui-helpers.js';
+import { logUserAction } from './utils/audit-log.js';
+
+class DashboardManager {
+    constructor() {
+        this.stats = {
+            totalOrders: 0,
+            totalProducts: 0,
+            totalUsers: 0,
+            totalRevenue: 0
+        };
+        this.recentOrders = [];
     }
-});
 
-/** ════════════════════════════════════════════════════
-    2. GLOBAL STATE & UTILS
-    ════════════════════════════════════════════════════ */
-let latestOrders = [];
-let productSalesMap = {};
+    async init() {
+        try {
+            // A. VISITORS DATA
+            const visitsRef = getCollectionRef('visits');
+            registerFirestoreListener(visitsRef, (snapshot) => {
+                const visits = snapshot.docs.map(doc => doc.data());
+                const total = visits.length;
+
+                const el = document.getElementById('totalVisitors');
+                const current = parseInt(el.innerText.replace(/,/g, '')) || 0;
+                animateValue(el, current, total, 1000);
+
+                // Simple Trend Calculation (Today vs Yesterday)
+                calculateVisitorTrend(visits);
+            });
+
+            // B. ORDERS DATA
+            const ordersRef = getCollectionRef('orders');
+            registerFirestoreListener(ordersRef, (snapshot) => {
+                const orders = snapshot.docs.map(doc => normalizeOrder(doc.data(), doc.id));
+                this.recentOrders = orders;
+
+                // Build sales map for chart
+                const productSalesMap = {};
+                orders.forEach(o => {
+                    const items = o.items || [];
+                    items.forEach(it => {
+                        if (it.productId) {
+                            const key = String(it.productId);
+                            productSalesMap[key] = (productSalesMap[key] || 0) + (it.qty || 1);
+                        }
+                    });
+                });
+
+                // Update Stat Card
+                const orderEl = document.getElementById('totalOrders');
+                const currentOrders = parseInt(orderEl.innerText.replace(/,/g, '')) || 0;
+                animateValue(orderEl, currentOrders, orders.length, 1000);
+
+                // Update Pending Card
+                const pendingRef = orders.filter(o => (o.status || '').toLowerCase() === 'pending');
+                document.getElementById('pendingOrders').innerText = pendingRef.length;
+
+                // Progress Bar (Completed / Total)
+                const completedCount = orders.filter(o => (o.status || '').toLowerCase() === 'archived').length;
+                const progress = orders.length > 0 ? (completedCount / orders.length) * 100 : 0;
+                document.getElementById('orderStatusProgress').style.width = `${progress}%`;
+
+                hideSkeletons();
+            });
+
+            // C. ANALYTICS (Top Products & Chart)
+            const analyticsRef = getCollectionRef('product_analytics');
+            registerFirestoreListener(analyticsRef, (snapshot) => {
+                const list = snapshot.docs.map(doc => doc.data());
+
+                renderTopLists(list);
+                renderPerformanceChart(list);
+                updatePriorityAlerts(list);
+            });
+        } catch (error) {
+            showError('Error initializing dashboard:', error);
+        }
+    }
+}
+
 let performanceChart = null;
 
 // ORDER SCHEMA NORMALIZATION - Phase 4 Compatibility

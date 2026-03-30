@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Admin Panel CSS -->
+    <link rel="stylesheet" href="css/admin-unified-new.css">
+    <link rel="stylesheet" href="css/dashboard-improvements.css">
+</head>
+<body>
+    <div id="adminApp">
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <div class="brand">
+                <i class="fas fa-store"></i>
+                <span>Admin Panel</span>
+            </div>
+            <nav aria-label="Admin navigation">
+                <button class="nav-item active" data-section="dashboard" role="button" tabindex="0" aria-current="page">
+                    <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-section="analytics" role="button" tabindex="0">
+                    <i class="fas fa-chart-line" aria-hidden="true"></i>
+                    <span>Analytics</span>
+                </button>
+                <button class="nav-item" data-section="products" role="button" tabindex="0">
+                    <i class="fas fa-box" aria-hidden="true"></i>
+                    <span>Products</span>
+                </button>
+                <button class="nav-item" data-section="inventory" role="button" tabindex="0">
+                    <i class="fas fa-warehouse" aria-hidden="true"></i>
+                    <span>Inventory</span>
+                </button>
+                <button class="nav-item" data-section="orders" role="button" tabindex="0">
+                    <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                    <span>Orders</span>
+                </button>
+                <button class="nav-item" data-section="media" role="button" tabindex="0">
+                    <i class="fas fa-images" aria-hidden="true"></i>
+                    <span>Media</span>
+                </button>
+                <button class="nav-item" data-section="settings" role="button" tabindex="0">
+                    <i class="fas fa-cog" aria-hidden="true"></i>
+                    <span>Settings</span>
+                </button>
+                <button class="nav-item" data-section="messages" role="button" tabindex="0">
+                    <i class="fas fa-envelope" aria-hidden="true"></i>
+                    <span>Messages</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div id="mainContent">
+            <!-- Top Bar -->
+            <header id="topBar">
+                <h1>Admin Dashboard</h1>
+                <button class="btn btn-secondary" onclick="logout()" aria-label="Logout from admin panel">
+                    <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                    Logout
+                </button>
+            </header>
+
+            <!-- Sections Wrapper -->
+            <div id="sectionsWrapper">
+                <!-- Dashboard Section -->
+                <div id="dashboardSection" class="admin-section active">
+                    <h2>Dashboard</h2>
+                    <div class="section-body">
+                        <div class="stat-grid">
+                            <div class="stat-card">
+                                <div class="icon"><i class="fas fa-shopping-cart"></i></div>
+                                <div class="number" id="totalOrders">0</div>
+                                <div class="label">Total Orders</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="icon"><i class="fas fa-box"></i></div>
+                                <div class="number" id="totalProducts">0</div>
+                                <div class="label">Total Products</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="icon"><i class="fas fa-users"></i></div>
+                                <div class="number" id="totalUsers">0</div>
+                                <div class="label">Total Users</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="icon"><i class="fas fa-dollar-sign"></i></div>
+                                <div class="number" id="totalRevenue">0</div>
+                                <div class="label">Total Revenue</div>
+                            </div>
+                        </div>
+                        <table class="data-table mb-24" role="grid" aria-label="Recent orders table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Order ID</th>
+                                    <th scope="col">Customer</th>
+                                    <th scope="col">Amount</th>
+                                    <th scope="col">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentOrdersTable">
+                                <tr>
+                                    <td colspan="4" class="text-center">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Analytics Section -->
+                <div id="analyticsSection" class="admin-section">
+                    <h2>Analytics</h2>
+                    <div class="section-body">
+                        <div class="flex flex-between mb-24">
+                            <select id="timeRange" class="btn btn-secondary">
+                                <option value="today">Today</option>
+                                <option value="week" selected>This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="refreshAnalytics()">
+                                <i class="fas fa-sync"></i>
+                                Refresh
+                            </button>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Views</th>
+                                    <th>Cart Adds</th>
+                                    <th>Purchases</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analyticsTable">
+                                <tr>
+                                    <td colspan="4" class="text-center">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Products Section -->
+                <div id="productsSection" class="admin-section">
+                    <h2>Products</h2>
+                    <div class="section-body">
+                        <div class="flex flex-between mb-24">
+                            <input type="text" id="productSearch" placeholder="Search products..." class="btn btn-secondary" oninput="productSystem.handleSearch(event)">
+                            <button class="btn btn-primary" onclick="openProductModal()">
+                                <i class="fas fa-plus"></i>
+                                Add Product
+                            </button>
+                        </div>
+                        <div id="productsGrid" class="stat-grid">
+                            <!-- Products will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Section -->
+                <div id="inventorySection" class="admin-section">
+                    <h2>Inventory</h2>
+                    <div class="section-body">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>SKU</th>
+                                    <th>Stock</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryTable">
+                                <tr>
+                                    <td colspan="5" class="text-center">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Orders Section -->
+                <div id="ordersSection" class="admin-section">
+                    <h2>Orders</h2>
+                    <div class="section-body">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Date</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTable">
+                                <tr>
+                                    <td colspan="6" class="text-center">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Media Section -->
+                <div id="mediaSection" class="admin-section">
+                    <h2>Media</h2>
+                    <div class="section-body">
+                        <div class="mb-24">
+                            <input type="file" id="mediaUpload" accept="image/*" multiple class="btn btn-secondary">
+                            <button class="btn btn-primary" onclick="uploadMedia()">
+                                <i class="fas fa-upload"></i>
+                                Upload Images
+                            </button>
+                        </div>
+                        <div id="mediaGrid" class="stat-grid">
+                            <!-- Media will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Section -->
+                <div id="settingsSection" class="admin-section">
+                    <h2>Settings</h2>
+                    <div class="section-body">
+                        <form id="settingsForm" id="settingsForm">
+                            <div class="flex gap-16 mb-16">
+                                <div style="flex: 1;">
+                                    <label class="mb-8">Site Name</label>
+                                    <input type="text" id="siteName" class="btn btn-secondary" style="width: 100%;">
+                                </div>
+                                <div style="flex: 1;">
+                                    <label class="mb-8">Contact Email</label>
+                                    <input type="email" id="contactEmail" class="btn btn-secondary" style="width: 100%;">
+                                </div>
+                            </div>
+                            <div class="flex gap-16 mb-16">
+                                <div style="flex: 1;">
+                                    <label class="mb-8">Currency</label>
+                                    <select id="currency" class="btn btn-secondary" style="width: 100%;">
+                                        <option value="BDT">BDT</option>
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                    </select>
+                                </div>
+                                <div style="flex: 1;">
+                                    <label class="mb-8">Maintenance Mode</label>
+                                    <select id="maintenanceMode" class="btn btn-secondary" style="width: 100%;">
+                                        <option value="false">Disabled</option>
+                                        <option value="true">Enabled</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                Save Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Messages Section -->
+                <div id="messagesSection" class="admin-section">
+                    <h2>Messages</h2>
+                    <div class="section-body">
+                        <div class="flex gap-16">
+                            <div style="flex: 1;">
+                                <h3 class="mb-16">Inbox</h3>
+                                <div id="messagesList">
+                                    <!-- Messages will be loaded here -->
+                                </div>
+                            </div>
+                            <div style="flex: 2;">
+                                <h3 class="mb-16">Message Details</h3>
+                                <div id="messageDetails" class="text-center text-muted">
+                                    Select a message to view details
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Firebase SDK - Simple Working Version -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    
+    <!-- Simple Firebase Initialization -->
+    <script>
+        // Firebase configuration - SAME AS YOUR WEBSITE
+        const firebaseConfig = {
+            apiKey: "AIzaSyCBYvTkVaW2ARhR6Ce5TUJJeyak9ojdWf4",
+            authDomain: "my-1st-site-09.firebaseapp.com",
+            projectId: "my-1st-site-09",
+            storageBucket: "my-1st-site-09.firebasestorage.app",
+            messagingSenderId: "716729465081",
+            appId: "1:716729465081:web:bef18625e664ac13ba4a28",
+            measurementId: "G-7LDJFSLMHP"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        
+        // Make Firebase available globally - COMPATIBLE VERSION
+        window.firebaseDB = firebase.firestore();
+        window.firebaseAuth = firebase.auth();
+        window.firebaseStorage = firebase.storage();
+        window.firebase = firebase;
+        
+        console.log('✅ Firebase initialized with COMPAT version');
+        console.log('Firestore instance:', window.firebaseDB);
+        console.log('Collection method test:', typeof window.firebaseDB.collection);
+    </script>
+    
+    <!-- Firebase Paths Constants -->
+    <script src="js/firebase-paths.js"></script>
+    
+    <!-- Simple Firebase Checker -->
+    <script src="js/simple-firebase-checker.js"></script>
+    
+    <!-- Simple Admin Only -->
+    <script src="js/admin-simple.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Admin panel loading...');
+            
+            // Initialize simple admin immediately
+            setTimeout(() => {
+                if (window.simpleAdmin) {
+                    console.log('🔄 Initializing simple admin...');
+                    window.simpleAdmin.init();
+                }
+            }, 1000); // 1 second delay
+        });
+    </script>
+    </body>
+</html>

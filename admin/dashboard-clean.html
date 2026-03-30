@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - FashionForAll</title>
+    <link rel="stylesheet" href="css/admin-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar Navigation -->
+        <nav class="dashboard-sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-store"></i>
+                    <span>FashionForAll</span>
+                </div>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item" id="navDashboard">
+                    <a href="#dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item" id="navProducts">
+                    <a href="#products">
+                        <i class="fas fa-box"></i>
+                        <span>Products</span>
+                    </a>
+                </li>
+                <li class="nav-item" id="navInventory">
+                    <a href="#inventory">
+                        <i class="fas fa-warehouse"></i>
+                        <span>Inventory</span>
+                    </a>
+                </li>
+                <li class="nav-item" id="navOrders">
+                    <a href="#orders">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Orders</span>
+                    </a>
+                </li>
+                <li class="nav-item" id="navMedia">
+                    <a href="#media">
+                        <i class="fas fa-images"></i>
+                        <span>Media</span>
+                    </a>
+                </li>
+                <li class="nav-item" id="navSettings">
+                    <a href="#settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="admin-profile">
+                    <img src="https://via.placeholder.com/40x40" alt="Admin">
+                    <div class="profile-info">
+                        <span class="profile-name">Admin User</span>
+                        <span class="profile-role">Administrator</span>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Admin Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="search-bar">
+                        <input type="text" placeholder="Search...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="header-actions">
+                        <button class="notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+            
+            <!-- Mobile Menu Overlay -->
+            <div class="mobile-menu-overlay" onclick="toggleMobileMenu()"></div>
+            
+            <!-- Dashboard Content -->
+            <div class="dashboard-body" id="dashboardSection">
+                <!-- Dashboard content will be rendered by JavaScript -->
+            </div>
+
+            <!-- Products Section -->
+            <div class="section-content" id="productSection" style="display: none;">
+                <!-- Products content will be rendered by JavaScript -->
+            </div>
+
+            <!-- Inventory Section -->
+            <div class="section-content" id="inventorySection" style="display: none;">
+                <!-- Inventory content will be rendered by JavaScript -->
+            </div>
+
+            <!-- Orders Section -->
+            <div class="section-content" id="orderSection" style="display: none;">
+                <!-- Orders content will be rendered by JavaScript -->
+            </div>
+
+            <!-- Media Section -->
+            <div class="section-content" id="mediaSection" style="display: none;">
+                <!-- Media content will be rendered by JavaScript -->
+            </div>
+
+            <!-- Settings Section -->
+            <div class="section-content" id="settingsSection" style="display: none;">
+                <!-- Settings content will be rendered by JavaScript -->
+            </div>
+
+            <!-- Messages Section -->
+            <div class="section-content" id="messagesSection" style="display: none;">
+                <!-- Messages content will be rendered by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Modal Container -->
+    <div id="modalContainer"></div>
+
+    <!-- Module JS -->
+    <script type="module" src="js/dashboard-complete-working.js"></script>
+
+    <script>
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.dashboard-sidebar');
+            const overlay = document.querySelector('.mobile-menu-overlay');
+            
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            }
+        }
+        
+        // Inline UI helpers (non-data logic)
+        function closePendingOrdersPanel() {
+            document.getElementById('pendingOrdersOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    </script>
+</body>
+</html>

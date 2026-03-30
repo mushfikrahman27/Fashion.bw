@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Policia</title>
+    <title>Admin Dashboard - Inarah</title>
     <!-- SaaS Stylesheet -->
     <link rel="stylesheet" href="css/admin-style.css">
     <!-- Chart.js for data visualization -->
@@ -269,7 +269,7 @@
                     <button class="btn-search">🔍</button>
                 </div>
                 <div class="orders-filters">
-                    <select id="statusFilter" class="filter-select">
+                    <select id="orderStatusFilter" class="filter-select">
                         <option value="">All Status</option>
                         <option value="pending">Pending</option>
                         <option value="processing">Processing</option>
@@ -336,9 +336,10 @@
             
             <!-- Products Actions Bar -->
             <div class="products-actions-bar">
-                <div class="products-search">
-                    <input type="text" id="productSearchInput" placeholder="Search products..." class="search-input">
-                    <button class="btn-search">🔍</button>
+                <div class="products-search" style="position:relative;">
+                    <input type="text" id="productSearchInput" placeholder="Search products..." class="search-input" autocomplete="off">
+                    <button type="button" class="btn-search" id="productSearchBtn" aria-label="Search products">🔍</button>
+                    <div id="searchResultsDropdown" class="search-results-dropdown" style="display:none;"></div>
                 </div>
                 <div class="products-filters">
                     <select id="categoryFilter" class="filter-select">
@@ -372,9 +373,11 @@
                                 <th class="image-column">Image</th>
                                 <th class="name-column">Product Name</th>
                                 <th class="category-column">Category</th>
+                                <th class="subcategory-column">Sub</th>
                                 <th class="price-column">Price</th>
                                 <th class="stock-column">Stock</th>
                                 <th class="status-column">Status</th>
+                                <th class="date-column">Added</th>
                                 <th class="actions-column">Actions</th>
                             </tr>
                         </thead>
@@ -420,11 +423,11 @@
                         <option value="low-stock">Low Stock</option>
                         <option value="out-of-stock">Out of Stock</option>
                     </select>
-                    <select id="categoryFilter" class="filter-select">
+                    <select id="inventoryCategoryFilter" class="filter-select">
                         <option value="">All Categories</option>
-                        <option value="shirts">Shirts</option>
-                        <option value="pants">Pants</option>
-                        <option value="accessories">Accessories</option>
+                        <option value="Women">Women</option>
+                        <option value="Men">Men</option>
+                        <option value="Collection">Collection</option>
                     </select>
                 </div>
                 <button class="btn-primary" id="refreshInventoryBtn">🔄 Refresh</button>
@@ -920,9 +923,9 @@
                         <label for="productCategory">Category *</label>
                         <select id="productCategory" name="category" required>
                             <option value="">Select Category</option>
-                            <option value="shirts">Shirts</option>
-                            <option value="pants">Pants</option>
-                            <option value="accessories">Accessories</option>
+                            <option value="Women">Women</option>
+                            <option value="Men">Men</option>
+                            <option value="Collection">Collection</option>
                         </select>
                         <span class="form-error" id="productCategoryError"></span>
                     </div>
@@ -930,14 +933,29 @@
                 
                 <div class="form-row">
                     <div class="form-group">
+                        <label for="productSubCategory">SubCategory *</label>
+                        <select id="productSubCategory" name="subCategory" required>
+                            <option value="">Select SubCategory</option>
+                        </select>
+                        <span class="form-error" id="productSubCategoryError"></span>
+                    </div>
+                    <div class="form-group">
                         <label for="productPrice">Price (৳) *</label>
                         <input type="number" id="productPrice" name="price" min="0" step="0.01" required>
                         <span class="form-error" id="productPriceError"></span>
                     </div>
+                </div>
+                
+                <div class="form-row">
                     <div class="form-group">
                         <label for="productStock">Stock *</label>
                         <input type="number" id="productStock" name="stock" min="0" required>
                         <span class="form-error" id="productStockError"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="productColor">Color</label>
+                        <input type="text" id="productColor" name="color" placeholder="e.g., Black, Red, Blue">
+                        <span class="form-error" id="productColorError"></span>
                     </div>
                 </div>
                 

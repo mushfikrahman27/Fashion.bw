@@ -4,6 +4,67 @@
     
     let cartArray = [];
     
+    // ============================================
+    // PRODUCT ANALYTICS TRACKING SYSTEM
+    // ============================================
+    class ProductAnalytics {
+        constructor() {
+            this.sessionId = this.generateSessionId();
+            this.userId = this.getUserId();
+        }
+
+        generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        getUserId() {
+            let userId = localStorage.getItem('userAnalyticsId');
+            if (!userId) {
+                userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('userAnalyticsId', userId);
+            }
+            return userId;
+        }
+
+        async trackProductView(productId) {
+            if (!window.firebaseDB) return;
+            const { ref, push } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+            await push(ref(window.firebaseDB, 'products-analytics/product-views'), {
+                productId: productId,
+                userId: this.userId,
+                timestamp: Date.now(),
+                sessionId: this.sessionId
+            });
+        }
+
+        async trackCartAddition(productId, quantity = 1) {
+            if (!window.firebaseDB) return;
+            const { ref, push } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+            await push(ref(window.firebaseDB, 'products-analytics/cart-additions'), {
+                productId: productId,
+                userId: this.userId,
+                timestamp: Date.now(),
+                quantity: quantity
+            });
+        }
+
+        async trackPurchase(productId, orderId, quantity, revenue) {
+            if (!window.firebaseDB) return;
+            const { ref, push } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+            await push(ref(window.firebaseDB, 'products-analytics/purchases'), {
+                productId: productId,
+                userId: this.userId,
+                timestamp: Date.now(),
+                orderId: orderId,
+                quantity: quantity,
+                revenue: revenue
+            });
+        }
+    }
+
+    // Initialize — must be after Firebase is ready
+    window.productAnalytics = new ProductAnalytics();
+    
     // User Analytics Tracking System
     class UserAnalytics {
         constructor() {
@@ -665,114 +726,147 @@
         { id: 43, name: "Oversized Street Tee", price: "990", color: "Grey", img: "tshirt4.jpg", category: "Women", subCategory: "Tshirt" },
 
         { id: 44, name: "Running Shorts", price: "720", color: "Black", img: "short1.jpg", category: "Men", subCategory: "Shorts" },
-        { id: 45, name: "Casual Cotton Shorts", price: "680", color: "Khaki", img: "short2.jpg", category: "Men", subCategory: "Shorts" },
 
-        { id: 46, name: "Yoga Leggings", price: "1100", color: "Black", img: "legging1.jpg", category: "Women", subCategory: "Leggings" },
-        { id: 47, name: "Active Sports Leggings", price: "1250", color: "Purple", img: "legging2.jpg", category: "Women", subCategory: "Leggings" },
+    { id: 32, name: "Winter Hoodie", price: "1850", color: "Charcoal", img: "hoodie1.jpg", category: "Men", subCategory: "Hoodie" },
+    { id: 33, name: "Casual Zip Hoodie", price: "1950", color: "Olive", img: "hoodie2.jpg", category: "Men", subCategory: "Hoodie" },
 
-        { id: 48, name: "Winter Scarf", price: "520", color: "Maroon", img: "scarf1.jpg", category: "Collection", subCategory: "Winter" },
-        { id: 49, name: "Knitted Gloves", price: "480", color: "Grey", img: "glove1.jpg", category: "Collection", subCategory: "Winter" },
+    { id: 34, name: "Women Knit Sweater", price: "1680", color: "Cream", img: "sweater1.jpg", category: "Women", subCategory: "Sweater" },
+    { id: 35, name: "Soft Wool Cardigan", price: "1780", color: "Lavender", img: "sweater2.jpg", category: "Women", subCategory: "Sweater" },
 
-        { id: 50, name: "Premium Travel Suitcase", price: "5400", color: "Black", img: "case1.jpg", category: "Collection", subCategory: "Travel" }
-    ];
+    { id: 36, name: "Premium Wallet", price: "980", color: "Dark Brown", img: "wallet1.jpg", category: "Collection", subCategory: "Wallet" },
+    { id: 37, name: "Compact Card Holder", price: "620", color: "Black", img: "wallet2.jpg", category: "Collection", subCategory: "Wallet" },
 
-    // GLOBAL PRODUCTS ARRAY - CRITICAL FOR ALL FUNCTIONS
-    window.allProducts = [...fallbackProducts];
+    { id: 38, name: "Travel Duffel Bag", price: "2600", color: "Army Green", img: "bag8.jpg", category: "Men", subCategory: "Bags" },
+    { id: 39, name: "Luxury Party Purse", price: "1450", color: "Rose Gold", img: "bag9.jpg", category: "Women", subCategory: "Bags" },
 
-    // Default filtered list
-    let filteredProducts = [...window.allProducts];
+    { id: 40, name: "Classic Polo T-Shirt", price: "920", color: "White", img: "tshirt1.jpg", category: "Men", subCategory: "Tshirt" },
+    { id: 41, name: "Graphic Street Tee", price: "880", color: "Black", img: "tshirt2.jpg", category: "Men", subCategory: "Tshirt" },
 
-    /* --- FIREBASE PRODUCT LOADER --- */
-    async function loadProductsFromFirebase() {
-        if (!window.firebaseDB) {
-            console.log('Firebase not available, using fallback products');
-            return false;
-        }
+    { id: 42, name: "Women Basic Tee", price: "760", color: "Peach", img: "tshirt3.jpg", category: "Women", subCategory: "Tshirt" },
+    { id: 43, name: "Oversized Street Tee", price: "990", color: "Grey", img: "tshirt4.jpg", category: "Women", subCategory: "Tshirt" },
 
-        // Mobile-specific: Add timeout for Firebase loading
-        const isMobile = window.innerWidth <= 768;
-        const timeoutMs = isMobile ? 3000 : 5000; // 3s for mobile, 5s for desktop
+    { id: 44, name: "Running Shorts", price: "720", color: "Black", img: "short1.jpg", category: "Men", subCategory: "Shorts" },
+    { id: 45, name: "Casual Cotton Shorts", price: "680", color: "Khaki", img: "short2.jpg", category: "Men", subCategory: "Shorts" },
 
-        try {
-            const { ref, get } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
-            const productsRef = ref(window.firebaseDB, 'products');
-            
-            // Create a timeout promise
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Firebase timeout')), timeoutMs);
-            });
-            
-            // Race between Firebase fetch and timeout
-            const snapshot = await Promise.race([get(productsRef), timeoutPromise]);
-            
-            if (snapshot.exists()) {
-                const firebaseProducts = snapshot.val();
-                const activeProducts = Object.values(firebaseProducts)
-                    .filter(product => product.isActive !== false) // Only active products
-                    .map(product => ({
-                        id: product.id || product.name.toLowerCase().replace(/\s+/g, '_'),
-                        name: product.name,
-                        price: product.price,
-                        color: product.color || 'Default',
-                        category: product.category,
-                        subCategory: product.subCategory || '',
-                        img: product.imgUrl || product.img // Support both field names
-                    }));
-                
-                if (activeProducts.length > 0) {
-                    window.allProducts = activeProducts;
-                    filteredProducts = [...window.allProducts];
-                    console.log(`✅ Loaded ${activeProducts.length} products from Firebase`);
-                    return true;
-                }
-            }
-        } catch (error) {
-            if (error.message === 'Firebase timeout') {
-                console.warn('⏰ Firebase loading timed out, using fallback products');
-            } else {
-                console.warn('Failed to load products from Firebase:', error);
-            }
-        }
-        
-        return false; // Use fallback
+    { id: 46, name: "Yoga Leggings", price: "1100", color: "Black", img: "legging1.jpg", category: "Women", subCategory: "Leggings" },
+    { id: 47, name: "Active Sports Leggings", price: "1250", color: "Purple", img: "legging2.jpg", category: "Women", subCategory: "Leggings" },
+
+    { id: 48, name: "Winter Scarf", price: "520", color: "Maroon", img: "scarf1.jpg", category: "Collection", subCategory: "Winter" },
+    { id: 49, name: "Knitted Gloves", price: "480", color: "Grey", img: "glove1.jpg", category: "Collection", subCategory: "Winter" },
+
+    { id: 50, name: "Premium Travel Suitcase", price: "5400", color: "Black", img: "case1.jpg", category: "Collection", subCategory: "Travel" }
+];
+
+// GLOBAL PRODUCTS ARRAY - CRITICAL FOR ALL FUNCTIONS
+window.allProducts = [...fallbackProducts];
+
+// Default filtered list
+let filteredProducts = [...window.allProducts];
+
+/* --- FIREBASE PRODUCT LOADER --- */
+async function loadProductsFromFirebase() {
+    if (!window.firebaseDB) {
+        console.log('Firebase not available, using fallback products');
+        return false;
     }
 
-    // Initialize products on page load
-    document.addEventListener('DOMContentLoaded', async () => {
-        console.log('🚀 Script initializing...');
+    // Mobile-specific: Add timeout for Firebase loading
+    const isMobile = window.innerWidth <= 768;
+    const timeoutMs = isMobile ? 3000 : 5000; // 3s for mobile, 5s for desktop
+
+    try {
+        console.log('🔍 DEBUG: Loading products from Firestore...');
+        
+        // Use Firestore instead of Realtime Database
+        const productsRef = window.firebaseDB.collection('products');
+        
+        console.log('🔍 DEBUG: Attempting to load products from Firestore...');
+        console.log('🔍 DEBUG: Timeout set to', timeoutMs, 'ms');
+        
+        // Create timeout with proper logging
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => {
+                console.log('⏰ DEBUG: Timeout triggered after', timeoutMs, 'ms');
+                reject(new Error('Firestore timeout'));
+            }, timeoutMs);
+        });
+        
+        // Race between Firestore fetch and timeout with better error handling
+        let snapshot;
+        try {
+            snapshot = await Promise.race([
+                productsRef.get().catch(error => {
+                    console.log('❌ DEBUG: Firestore get() failed:', error);
+                    throw error;
+                }),
+                timeoutPromise
+            ]);
+            console.log('✅ DEBUG: Promise.race completed successfully');
+        } catch (raceError) {
+            console.log('❌ DEBUG: Promise.race failed:', raceError.message);
+            throw raceError;
+        }
+        
+        if (snapshot && !snapshot.empty) {
+            const firestoreProducts = snapshot.docs;
+            console.log('🔍 DEBUG: Raw Firestore data received, docs count:', firestoreProducts.length);
+            console.log('🔍 DEBUG: Raw Firestore data:', firestoreProducts);
+            
+            // Process Firestore documents
+            const activeProducts = firestoreProducts
+                .map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }))
+                .filter(product => {
+                    console.log('🔍 DEBUG: Filtering product:', product.name, 'isActive:', product.isActive);
+                    return product.isActive !== false; // Only active products
+                });
+            
+            console.log('🔍 DEBUG: Processed products:', activeProducts.length, 'items');
+            console.log('🔍 DEBUG: Processed products:', activeProducts);
+            
+            // Check if there are active products in Firestore first
+            if (activeProducts.length > 0) {
+                window.allProducts = activeProducts;
+                filteredProducts = [...window.allProducts];
+                console.log(`✅ Loaded ${activeProducts.length} products from Firestore`);
+                return true;
+            } else {
+                console.log('⚠️ No active products found in Firestore');
+                window.allProducts = [...fallbackProducts];
+                filteredProducts = [...window.allProducts];
+                console.log('Using fallback hardcoded products');
+                return false;
+            }
+        } else {
+            console.log('⚠️ No products found in Firestore collection');
+            console.log('🔍 DEBUG: Snapshot empty:', snapshot?.empty);
+            window.allProducts = [...fallbackProducts];
+            filteredProducts = [...window.allProducts];
+            console.log('Using fallback hardcoded products');
+            return false;
+        }
+    } catch (error) {
+        if (error.message === 'Firestore timeout') {
+            console.warn('⏰ Firestore loading timed out after', timeoutMs, 'ms, using fallback products');
+        } else {
+            console.warn('❌ Failed to load products from Firestore:', error.message);
+            console.warn('❌ Full error:', error);
+        }
+    }
+    
+    console.log('🔄 DEBUG: Falling back to hardcoded products');
+    return false; // Use fallback
+}
+
+// Initialize products on page load
+document.addEventListener('DOMContentLoaded', async () => {
         
         // Force scroll to top immediately
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
-        
-        // Add event delegation for search suggestions
-        document.addEventListener('click', function(event) {
-            const searchContainer = document.querySelector('.stylish-search');
-            if (searchContainer && !searchContainer.contains(event.target)) {
-                hideSearchSuggestions();
-            }
-            
-            // Handle suggestion clicks
-            if (event.target.closest('.ssRow')) {
-                const row = event.target.closest('.ssRow');
-                const productId = row.dataset.id;
-                const productName = row.querySelector('.ssName').textContent;
-                selectSearchSuggestion(productId, productName);
-            }
-        });
-        
-        // Add keyboard navigation for search
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', handleSearchInput);
-            searchInput.addEventListener('keydown', handleSearchKeyboard);
-            searchInput.addEventListener('focus', function() {
-                if (this.value.trim().length > 0) {
-                    showIsolatedSearchSuggestions(this.value.toLowerCase().trim());
-                }
-            });
-        }
         
         // Mobile-specific: Add a small delay for mobile devices
         const isMobile = window.innerWidth <= 768;
@@ -794,9 +888,48 @@
             console.log('Using fallback hardcoded products');
         }
         
+        // Set up real-time listener for automatic updates
+        if (window.firebaseDB && !window.productsListener) {
+            console.log('🔄 Setting up real-time product listener...');
+            // Use Firestore instead of Realtime Database
+            const productsRef = window.firebaseDB.collection('products');
+            
+            window.productsListener = productsRef.onSnapshot((snapshot) => {
+                const firestoreProducts = snapshot.docs;
+                console.log('🔄 Real-time product update received:', firestoreProducts.length, 'products');
+                
+                if (firestoreProducts && firestoreProducts.length > 0) {
+                    const activeProducts = firestoreProducts
+                        .map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }))
+                        .filter(product => product.isActive !== false);
+                    
+                    window.allProducts = activeProducts;
+                    filteredProducts = [...window.allProducts];
+                    console.log(`✅ Real-time update: ${activeProducts.length} active products loaded`);
+                    updateProductView();
+                } else {
+                    console.log('⚠️ Real-time update: No products found, keeping current display');
+                }
+            });
+        }
+        
         // Then render them
         console.log('🎨 Rendering products...');
         updateProductView(); // Use unified system for initial load
+        
+        // DEBUG: Force show products if not showing after 1 second
+        setTimeout(() => {
+            const grid = document.getElementById('productGrid');
+            console.log('🔍 DEBUG: Product grid children count:', grid ? grid.children.length : 'grid not found');
+            console.log('🔍 DEBUG: Filtered products count:', filteredProducts.length);
+            if (grid && grid.children.length === 0 && filteredProducts.length > 0) {
+                console.log('🔧 DEBUG: Forcing product display...');
+                displayProducts(1);
+            }
+        }, 1000);
         
         // Force scroll to top again after products load
         setTimeout(() => {
@@ -809,10 +942,9 @@
         setTimeout(() => {
             const grid = document.getElementById('productGrid');
             if (grid && grid.children.length === 0) {
-                console.log('Fallback: Forcing product render');
                 updateProductView();
             }
-        }, isMobile ? 1000 : 2000); // Shorter timeout for mobile
+        }, isMobile ? 1000 : 2000); // Shorter timeout for better UX
         
         console.log('✅ Script initialization complete');
     });
@@ -846,8 +978,11 @@
 
     function toggleCartDisplay() {
         const cartOverlay = document.getElementById('cartSerialOverlay');
-        if (!cartOverlay) return;
-
+        if (!cartOverlay) {
+            console.log('Cart overlay not found - cart functionality disabled');
+            return;
+        }
+        
         if (cartOverlay.classList.contains('active')) {
             if (history.state && history.state.overlay) {
                 history.back();
@@ -865,6 +1000,9 @@
 
     /* --- 4. THE ADD TO CART SYSTEM --- */
     function addToCart(id) {
+        // Track cart addition
+        window.productAnalytics.trackCartAddition(id);
+        
         // Safety guard for undefined products
         if (!window.allProducts || window.allProducts.length === 0) {
             console.error('Products not loaded yet');
@@ -1254,11 +1392,16 @@
 
     /* --- UNIFIED FILTER SYSTEM --- */
     function applyFilters(products, state) {
-        return products.filter(product => {
+        console.log('🔍 DEBUG: Filtering products with state:', state);
+        console.log('🔍 DEBUG: Total products before filter:', products.length);
+        
+        const filtered = products.filter(product => {
             // 1. Category filter
             if (state.category && state.category !== 'All') {
+                console.log('🔍 DEBUG: Checking category filter:', product.category, '===', state.category);
                 if (product.category !== state.category) return false;
                 if (state.subCategory && state.subCategory !== 'All' && product.subCategory !== state.subCategory) {
+                    console.log('🔍 DEBUG: Checking subCategory filter:', product.subCategory, '===', state.subCategory);
                     return false;
                 }
             }
@@ -1266,6 +1409,7 @@
             // 2. SubCategory filter (standalone, when category is 'All')
             if (!state.category || state.category === 'All') {
                 if (state.subCategory && state.subCategory !== 'All' && product.subCategory !== state.subCategory) {
+                    console.log('🔍 DEBUG: Checking standalone subCategory filter:', product.subCategory, '===', state.subCategory);
                     return false;
                 }
             }
@@ -1295,6 +1439,11 @@
 
             return true;
         });
+        
+        console.log('🔍 DEBUG: Products after filter:', filtered.length);
+        console.log('🔍 DEBUG: Filtered products:', filtered);
+        
+        return filtered;
     }
 
     // UPDATE PRODUCT VIEW - Single entrypoint
@@ -1361,174 +1510,11 @@
         updateProductView();
     }
 
-    // Search input handler with debouncing and isolated suggestions
-    let searchDebounceTimer;
-    function handleSearchInput() {
-        const searchInput = document.getElementById('searchInput');
-        const suggestionsPanel = document.getElementById('searchSuggestPanel');
-        
-        if (searchInput) {
-            const searchTerm = searchInput.value.toLowerCase().trim();
-            filterState.searchText = searchInput.value;
-            
-            // Clear existing timer
-            clearTimeout(searchDebounceTimer);
-            
-            // Hide immediately if empty
-            if (searchTerm.length === 0) {
-                hideSearchSuggestions();
-                updateProductView();
-                return;
-            }
-            
-            // Debounce search suggestions (250ms)
-            searchDebounceTimer = setTimeout(() => {
-                showIsolatedSearchSuggestions(searchTerm);
-            }, 250);
-            
-            // Don't update product view while typing - only on empty or selection
-        }
-    }
-    
-    // Isolated search suggestions with exact markup
-    function showIsolatedSearchSuggestions(searchTerm) {
-        const suggestionsPanel = document.getElementById('searchSuggestPanel');
-        if (!suggestionsPanel || !window.allProducts || window.allProducts.length === 0) {
-            hideSearchSuggestions();
-            return;
-        }
-        
-        // Get matching products with prioritization
-        const matches = [];
-        const maxSuggestions = 10;
-        const addedIds = new Set();
-        
-        // Prioritize name matches
-        window.allProducts.forEach(product => {
-            if (matches.length >= maxSuggestions) return;
-            if (addedIds.has(product.id)) return;
-            
-            const nameMatch = product.name.toLowerCase().includes(searchTerm);
-            const categoryMatch = product.category.toLowerCase().includes(searchTerm);
-            const subCategoryMatch = product.subCategory && product.subCategory.toLowerCase().includes(searchTerm);
-            
-            if (nameMatch || categoryMatch || subCategoryMatch) {
-                const priority = nameMatch ? 1 : (categoryMatch ? 2 : 3);
-                matches.push({ ...product, matchType: priority });
-                addedIds.add(product.id);
-            }
-        });
-        
-        // Sort by priority (name matches first)
-        matches.sort((a, b) => a.matchType - b.matchType);
-        
-        // Display suggestions with exact isolated markup
-        if (matches.length > 0) {
-            suggestionsPanel.innerHTML = matches.map(product => `
-                <div class="ssRow" data-id="${product.id}" role="button" tabindex="0">
-                    <img class="ssThumb" src="${product.img}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/40x40'">
-                    <div class="ssText">
-                        <div class="ssName">${highlightMatch(product.name, searchTerm)}</div>
-                        <div class="ssMeta"><span class="ssTag">${product.category}${product.subCategory ? ' • ' + product.subCategory : ''}</span></div>
-                    </div>
-                    <div class="ssPrice">৳${product.price}</div>
-                </div>
-            `).join('');
-            
-            suggestionsPanel.classList.add('isOpen');
-            suggestionsPanel.style.display = 'block';
-        } else {
-            hideSearchSuggestions();
-        }
-    }
-    
-    // Highlight matching text in suggestions
-    function highlightMatch(text, searchTerm) {
-        const regex = new RegExp(`(${searchTerm})`, 'gi');
-        return text.replace(regex, '<strong>$1</strong>');
-    }
-    
-    // Hide search suggestions with isolated panel
-    function hideSearchSuggestions() {
-        const suggestionsPanel = document.getElementById('searchSuggestPanel');
-        if (suggestionsPanel) {
-            suggestionsPanel.classList.remove('isOpen');
-            suggestionsPanel.style.display = 'none';
-            suggestionsPanel.innerHTML = '';
-        }
-    }
-    
-    // Select a search suggestion and open product details
-    function selectSearchSuggestion(productId, productName) {
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.value = productName;
-            filterState.searchText = productName;
-            hideSearchSuggestions();
-            updateProductView();
-            
-            // Open product details using existing function
-            openProductDetails(parseInt(productId));
-        }
-    }
-    
-    // Clear search function
-    function clearSearch() {
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.value = "";
-            filterState.searchText = "";
-            hideSearchSuggestions();
-            updateProductView();
-        }
-    }
-    
-    // Keyboard navigation for search
-    function handleSearchKeyboard(event) {
-        const suggestionsPanel = document.getElementById('searchSuggestPanel');
-        const items = suggestionsPanel ? suggestionsPanel.querySelectorAll('.ssRow') : [];
-        let currentIndex = -1;
-        
-        // Find current highlighted item
-        items.forEach((item, index) => {
-            if (item.classList.contains('isHighlighted')) {
-                currentIndex = index;
-            }
-        });
-        
-        switch(event.key) {
-            case 'ArrowDown':
-                event.preventDefault();
-                items.forEach(item => item.classList.remove('isHighlighted'));
-                const nextIndex = (currentIndex + 1) % items.length;
-                items[nextIndex].classList.add('isHighlighted');
-                items[nextIndex].scrollIntoView({ block: 'nearest' });
-                break;
-                
-            case 'ArrowUp':
-                event.preventDefault();
-                items.forEach(item => item.classList.remove('isHighlighted'));
-                const prevIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
-                items[prevIndex].classList.add('isHighlighted');
-                items[prevIndex].scrollIntoView({ block: 'nearest' });
-                break;
-                
-            case 'Enter':
-                event.preventDefault();
-                if (currentIndex >= 0 && items[currentIndex]) {
-                    items[currentIndex].click();
-                }
-                break;
-                
-            case 'Escape':
-                event.preventDefault();
-                hideSearchSuggestions();
-                break;
-        }
-    }
-
     /* --- FINAL MERGED PRODUCT DETAILS LOGIC --- */
     function openProductDetails(id) {
+        // Track product view
+        window.productAnalytics.trackProductView(id);
+        
         if (!window.allProducts || window.allProducts.length === 0) {
             console.error('Products not loaded yet');
             return;
@@ -1562,10 +1548,18 @@
         const thumbContainer = document.getElementById('thumbnailStrip');
         thumbContainer.innerHTML = '';
         const gallery = p.gallery || [p.img, p.img, p.img];
-        gallery.forEach(imgSrc => {
+        gallery.forEach((imgSrc, index) => {
             const thumb = document.createElement('img');
             thumb.src = imgSrc;
-            thumb.onclick = () => { document.getElementById('mainDetailImg').src = imgSrc; };
+            if (index === 0) thumb.classList.add('active'); // make first active
+            
+            thumb.onclick = () => { 
+                document.getElementById('mainDetailImg').src = imgSrc; 
+                // Remove active from all
+                thumbContainer.querySelectorAll('img').forEach(t => t.classList.remove('active'));
+                // Add active to clicked
+                thumb.classList.add('active');
+            };
             thumbContainer.appendChild(thumb);
         });
 
@@ -1643,6 +1637,7 @@
         // 6. Show the Page
         history.pushState({ overlay: true }, "");
         dPage.classList.add('active');
+        dPage.style.display = 'flex'; // Explicitly set as per user request flow
         document.body.style.overflow = 'hidden';
         dPage.scrollTop = 0;
     }
@@ -1679,10 +1674,23 @@
             history.back();
         } else {
             const detailsPage = document.getElementById('productDetailsPage');
-            detailsPage.classList.remove('active');
-            document.body.style.overflow = 'auto';
+            if (detailsPage) {
+                detailsPage.classList.remove('active');
+                detailsPage.style.display = 'none';
+            }
+            document.body.style.overflow = '';
         }
     }
+
+    // Also close when clicking the dark overlay background
+    document.getElementById('productDetailsPage')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeProductDetails();
+    });
+
+    // Close with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeProductDetails();
+    });
 
     /* --- HARDWARE BACK BUTTON FIX --- */
     window.onpopstate = function (event) {
@@ -1903,6 +1911,16 @@
             
             console.log('🎯 Order Result:', orderResult);
             
+            // Track purchases for analytics
+            for (const item of currentOrderContext.items) {
+                await window.productAnalytics.trackPurchase(
+                    item.productId,
+                    orderResult.orderId,
+                    item.qty || 1,
+                    parseInt(item.price.toString().replace(/[^0-9.]/g, ''), 10) || 0
+                );
+            }
+            
             // Show success with orderId
             let successMessage = `Order created! Your Order ID: ${orderResult.orderId}`;
             if (orderResult.fallback) {
@@ -1964,6 +1982,16 @@
             recordOrderAttempt();
             
             const orderResult = await createOrderInRTDB(sanitizedData);
+            
+            // Track purchases for analytics
+            for (const item of currentOrderContext.items) {
+                await window.productAnalytics.trackPurchase(
+                    item.productId,
+                    orderResult.orderId,
+                    item.qty || 1,
+                    parseInt(item.price.toString().replace(/[^0-9.]/g, ''), 10) || 0
+                );
+            }
             
             // Show success with orderId
             let successMessage = `Order created! Your Order ID: ${orderResult.orderId}`;
@@ -2144,6 +2172,7 @@
             const validationErrors = validateOrderPayload(orderData);
             if (validationErrors.length > 0) {
                 alert('Please fix the following issues:\n' + validationErrors.join('\n'));
+                const sanitizedData = sanitizeOrderData(orderData);
                 confirmBtn.innerText = "Confirm Order";
                 confirmBtn.disabled = false;
                 return;
@@ -2157,6 +2186,16 @@
             const orderResult = await createOrderInRTDB(sanitizedData);
             
             console.log('🎯 Direct Order Result:', orderResult);
+            
+            // Track purchases for analytics
+            for (const item of currentOrderContext.items) {
+                await window.productAnalytics.trackPurchase(
+                    item.productId,
+                    orderResult.orderId,
+                    item.qty || 1,
+                    parseInt(item.price.toString().replace(/[^0-9.]/g, ''), 10) || 0
+                );
+            }
             
             // SECURITY: Telegram alerts disabled for public site
             // await sendTelegramAlert(cName, cPhone, cAddress, currentOrderContext, orderResult.orderId);
@@ -2327,89 +2366,242 @@
                 overlay.classList.remove('active');
                 openProductDetails(winningProduct.id);
             }, 1200);
-
         }, 2500); // Must match transition time
     }
 
-    // Enhanced search with animation integration
-    function showSearchSuggestions(suggestions) {
-        const panel = document.getElementById('searchSuggestPanel');
-        if (!panel) return;
-        
-        if (suggestions.length > 0) {
-            panel.innerHTML = suggestions.map(s => 
-                `<div class="search-suggestion-item" onclick="selectSuggestion('${s.replace(/'/g, "\\'")}')">${s}</div>`
-            ).join('');
-            panel.classList.add('show');
-        } else {
-            panel.classList.remove('show');
-        }
-    }
-    
-    function selectSuggestion(suggestion) {
-        const input = document.getElementById('searchInput');
-        if (input) {
-            input.value = suggestion;
-            document.getElementById('searchSuggestPanel').classList.remove('show');
-            // Trigger search if needed
-            if (window.performSearch) {
-                window.performSearch(suggestion);
-            }
-        }
-    }
-    
-    function hideSearchSuggestions() {
-        const panel = document.getElementById('searchSuggestPanel');
-        if (panel) {
-            panel.classList.remove('show');
-        }
-    }
-    
-    // Export new functions
-    window.showSearchSuggestions = showSearchSuggestions;
-    window.selectSuggestion = selectSuggestion;
-    window.hideSearchSuggestions = hideSearchSuggestions;
-    window.toggleMenu = toggleMenu;
-    window.toggleCartDisplay = toggleCartDisplay;
-    window.addToCart = addToCart;
-    window.openProductDetails = openProductDetails;
-    window.handleCategoryClick = handleCategoryClick;
-    window.selectSize = selectSize;
-    window.removeItem = removeItem;
-    window.processCartCheckout = processCartCheckout;
-    window.handleSingleBuy = handleSingleBuy;
-    window.triggerOrderFlow = triggerOrderFlow;
-    window.triggerCartOrderFlow = triggerCartOrderFlow;
-    window.showDirectOrderForm = showDirectOrderForm;
-    window.hideDirectOrderForm = hideDirectOrderForm;
-    window.submitDirectOrder = submitDirectOrder;
-    window.closeSocialModal = closeSocialModal;
-    window.handleMessengerOrder = handleMessengerOrder;
-    window.handleAddToCartFromDetails = handleAddToCartFromDetails;
-    window.handleDirectBuy = handleDirectBuy;
-    window.closeProductDetails = closeProductDetails;
-    window.filterByCategory = filterByCategory;
-    window.filterBySubCategory = filterBySubCategory;
-    window.updatePriceLabel = updatePriceLabel;
-    window.toggleSub = toggleSub;
-    window.filterProducts = filterProducts;
-    window.scrollToSection = scrollToSection;
-    window.openPage = openPage;
-    window.clearSearch = clearSearch;
-    window.handleWhatsAppOrder = handleWhatsAppOrder;
-    window.resetRateLimit = resetRateLimit;
-    window.spinForRandomProduct = spinForRandomProduct;
-    window.selectSearchSuggestion = selectSearchSuggestion;
-    window.hideSearchSuggestions = hideSearchSuggestions;
-    window.showPremiumSearchSuggestions = showPremiumSearchSuggestions;
-    window.handleSearchKeyboard = handleSearchKeyboard;
+// Export new functions
+window.toggleMenu = toggleMenu;
+window.toggleCartDisplay = toggleCartDisplay;
+window.addToCart = addToCart;
+window.openProductDetails = openProductDetails;
+window.handleCategoryClick = handleCategoryClick;
+window.selectSize = selectSize;
+window.removeItem = removeItem;
+window.processCartCheckout = processCartCheckout;
+window.handleSingleBuy = handleSingleBuy;
+window.triggerOrderFlow = triggerOrderFlow;
+window.triggerCartOrderFlow = triggerCartOrderFlow;
+window.showDirectOrderForm = showDirectOrderForm;
+window.hideDirectOrderForm = hideDirectOrderForm;
+window.submitDirectOrder = submitDirectOrder;
+window.closeSocialModal = closeSocialModal;
+window.handleMessengerOrder = handleMessengerOrder;
+window.handleAddToCartFromDetails = handleAddToCartFromDetails;
+window.handleDirectBuy = handleDirectBuy;
+window.closeProductDetails = closeProductDetails;
+window.filterByCategory = filterByCategory;
+window.filterBySubCategory = filterBySubCategory;
+window.updatePriceLabel = updatePriceLabel;
+window.toggleSub = toggleSub;
+window.filterProducts = filterProducts;
+window.scrollToSection = scrollToSection;
+window.openPage = openPage;
+window.handleWhatsAppOrder = handleWhatsAppOrder;
+window.resetRateLimit = resetRateLimit;
+window.spinForRandomProduct = spinForRandomProduct;
 
-    // CONSOLE LOG TO VERIFY PHASE 5 FEATURES
-    console.log('✅ PHASE 5 SCRIPT LOADED WITH ALL FEATURES:');
-    console.log('  📝 Order ID Generation: generateOrderId()');
-    console.log('  🔥 RTDB Order Creation: createOrderInRTDB()');
-    console.log('  🛡️  Security Features: Validation, Rate Limiting, Sanitization');
-    console.log('  🚫 Telegram Alerts Disabled: TELEGRAM_ENABLED = false');
-    console.log('  📦 Real Order System Active');
+// Handle suggestion clicks - global function
+function handleSuggestionClick(id) {
+    console.log('🔍 handleSuggestionClick called with ID:', id);
+    
+    // Close both panels
+    const desktopPanel = document.getElementById('suggestionPanel');
+    const mobilePanel = document.getElementById('mobileSuggestionPanel');
+    if (desktopPanel) desktopPanel.classList.remove('open');
+    if (mobilePanel) mobilePanel.classList.remove('open');
+    
+    // Clear both search inputs
+    const desktopInput = document.getElementById('searchInput');
+    const mobileInput = document.getElementById('mobileSearchInput');
+    if (desktopInput) desktopInput.value = '';
+    if (mobileInput) mobileInput.value = '';
+
+    if      (typeof openProductDetails  === 'function') {
+        console.log('✅ Calling openProductDetails with ID:', id);
+        openProductDetails(id);
+    }
+    else if (typeof showProductDetail   === 'function') {
+        console.log('✅ Calling showProductDetail with ID:', id);
+        showProductDetail(id);
+    }
+    else if (typeof viewProduct         === 'function') {
+        console.log('✅ Calling viewProduct with ID:', id);
+        viewProduct(id);
+    }
+    else if (typeof openProduct         === 'function') {
+        console.log('✅ Calling openProduct with ID:', id);
+        openProduct(id);
+    }
+    else console.warn('❌ No product open function found. ID:', id);
+}
+
+window.handleSuggestionClick = handleSuggestionClick;
+
+// CONSOLE LOG TO VERIFY PHASE 5 FEATURES
+console.log('✅ PHASE 5 SCRIPT LOADED WITH ALL FEATURES:');
+console.log('  📝 Order ID Generation: generateOrderId()');
+
+/* ═══════════════════════════════
+   SEARCH SUGGESTIONS FRESH SYSTEM
+════════════════════════════════ */
+(function () {
+
+    function startSearch() {
+      // Handle both desktop and mobile search inputs
+      const inputs = [
+        document.getElementById('searchInput'),
+        document.getElementById('mobileSearchInput')
+      ].filter(Boolean);
+      
+      const panels = [
+        document.getElementById('suggestionPanel'),
+        document.getElementById('mobileSuggestionPanel')
+      ].filter(Boolean);
+
+      if (inputs.length === 0 || panels.length === 0) {
+        console.warn('❌ Search: inputs or panels missing');
+        return;
+      }
+
+      console.log('✅ Search suggestions ready');
+
+      // Setup each input
+      inputs.forEach((input, index) => {
+        const panel = panels[index];
+        let timer;
+
+        // Typing handler
+        input.addEventListener('input', function () {
+          clearTimeout(timer);
+
+          // IMPORTANT: do NOT add any class to navbar here
+          const query = input.value.trim();
+
+          if (query.length < 2) {
+            closePanel(panel);
+            return;
+          }
+
+          timer = setTimeout(function () {
+            showResults(query, panel);
+          }, 250);
+        });
+
+        // Close on outside click
+        document.addEventListener('click', function (e) {
+          if (!panel.contains(e.target) && e.target !== input) {
+            closePanel(panel);
+          }
+        });
+
+        // Close on Escape key
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') {
+            closePanel(panel);
+            input.blur();
+          }
+        });
+      });
+    }
+
+    function showResults(query, panel) {
+      const products = window.allProducts || [];
+      const term     = query.toLowerCase();
+
+      const matches = products.filter(function (p) {
+        const name = (p.name || p.title || '').toLowerCase();
+        return name.includes(term);
+      }).slice(0, 7);
+
+      console.log('🔍 Search matches found:', matches.length, 'for query:', query);
+
+      if (matches.length === 0) {
+        panel.innerHTML =
+          '<div class="sg-empty">No products found for "' + query + '"</div>';
+      } else {
+        panel.innerHTML = matches.map(function (p) {
+          const name = p.name  || p.title     || 'Product';
+          const img  = p.image || p.img       || p.thumbnail || '';
+          // Fix: Use the correct ID field - products have numeric 'id' field
+          const id   = p.id !== undefined ? p.id : (p.productId || '');
+          
+          console.log('🔍 Building suggestion for:', name, 'with ID:', id);
+          
+          return (
+            '<div class="sg-row" data-id="' + id + '" onclick="handleSuggestionClick(' + id + ')">' +
+              '<img class="sg-img" src="' + img + '" alt="' + name + '" ' +
+                'onerror="this.src=\'images/placeholder.png\'">' +
+              '<span class="sg-name">' + name + '</span>' +
+            '</div>'
+          );
+        }).join('');
+
+        // Click → open product modal
+        const suggestionRows = panel.querySelectorAll('.sg-row');
+        console.log('🔍 Found suggestion rows:', suggestionRows.length);
+        suggestionRows.forEach(function (row, index) {
+          console.log('🔍 Attaching click event to row', index, 'with data-id:', row.getAttribute('data-id'));
+          
+          row.addEventListener('click', function (e) {
+            console.log('🔍 Click event fired on suggestion row!', e);
+            const id = row.getAttribute('data-id');
+            console.log('🔍 Suggestion clicked, product ID:', id);
+            
+            // Make sure we have a valid ID
+            if (!id || id === '') {
+              console.error('❌ No valid product ID found');
+              return;
+            }
+            
+            closePanel(panel);
+            
+            // Clear both search inputs
+            const desktopInput = document.getElementById('searchInput');
+            const mobileInput = document.getElementById('mobileSearchInput');
+            if (desktopInput) desktopInput.value = '';
+            if (mobileInput) mobileInput.value = '';
+
+            if      (typeof openProductDetails  === 'function') {
+              console.log('✅ Calling openProductDetails with ID:', id);
+              openProductDetails(id);
+            }
+            else if (typeof showProductDetail   === 'function') {
+              console.log('✅ Calling showProductDetail with ID:', id);
+              showProductDetail(id);
+            }
+            else if (typeof viewProduct         === 'function') {
+              console.log('✅ Calling viewProduct with ID:', id);
+              viewProduct(id);
+            }
+            else if (typeof openProduct         === 'function') {
+              console.log('✅ Calling openProduct with ID:', id);
+              openProduct(id);
+            }
+            else console.warn('❌ No product open function found. ID:', id);
+          });
+          
+          // Also add pointer debugging
+          row.style.cursor = 'pointer';
+          row.addEventListener('mouseenter', function() {
+            console.log('🔍 Mouse entered suggestion row:', row.textContent.trim());
+          });
+        });
+      }
+
+      panel.classList.add('open');
+    }
+
+    function closePanel(panel) {
+      if (panel) panel.classList.remove('open');
+    }
+
+    // Safe init
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', startSearch);
+    } else {
+      startSearch();
+    }
+
+  })(); // Added missing closing bracket here
 
 })();

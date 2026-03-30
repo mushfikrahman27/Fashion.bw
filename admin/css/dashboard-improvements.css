@@ -1,0 +1,238 @@
+/* ============================================
+   DASHBOARD SECTION IMPROVEMENTS
+   ============================================ */
+
+/* Dashboard Loading States */
+.loading-placeholder {
+    opacity: 0.6;
+    transition: opacity 0.3s ease;
+}
+
+.stat-card .number.loading-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+}
+
+.stat-card .number.loading-placeholder i {
+    font-size: 20px;
+    color: var(--primary);
+}
+
+/* Dashboard Error Messages */
+.dashboard-error {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+    color: white;
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin: 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    animation: slideIn 0.3s ease;
+}
+
+.dashboard-error i {
+    font-size: 20px;
+}
+
+.dashboard-error span {
+    flex: 1;
+    font-weight: 500;
+}
+
+.btn-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Order Links */
+.order-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.order-link:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+/* Enhanced Stat Cards */
+.stat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card .number {
+    font-weight: 700;
+    font-size: 2rem;
+    line-height: 1;
+    transition: color 0.3s ease;
+}
+
+.stat-card .number.loading-placeholder {
+    font-size: 1.5rem;
+}
+
+/* Enhanced Table Styles */
+.data-table {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.data-table th {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 16px 12px;
+}
+
+.data-table td {
+    padding: 16px 12px;
+    border-bottom: 1px solid var(--border);
+    transition: background-color 0.2s ease;
+}
+
+.data-table tr:hover td {
+    background-color: var(--bg-hover);
+}
+
+.data-table .no-data {
+    padding: 40px;
+    font-size: 16px;
+    color: var(--text-muted);
+    background-color: var(--bg);
+}
+
+/* Mobile Responsive Improvements */
+@media (max-width: 768px) {
+    .stat-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .stat-card {
+        padding: 20px;
+    }
+    
+    .stat-card .number {
+        font-size: 1.5rem;
+    }
+    
+    .data-table {
+        font-size: 14px;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 12px 8px;
+    }
+    
+    .dashboard-error {
+        margin: 12px 0;
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-grid {
+        gap: 12px;
+    }
+    
+    .stat-card {
+        padding: 16px;
+    }
+    
+    .stat-card .number {
+        font-size: 1.25rem;
+    }
+    
+    .data-table {
+        font-size: 12px;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 8px 6px;
+    }
+    
+    /* Hide less important columns on mobile */
+    .data-table th:nth-child(4),
+    .data-table td:nth-child(4) {
+        display: none;
+    }
+}
+
+/* Accessibility Improvements */
+.stat-card:focus-within {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.data-table:focus-within {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.order-link:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Animation Enhancements */
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.stat-card.updating .number {
+    animation: pulse 1.5s ease-in-out;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .dashboard-error {
+        background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+    }
+    
+    .data-table th {
+        background: linear-gradient(135deg, #1e3a8a 0%, #2d3748 100%);
+    }
+}

@@ -128,40 +128,11 @@
     }
 }
 
-/* --- SEARCH SUGGESTIONS ANIMATION --- */
-.searchSuggestPanel {
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: opacity var(--micro-interaction-duration) ease-out, 
-                transform var(--micro-interaction-duration) ease-out;
-}
-
-.searchSuggestPanel.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.search-suggestion-item {
-    padding: 12px 16px;
-    cursor: pointer;
-    border-bottom: 1px solid rgba(23, 64, 42, 0.1);
-    transition: background-color var(--micro-interaction-duration) ease-out;
-}
-
-.search-suggestion-item:hover {
-    background-color: rgba(23, 64, 42, 0.05);
-}
-
-.search-suggestion-item:last-child {
-    border-bottom: none;
-}
-
 /* --- CART DRAWER ENHANCED ANIMATION --- */
 .cart-serial-overlay {
     opacity: 0;
     transform: translateX(100%);
-    transition: opacity 0.3s ease-out, 
-                transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: opacity 0.3s ease-out, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .cart-serial-overlay.active {
@@ -228,6 +199,13 @@
 
 /* --- 1. GLOBAL VARIABLES & RESET --- */
 :root {
+    --z-base:       1;
+    --z-dropdown:   100;
+    --z-sidebar:    200;
+    --z-modal:      300;
+    --z-overlay:    400;
+    --z-toast:      500;
+
     /* Luxury Forest & Rose Palette */
     --primary-brand: #17402a;
     /* Deep Dark Forest - Main brand anchor */
@@ -570,7 +548,7 @@ body {
 
 .brand-name span {
     color: #a0a0a0;
-    /* Policia-er CIA part-ta ektu subtle thakbe */
+    /* Inarah - Premium Fashion Brand */
 }
 
 .brand-name {
@@ -2024,34 +2002,265 @@ body.cart-open {
     }
 }
 
+/* ===============================================
+   PREMIUM FOOTER DESIGN - INARAH (FINAL STRUCTURE)
+   =============================================== */
+
 .main-footer {
     width: 100%;
-    padding: 80px 5%;
-    background: var(--primary-brand);
+    background: #0a0a0a;
+    color: #ffffff;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Row 1: Main Content (4 Columns) */
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 20px 40px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 50px;
+}
+
+/* Column Styles */
+.footer-column {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Brand Column */
+.brand-column .brand-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 15px;
+    letter-spacing: 0.5px;
+    font-family: 'Montserrat', sans-serif;
+    text-align: left;
+}
+
+.brand-description {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #b0b0b0;
+    max-width: 280px;
+    text-align: left;
+}
+
+/* Column Titles */
+.column-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 18px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-family: 'Montserrat', sans-serif;
+    text-align: left;
+}
+
+/* Footer Links */
+.footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: left;
+}
+
+.footer-links li {
+    margin-bottom: 10px;
+}
+
+.footer-links a {
+    color: #b0b0b0;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.3s ease;
+    display: inline-block;
+}
+
+.footer-links a:hover {
+    color: #d4af37;
+}
+
+/* Contact Info */
+.contact-info {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    color: #b0b0b0;
+    font-size: 0.85rem;
+}
+
+.contact-icon {
+    margin-right: 8px;
+    font-size: 0.9rem;
+}
+
+/* Row 2: Social Media Section */
+.footer-social-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px 30px;
     text-align: center;
 }
 
-.footer-content {
+.social-icons {
     display: flex;
-    flex-direction: column;
-    align-items: center;
     gap: 15px;
+    justify-content: center;
 }
 
-.footer-content p {
-    font-size: 0.8rem;
-    color: var(--text-white);
-}
-
-.footer-content a {
-    color: var(--accent-rose);
+.social-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #b0b0b0;
     text-decoration: none;
-    transition: color 0.3s ease;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.footer-content a:hover {
-    color: var(--accent-soft);
+.social-icon:hover {
+    background: #d4af37;
+    color: #0a0a0a;
+    transform: translateY(-2px);
+}
+
+/* Row 3: Bottom Bar */
+.footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 20px 0;
+    text-align: center;
+}
+
+.copyright {
+    color: #808080;
+    font-size: 0.8rem;
+    letter-spacing: 0.3px;
+}
+
+/* ===============================================
+   MOBILE FOOTER RESPONSIVE DESIGN (2-COLUMN LAYOUT)
+   =============================================== */
+
+@media (max-width: 768px) {
+    .main-footer {
+        padding: 0;
+    }
+
+    /* Mobile: All sections side by side horizontally */
+    .footer-container {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        padding: 30px 15px 20px;
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .footer-column {
+        flex: 1;
+        min-width: calc(33.333% - 10px);
+        margin-bottom: 0;
+    }
+
+    /* Brand: Full width on top */
+    .brand-column {
+        flex: 100%;
+        min-width: 100%;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .brand-column .brand-title {
+        font-size: 1.6rem;
+        text-align: center;
+        margin-bottom: 12px;
+    }
+
+    .brand-description {
+        max-width: 100%;
+        text-align: center;
+        margin: 0 auto;
+        font-size: 0.9rem;
+    }
+
+    /* Other sections: Side by side */
+    .footer-column:not(.brand-column) {
+        text-align: left;
+    }
+
+    .column-title {
+        text-align: left;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+
+    .footer-links {
+        text-align: left;
+    }
+
+    .footer-links li {
+        margin-bottom: 6px;
+    }
+
+    .footer-links a {
+        font-size: 0.85rem;
+    }
+
+    .contact-info {
+        text-align: left;
+    }
+
+    .contact-item {
+        font-size: 0.85rem;
+        margin-bottom: 6px;
+    }
+
+    /* Social Section: Full width, centered */
+    .footer-social-section {
+        padding: 15px 15px 15px;
+        text-align: center;
+        width: 100%;
+    }
+
+    .social-icons {
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .social-icon {
+        width: 38px;
+        height: 38px;
+    }
+
+    /* Copyright: Full width, centered */
+    .copyright {
+        font-size: 0.7rem;
+        padding: 0 10px;
+    }
+}
+
+/* Tablet Responsive */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .footer-container {
+        gap: 30px;
+        padding: 60px 30px 40px;
+    }
+    
+    .brand-description {
+        max-width: 240px;
+    }
 }
 
 .social-modal-overlay {
@@ -2703,6 +2912,56 @@ body.cart-open {
     .stylish-search {
         max-width: 520px;
     }
+    
+    /* Desktop hamburger menu - copy mobile colors (black theme, white content) */
+    .menu-scroll-container {
+        background: #0a0a0a !important;
+    }
+    
+    .nested {
+        background: transparent !important;
+    }
+    
+    .menu-header {
+        background: #0a0a0a !important;
+        border-bottom: 1px solid #2a2a2a !important;
+    }
+    
+    .back-icon-wrapper {
+        background: #1a1a1a !important;
+        color: #ffffff !important;
+    }
+    
+    .menu-back-btn:hover .back-icon-wrapper {
+        background: #ffffff !important;
+        color: #000000 !important;
+    }
+    
+    .category-trigger:hover,
+    .category-trigger:active,
+    .nested.open .category-trigger {
+        background: #141414 !important;
+        color: #ffffff !important;
+        padding-left: 20px !important;
+    }
+    
+    .sub-links li a:hover {
+        background: #1a1a1a !important;
+        color: #ffffff !important;
+        padding-left: 15px !important;
+    }
+    
+    .cat-text {
+        color: #ffffff !important;
+    }
+    
+    .sub-links li a {
+        color: #ffffff !important;
+    }
+    
+    .plus-icon {
+        color: #ffffff !important;
+    }
 }
 
 .cart-glass {
@@ -2734,9 +2993,9 @@ body.cart-open {
     right: -6px;
     background: var(--accent-gold);
     color: var(--background);
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 5px;
     border-radius: 10px;
     min-width: 18px;
     text-align: center;
@@ -2953,7 +3212,7 @@ body.cart-open {
 
 /* ensures footer/back-to-top not cut */
 body {
-    padding-bottom: 120px;
+    padding-bottom: 0;
 }
 
 /* ensures scroll height enough */
@@ -2965,7 +3224,7 @@ main,
 
 /* prevents last section from sticking */
 footer {
-    margin-bottom: 40px;
+    margin-bottom: 0;
 }
 
 @media (max-width: 768px) {
@@ -3799,366 +4058,137 @@ footer {
         padding: 20px !important;
     }
 
-    /* --- ISOLATED SEARCH SUGGESTIONS PANEL --- */
-    #searchSuggestPanel {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: rgba(10, 10, 10, 0.72);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(212, 175, 55, 0.12);
-        border-radius: 16px;
-        margin-top: 4px;
-        max-width: 520px;
-        max-height: 360px;
-        overflow: auto;
-        z-index: 9999;
-        display: none;
-        opacity: 0;
-        visibility: hidden;
-        transform: translateY(-8px);
-        transition: all 0.25s cubic-bezier(0.2, 0, 0.1, 1);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 
-                    0 4px 12px rgba(0, 0, 0, 0.15);
-        pointer-events: auto;
+    .roulette-title {
+        font-family: 'Playfair Display', serif;
+        color: #d4af37;
+        font-size: 2rem;
+        letter-spacing: 2px;
+        margin-bottom: 20px;
+        text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
     }
 
-    #searchSuggestPanel.isOpen {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-    }
-
-    .ssRow {
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        transition: all 0.15s ease;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    /* The spinning window */
+    .roulette-window {
+        width: 250px;
+        height: 300px;
+        background: #141414;
+        border: 2px solid #333;
+        border-radius: 12px;
+        overflow: hidden;
         position: relative;
-        overflow: hidden;
-        height: 56px;
-        padding: 10px 12px;
-        gap: 10px;
+        box-shadow: inset 0 20px 40px rgba(0, 0, 0, 0.8), 0 20px 50px rgba(0, 0, 0, 0.5);
     }
 
-    .ssRow:last-child {
-        border-bottom: none;
-    }
-
-    .ssRow:hover,
-    .ssRow.isHighlighted {
-        background: rgba(212, 175, 55, 0.08);
-        border-left: 2px solid #d4af37;
-        padding-left: 10px;
-    }
-
-    .ssThumb {
-        width: 40px !important;
-        height: 40px !important;
-        border-radius: 10px;
-        overflow: hidden;
-        flex-shrink: 0;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        object-fit: cover;
-        transition: transform 0.2s ease;
-    }
-
-    .ssRow:hover .ssThumb {
-        transform: scale(1.05);
-    }
-
-    .ssText {
-        flex: 1;
-        min-width: 0;
+    /* The inner tape of images */
+    .roulette-spinner {
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        line-height: 1.2;
+        width: 100%;
     }
 
-    .ssName {
+    .roulette-spinner img {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+        flex-shrink: 0;
+        /* Important */
+        border-bottom: 2px solid #000;
+    }
+
+    /* The spinning blur class */
+    .spinning-blur {
+        filter: blur(4px);
+    }
+
+    .roulette-result-text {
+        color: #fff;
         font-family: 'Montserrat', sans-serif;
-        font-size: 14px;
         font-weight: 600;
-        color: #ffffff;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin-bottom: 2px;
+        font-size: 1.1rem;
+        height: 25px;
+        /* Fixed height to prevent jumping */
+        opacity: 0;
+        transition: opacity 0.5s;
+        letter-spacing: 1px;
     }
 
-    .ssName strong {
-        color: #d4af37;
-        font-weight: 700;
+    .roulette-result-text.show {
+        opacity: 1;
     }
 
-    .ssMeta {
-        display: flex;
+    /* Ball Icons Styling */
+    .ball-icon {
+        position: absolute;
+        width: 45px; /* Mobile touch-friendly size */
+        height: 45px;
+        cursor: pointer;
+        z-index: 999;
+        opacity: 0.7;
+        filter: drop-shadow(0 0 5px rgba(0,0,0,0.2));
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .ball-icon:hover {
+        opacity: 1;
+        transform: scale(1.2) rotate(15deg);
+    }
+
+    /* Ball Placements - Ei value gulo tumi tomar site er length onujayi change korte paro */
+    #ball-1 { top: 15%; right: 5%; } /* Header zone */
+    #ball-2 { top: 50%; left: 10px; } /* Middle/Product zone */
+    #ball-3 { bottom: 100px; right: 20px; } /* Footer zone */
+
+    /* Popup Overlay */
+    .fifa-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(8px);
+        z-index: 100000;
         align-items: center;
-        margin-top: 2px;
+        justify-content: center;
     }
 
-    .ssTag {
-        font-family: 'Montserrat', sans-serif;
-        font-size: 11px;
-        font-weight: 500;
-        padding: 2px 8px;
-        border-radius: 999px;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 120px;
-        background: rgba(212, 175, 55, 0.12);
-        color: rgba(212, 175, 55, 0.95);
-        border: 1px solid rgba(212, 175, 55, 0.25);
+    /* Popup Card */
+    .fifa-card {
+        background: #fff;
+        padding: 40px 20px;
+        border-radius: 20px;
+        text-align: center;
+        width: 85%;
+        max-width: 350px;
+        position: relative;
+        animation: popupAnim 0.5s ease-out;
     }
 
-    .ssPrice {
-        font-family: 'Montserrat', sans-serif;
-        font-size: 13px;
-        font-weight: 700;
-        color: #d4af37;
-        margin-left: auto;
-        white-space: nowrap;
+    @keyframes popupAnim {
+        from { transform: scale(0.7); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
     }
 
-    /* Desktop: >=1024px - Fixed width and positioning */
-    @media (min-width: 1024px) {
-        #searchSuggestPanel {
-            max-width: 520px;
-            left: 0;
-            right: auto;
-            width: auto;
-        }
+    .promo-box {
+        background: #f3f3f3;
+        padding: 15px;
+        margin: 20px 0;
+        border: 2px dashed #2c3e50;
+        border-radius: 10px;
     }
 
-    /* Tablet: 769px–1023px */
-    @media (min-width: 769px) and (max-width: 1023px) {
-        #searchSuggestPanel {
-            max-width: 100%;
-            max-height: 340px;
-        }
-
-        .ssRow {
-            height: 60px;
-            padding: 12px 14px;
-            gap: 12px;
-        }
-
-        .ssThumb {
-            width: 44px !important;
-            height: 44px !important;
-            border-radius: 12px;
-        }
-
-        .ssName {
-            font-size: 15px;
-        }
-
-        .ssTag {
-            font-size: 11px;
-            max-width: 100px;
-        }
-
-        .ssPrice {
-            font-size: 13px;
-        }
+    .claim-btn {
+        background: #2c3e50;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        font-weight: bold;
+        cursor: pointer;
     }
 
-    /* Mobile: <=768px - Keep as is (working perfectly) */
-    @media (max-width: 768px) {
-        #searchSuggestPanel {
-            width: 100%;
-            max-height: 50vh;
-            min-height: 240px;
-            max-height: 320px;
-            border-radius: 14px;
-        }
-
-        .ssRow {
-            height: 64px;
-            padding: 12px 14px;
-            gap: 12px;
-        }
-
-        .ssThumb {
-            width: 46px !important;
-            height: 46px !important;
-            border-radius: 12px;
-        }
-
-    .ssPrice {
-        font-size: 13px;
-    }
-}
-
-/* Scrollbar styling */
-#searchSuggestPanel::-webkit-scrollbar {
-    width: 4px;
-}
-
-#searchSuggestPanel::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: 2px;
-}
-
-#searchSuggestPanel::-webkit-scrollbar-thumb {
-    background: rgba(212, 175, 55, 0.4);
-    border-radius: 2px;
-}
-
-#searchSuggestPanel::-webkit-scrollbar-thumb:hover {
-    background: rgba(212, 175, 55, 0.6);
-}
-
-.roulette-title {
-    font-family: 'Playfair Display', serif;
-    color: #d4af37;
-    font-size: 2rem;
-    letter-spacing: 2px;
-    margin-bottom: 20px;
-    text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
-}
-
-/* The spinning window */
-.roulette-window {
-    width: 250px;
-    height: 300px;
-    background: #141414;
-    border: 2px solid #333;
-    border-radius: 12px;
-    overflow: hidden;
-    position: relative;
-    box-shadow: inset 0 20px 40px rgba(0, 0, 0, 0.8), 0 20px 50px rgba(0, 0, 0, 0.5);
-}
-
-/* The inner tape of images */
-.roulette-spinner {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.roulette-spinner img {
-    width: 100%;
-    height: 300px;
-    object-fit: cover;
-    flex-shrink: 0;
-    /* Important */
-    border-bottom: 2px solid #000;
-}
-
-/* The spinning blur class */
-.spinning-blur {
-    filter: blur(4px);
-}
-
-.roulette-result-text {
-    color: #fff;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600;
-    font-size: 1.1rem;
-    height: 25px;
-    /* Fixed height to prevent jumping */
-    opacity: 0;
-    transition: opacity 0.5s;
-    letter-spacing: 1px;
-}
-
-.roulette-result-text.show {
-    opacity: 1;
-}
-
-
-
-/* Ball Icons Styling */
-.ball-icon {
-    position: absolute;
-    width: 45px; /* Mobile touch-friendly size */
-    height: 45px;
-    cursor: pointer;
-    z-index: 999;
-    opacity: 0.7;
-    filter: drop-shadow(0 0 5px rgba(0,0,0,0.2));
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.ball-icon:hover {
-    opacity: 1;
-    transform: scale(1.2) rotate(15deg);
-}
-
-/* Ball Placements - Ei value gulo tumi tomar site er length onujayi change korte paro */
-#ball-1 { top: 15%; right: 5%; } /* Header zone */
-#ball-2 { top: 50%; left: 10px; } /* Middle/Product zone */
-#ball-3 { bottom: 100px; right: 20px; } /* Footer zone */
-
-/* Popup Overlay */
-.fifa-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(8px);
-    z-index: 100000;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Popup Card */
-.fifa-card {
-    background: #fff;
-    padding: 40px 20px;
-    border-radius: 20px;
-    text-align: center;
-    width: 85%;
-    max-width: 350px;
-    position: relative;
-    animation: popupAnim 0.5s ease-out;
-}
-
-@keyframes popupAnim {
-    from { transform: scale(0.7); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-.promo-box {
-    background: #f3f3f3;
-    padding: 15px;
-    margin: 20px 0;
-    border: 2px dashed #2c3e50;
-    border-radius: 10px;
-}
-
-.claim-btn {
-    background: #2c3e50;
-    color: white;
-    border: none;
-    padding: 12px 30px;
-    border-radius: 50px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.close-btn {
-    position: absolute;
-    top: 15px; right: 20px;
-    font-size: 25px;
-    cursor: pointer;
-}
-
-/* Mobile responsive fixes */
-@media (max-width: 768px) {
-    .ball-icon { width: 38px; height: 38px; }
     .close-btn {
+        position: absolute;
         top: 15px; right: 20px;
         font-size: 25px;
         cursor: pointer;
@@ -4235,26 +4265,26 @@ footer {
 .nav-btn-stylish {
     padding: 12px 24px;
     border-radius: 25px;
-    border: 2px solid #FFFFFF;
+    border: 2px solid #000000;
     background: rgba(255, 255, 255, 0.2);
-    color: #FFFFFF !important;
+    color: #000000 !important;
     font-family: 'Montserrat', sans-serif;
     font-size: 0.9rem;
-    font-weight: 700;
+    font-weight: 900;
     letter-spacing: 1.5px;
     text-transform: uppercase;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+    text-shadow: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .nav-btn-stylish:hover {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.3);
-    color: #ffffff;
+    color: #000000;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
@@ -4283,15 +4313,208 @@ footer {
     }
 }
 
-/* ========================================
-   SPLASH SCREEN: SPEED-OPTIMIZED HIDE
-   ======================================== */
+    .nav-btn-stylish:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
 
-#splashScreen.hide {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.4s ease, visibility 0.4s ease;
-}
+    .nav-btn-stylish:active {
+        transform: translateY(-1px);
+    }
 
-/* End of CSS */
+    /* Mobile responsive for boutique pagination */
+    @media (max-width: 768px) {
+        .pagination-column {
+            gap: 8px;
+            margin-top: 30px;
+        }
+        
+        .page-num {
+            width: 38px;
+            height: 38px;
+            font-size: 0.8rem;
+        }
+        
+        .nav-btn-stylish {
+            padding: 10px 18px;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+        }
+    }
+
+    /* ========================================
+       SPLASH SCREEN: SPEED-OPTIMIZED HIDE
+       ======================================== */
+
+    #splashScreen.hide {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+
+    /* ═══════════════════════════════
+       NAVBAR TYPING BUG FIX
+    ═════════════════════════════════ */
+    .navbar {
+        height: auto !important;
+        min-height: unset !important;
+    }
+
+    /* Prevent ANY focus style from changing navbar size */
+    .navbar *:focus {
+        outline: none;
+        box-shadow: none;
+    }
+
+    #searchInput:focus {
+        outline: 2px solid #6366f1;
+        outline-offset: 2px;
+        box-shadow: none !important;
+        background: #ffffff !important;
+    }
+
+    /* ═══════════════════════════════
+       SEARCH SUGGESTIONS FRESH SYSTEM
+    ═════════════════════════════════ */
+
+    /* Mobile Search Bar Styling */
+    .mobile-search-bar {
+        display: none;
+        padding: 15px 20px;
+        background: #ffffff;
+        border-bottom: 1px solid #e5e5e5;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Wrapper must be relative so panel anchors to it */
+    .search-wrapper {
+        position: relative !important;
+        width: 100%;
+    }
+
+    /* PANEL — hidden by default */
+    #suggestionPanel,
+    #mobileSuggestionPanel {
+        display: none;
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        width: 100%;
+        background: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        border: 1px solid #efefef;
+        z-index: 99999;
+        overflow: hidden;
+        max-height: 380px;
+        overflow-y: auto;
+    }
+
+    /* OPEN STATE */
+    #suggestionPanel.open,
+    #mobileSuggestionPanel.open {
+        display: block;
+        animation: sgFade 0.15s ease;
+    }
+
+    @keyframes sgFade {
+        from { opacity:0; transform:translateY(-6px); }
+        to   { opacity:1; transform:translateY(0);    }
+    }
+
+    /* EACH PRODUCT ROW */
+    .sg-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        cursor: pointer;
+        border-bottom: 1px solid #f5f5f5;
+        transition: background 0.15s;
+        background: #ffffff;
+    }
+
+    .sg-row:last-child { border-bottom: none; }
+
+    .sg-row:hover { background: #f5f3ff; }
+
+    /* PRODUCT IMAGE */
+    .sg-img {
+        width: 46px;
+        height: 46px;
+        object-fit: cover;
+        border-radius: 10px;
+        flex-shrink: 0;
+        background: #f3f3f3;
+    }
+
+    /* PRODUCT NAME */
+    .sg-name {
+        flex: 1;
+        font-size: 14px;
+        font-weight: 600;
+        color: #1a1a1a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sg-row:hover .sg-name { color: #6366f1; }
+
+    /* NO RESULTS */
+    .sg-empty {
+        padding: 20px;
+        text-align: center;
+        color: #aaa;
+        font-size: 14px;
+    }
+
+    /* ── DESKTOP (769px+) ── */
+    @media (min-width: 769px) {
+        .mobile-search-bar {
+            display: none !important;
+        }
+        
+        #suggestionPanel {
+            width: 420px;
+            left: 50%;
+            transform: translateX(-50%);
+            top: calc(100% + 10px);
+        }
+    }
+
+    /* ── MOBILE (768px and below) ── */
+    @media (max-width: 768px) {
+        /* Hide desktop search in navbar */
+        .navbar .search-wrapper {
+            display: none !important;
+        }
+        
+        /* Show mobile search bar */
+        .mobile-search-bar {
+            display: block !important;
+        }
+        
+        #mobileSuggestionPanel {
+            position: absolute;
+            top: calc(100% + 50px);
+            left: 0;
+            width: 100%;
+            border-radius: 14px;
+            max-height: 300px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            transform: none;
+            z-index: 999;
+        }
+
+        .sg-row    { padding: 13px 18px; }
+        .sg-img    { width: 52px; height: 52px; }
+        .sg-name   { font-size: 15px; }
+    }
+
+    /* End of CSS */

@@ -1,0 +1,67 @@
+/* ========================================================= */
+/* --- USER REQUESTED PRODUCT DETAILS LAYOUT OVERRIDES --- */
+/* ========================================================= */
+#productDetailsPage {
+    position: fixed !important;
+    inset: 0 !important;
+    overflow-y: auto !important;
+    background: rgba(0,0,0,0.5) !important;
+    /* Initially hide with none, JS sets to flex when opening */
+    display: none !important; 
+    align-items: flex-start !important;
+    justify-content: center !important;
+    padding: 40px 20px !important;
+    z-index: var(--z-modal) !important;
+}
+#productDetailsPage.active {
+    display: flex !important;
+}
+.details-container {
+    background: var(--surface-white, #fff) !important;
+    border-radius: 12px !important;
+    width: 100% !important;
+    max-width: 960px !important;
+    padding: 32px !important;
+    position: relative !important;
+}
+@media (min-width: 769px) {
+    .details-content-wrapper {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 40px !important;
+        align-items: start !important;
+    }
+    .details-gallery { width: 100% !important; min-width: 0 !important; }
+    .details-info { width: 100% !important; min-width: 0 !important; }
+}
+@media (max-width: 768px) {
+    .details-content-wrapper {
+        display: block !important;
+    }
+}
+/* Thumbnail Strip UI requested by User */
+.thumbnail-strip {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    margin-top: 12px !important;
+}
+.thumbnail-strip img {
+    width: 64px !important;
+    height: 64px !important;
+    object-fit: cover !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    border: 2px solid transparent !important;
+    flex-shrink: 0 !important;
+}
+.thumbnail-strip img.active,
+.thumbnail-strip img:hover {
+    border-color: #6366f1 !important;
+}
+/* Z-INDEX ROOT LEVEL IMPORTS */
+.details-overlay { z-index: var(--z-overlay) !important; }
+#searchSuggestPanel { z-index: var(--z-dropdown) !important; }
+.sidebar, #sidebar { z-index: var(--z-sidebar) !important; }
+.toast-container { z-index: var(--z-toast) !important; }

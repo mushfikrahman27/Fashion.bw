@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel Test</title>
+</head>
+<body>
+    <h1>Testing Admin Panel</h1>
+    <p>Open browser console and check for errors</p>
+    <p>Then go to: <a href="dashboard-complete.html">Admin Panel</a></p>
+    
+    <script>
+        console.log('Test page loaded');
+        console.log('Firebase config path:', '../../firebase-config.js');
+        
+        // Test if Firebase is accessible
+        import('../../firebase-config.js').then(module => {
+            console.log('Firebase config loaded successfully:', module);
+        }).catch(error => {
+            console.error('Firebase config failed to load:', error);
+        });
+    </script>
+</body>
+</html>

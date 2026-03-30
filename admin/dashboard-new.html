@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - INARAH</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">INARAH</div>
+        
+        <a href="#" class="nav-item active">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="orders.html" class="nav-item">
+            <i class="fas fa-shopping-bag"></i>
+            <span>Orders</span>
+        </a>
+        <a href="products.html" class="nav-item">
+            <i class="fas fa-box"></i>
+            <span>Stock</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+            <i class="fas fa-user-cog"></i>
+            <span>Admin</span>
+        </a>
+    </aside>
+
+    <main class="main-content">
+        <h2 style="font-family: 'Playfair Display'; margin-bottom: 25px;">Store Overview</h2>
+
+        <div class="stat-grid">
+            <div class="stat-card">
+                <small style="color: #888;">Revenue</small>
+                <div id="stat-revenue" style="font-size: 1.2rem; margin-top: 5px;">TK 0</div>
+            </div>
+            <div class="stat-card">
+                <small style="color: #888;">Live Orders</small>
+                <div id="stat-orders" style="font-size: 1.2rem; margin-top: 5px;">0</div>
+            </div>
+            <div class="stat-card">
+                <small style="color: #888;">Visitors</small>
+                <div id="stat-visitors" style="font-size: 1.2rem; margin-top: 5px;">0</div>
+            </div>
+            <div class="stat-card">
+                <small style="color: #888;">Top Search</small>
+                <div id="stat-search" style="font-size: 1.2rem; margin-top: 5px;">--</div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="js/dashboard-mobile.js"></script>
+</body>
+</html>

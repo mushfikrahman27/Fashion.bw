@@ -1,0 +1,29 @@
+{
+  "rules": {
+    "orders": {
+      ".read": "root.child('admins').hasChild(auth.uid) != null",
+      ".write": "true",
+      ".indexOn": ["createdAt"]
+    },
+    "products": {
+      ".read": "true",
+      ".write": "root.child('admins').hasChild(auth.uid) != null"
+    },
+    "settings": {
+      ".read": "true",
+      ".write": "root.child('admins').hasChild(auth.uid) != null"
+    },
+    "admins": {
+      ".read": "root.child('admins').hasChild(auth.uid) != null",
+      ".write": "root.child('admins').hasChild(auth.uid) != null"
+    },
+    "search_queries": {
+      ".read": "root.child('admins').hasChild(auth.uid) != null",
+      ".write": "true"
+    },
+    "visits": {
+      ".read": "true",
+      ".write": "true"
+    }
+  }
+}
