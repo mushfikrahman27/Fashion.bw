@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - INARAH</title>
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/orders.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
@@ -54,8 +55,17 @@
                 <div id="stat-search" style="font-size: 1.2rem; margin-top: 5px;">--</div>
             </div>
         </div>
+
+        <div style="margin-top: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-family: 'Playfair Display';">Recent Orders</h3>
+            </div>
+            <div id="live-order-list" class="order-list">
+                <p id="order-loader" style="text-align: center; color: #666;">Waiting for new orders...</p>
+            </div>
+        </div>
     </main>
 
-    <script type="module" src="js/dashboard-mobile.js"></script>
+    <script type="module" src="js/dashboard-mobile.js?v=5"></script>
 </body>
 </html>

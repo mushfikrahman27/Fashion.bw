@@ -21,7 +21,7 @@ const firebaseConfig = {
 // 3. Initialize Firebase
 const app = initializeApp(firebaseConfig);
 // Analytics sometimes fails on some environments; DB/Auth must still work
-try { getAnalytics(app); } catch (_) {}
+try { getAnalytics(app); } catch (_) { }
 
 // 4. Enable offline persistence for better performance
 const firestoreDB = getFirestore(app);

@@ -1,9 +1,9 @@
 /* --- 1. CONFIGURATION & UPDATED DATA --- */
 (() => {
     "use strict";
-    
+
     let cartArray = [];
-    
+
     // ============================================
     // PRODUCT ANALYTICS TRACKING SYSTEM
     // ============================================
@@ -64,7 +64,7 @@
 
     // Initialize — must be after Firebase is ready
     window.productAnalytics = new ProductAnalytics();
-    
+
     // User Analytics Tracking System
     class UserAnalytics {
         constructor() {
@@ -75,18 +75,18 @@
             this.cartAdditions = new Map();
             this.init();
         }
-        
+
         generateSessionId() {
             return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
-        
+
         init() {
             this.trackPageView();
             this.setupProductClickTracking();
             this.setupCartTracking();
             this.setupSessionTracking();
         }
-        
+
         trackPageView() {
             this.pageViews++;
             this.sendToAnalytics({
@@ -98,11 +98,11 @@
                 referrer: document.referrer
             });
         }
-        
+
         trackProductView(productId, productName) {
             const currentViews = this.productViews.get(productId) || 0;
             this.productViews.set(productId, currentViews + 1);
-            
+
             this.sendToAnalytics({
                 type: 'product_view',
                 sessionId: this.sessionId,
@@ -112,11 +112,11 @@
                 viewCount: currentViews + 1
             });
         }
-        
+
         trackCartAddition(productId, productName) {
             const currentAdditions = this.cartAdditions.get(productId) || 0;
             this.cartAdditions.set(productId, currentAdditions + 1);
-            
+
             this.sendToAnalytics({
                 type: 'cart_addition',
                 sessionId: this.sessionId,
@@ -126,7 +126,7 @@
                 additionCount: currentAdditions + 1
             });
         }
-        
+
         setupProductClickTracking() {
             // Track product card clicks
             document.addEventListener('click', (e) => {
@@ -140,11 +140,11 @@
                 }
             });
         }
-        
+
         setupCartTracking() {
             // Track add to cart clicks
             document.addEventListener('click', (e) => {
-                if (e.target.classList.contains('cart-btn') || 
+                if (e.target.classList.contains('cart-btn') ||
                     e.target.closest('.cart-btn')) {
                     const productCard = e.target.closest('.product-card');
                     if (productCard) {
@@ -157,7 +157,7 @@
                 }
             });
         }
-        
+
         setupSessionTracking() {
             // Track session end
             window.addEventListener('beforeunload', () => {
@@ -172,7 +172,7 @@
                 });
             });
         }
-        
+
         getProductIdFromCard(card) {
             // Try to get product ID from various sources
             const onclick = card.getAttribute('onclick');
@@ -180,35 +180,35 @@
                 const match = onclick.match(/openProductDetails\(['"]([^'"]+)['"]\)/);
                 if (match) return match[1];
             }
-            
+
             // Fallback: generate ID from product name
             const productName = card.querySelector('.p-name')?.textContent;
             if (productName) {
                 return productName.toLowerCase().replace(/\s+/g, '_');
             }
-            
+
             return null;
         }
-        
+
         sendToAnalytics(data) {
             // In production, this would send to your analytics backend
             // For now, we'll store in localStorage for admin panel to read
             const existingData = JSON.parse(localStorage.getItem('user_analytics') || '[]');
             existingData.push(data);
-            
+
             // Keep only last 1000 entries to prevent localStorage overflow
             if (existingData.length > 1000) {
                 existingData.splice(0, existingData.length - 1000);
             }
-            
+
             localStorage.setItem('user_analytics', JSON.stringify(existingData));
-            
+
             // Also send to Firebase if configured
             if (window.firebaseAnalyticsEnabled) {
                 this.sendToFirebase(data);
             }
         }
-        
+
         async sendToFirebase(data) {
             try {
                 // This would require Firebase SDK to be included
@@ -219,7 +219,7 @@
             }
         }
     }
-    
+
     // Initialize analytics
     const userAnalytics = new UserAnalytics();
     window.userAnalytics = userAnalytics;
@@ -289,22 +289,22 @@
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
-        const time = now.toLocaleTimeString('en-US', { 
-            hour12: false, 
-            hour: '2-digit', 
-            minute: '2-digit' 
+        const time = now.toLocaleTimeString('en-US', {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit'
         }).replace(/:/g, '');
-        
+
         // Generate 4-digit random number for better readability
         const random = Math.floor(Math.random() * 9000) + 1000;
-        
+
         return `ORD-${year}${month}${day}-${time}-${random}`;
     }
 
     /* --- SECURITY: VALIDATION & SANITIZATION --- */
     function validateOrderPayload(orderData) {
         const errors = [];
-        
+
         // Customer validation
         if (!orderData.customerName || orderData.customerName.trim().length < 2) {
             errors.push('Name must be at least 2 characters long');
@@ -312,14 +312,14 @@
         if (orderData.customerName && orderData.customerName.length > 60) {
             errors.push('Name must be 60 characters or less');
         }
-        
+
         // Phone validation (Bangladesh format)
         const phone = orderData.phone ? orderData.phone.trim() : '';
         const phoneRegex = /^(?:\+880|01)[0-9]{9,10}$/;
         if (!phone || !phoneRegex.test(phone.replace(/[\s-]/g, ''))) {
             errors.push('Please enter a valid Bangladesh phone number (e.g., 01234567890 or +8801234567890)');
         }
-        
+
         // Address validation
         if (!orderData.address || orderData.address.trim().length < 6) {
             errors.push('Address must be at least 6 characters long');
@@ -327,7 +327,7 @@
         if (orderData.address && orderData.address.length > 200) {
             errors.push('Address must be 200 characters or less');
         }
-        
+
         // Items validation
         if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
             errors.push('Order must contain at least one item');
@@ -335,7 +335,7 @@
             if (orderData.items.length > 30) {
                 errors.push('Order cannot contain more than 30 items');
             }
-            
+
             orderData.items.forEach((item, index) => {
                 if (!item.name || item.name.trim().length < 1) {
                     errors.push(`Item ${index + 1}: Name is required`);
@@ -351,7 +351,7 @@
                 }
             });
         }
-        
+
         // Totals validation
         if (isNaN(orderData.subtotal) || parseFloat(orderData.subtotal) < 0) {
             errors.push('Invalid subtotal amount');
@@ -359,38 +359,38 @@
         if (isNaN(orderData.total) || parseFloat(orderData.total) < 0) {
             errors.push('Invalid total amount');
         }
-        
+
         // Recalculate and verify totals
         const calculatedSubtotal = orderData.items.reduce((sum, item) => {
             const price = parseFloat(item.price) || 0;
             const qty = parseInt(item.qty) || 1;
             return sum + (price * qty);
         }, 0);
-        
+
         // Allow small differences due to rounding
         if (Math.abs(calculatedSubtotal - parseFloat(orderData.subtotal)) > 1) {
             errors.push('Subtotal does not match item prices');
         }
-        
+
         return errors;
     }
 
     function sanitizeOrderData(orderData) {
         const sanitized = { ...orderData };
-        
+
         // Trim and limit string lengths
         sanitized.customerName = (sanitized.customerName || '').toString().trim().substring(0, 60);
         sanitized.phone = (sanitized.phone || '').toString().trim().substring(0, 20);
         sanitized.address = (sanitized.address || '').toString().trim().substring(0, 200);
         sanitized.note = (sanitized.note || '').toString().trim().substring(0, 200);
-        
+
         // Remove suspicious characters
         const controlCharRegex = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
         sanitized.customerName = sanitized.customerName.replace(controlCharRegex, '');
         sanitized.phone = sanitized.phone.replace(controlCharRegex, '');
         sanitized.address = sanitized.address.replace(controlCharRegex, '');
         sanitized.note = sanitized.note.replace(controlCharRegex, '');
-        
+
         // Sanitize items
         if (sanitized.items && Array.isArray(sanitized.items)) {
             sanitized.items = sanitized.items.map(item => ({
@@ -402,11 +402,11 @@
                 color: item.color ? item.color.toString().trim().substring(0, 30) : ''
             }));
         }
-        
+
         // Ensure numeric types
         sanitized.subtotal = Math.max(0, parseFloat(sanitized.subtotal) || 0);
         sanitized.total = Math.max(0, parseFloat(sanitized.total) || 0);
-        
+
         return sanitized;
     }
 
@@ -418,11 +418,11 @@
     function checkRateLimit() {
         const now = Date.now();
         const rateData = JSON.parse(localStorage.getItem(RATE_LIMIT_STORAGE_KEY) || '{}');
-        
+
         // Clean old entries (older than 1 minute)
         const oneMinuteAgo = now - 60000;
         rateData.recentAttempts = (rateData.recentAttempts || []).filter(timestamp => timestamp > oneMinuteAgo);
-        
+
         // Check rate limit
         if (rateData.recentAttempts.length >= MAX_ORDERS_PER_MINUTE) {
             return {
@@ -430,7 +430,7 @@
                 message: `Too many order attempts. Please wait ${Math.ceil((rateData.recentAttempts[0] + 60000 - now) / 1000)} seconds before trying again.`
             };
         }
-        
+
         // Check cooldown
         if (rateData.lastOrderTime && (now - rateData.lastOrderTime) < (ORDER_COOLDOWN_SECONDS * 1000)) {
             const remainingCooldown = Math.ceil((ORDER_COOLDOWN_SECONDS * 1000 - (now - rateData.lastOrderTime)) / 1000);
@@ -439,18 +439,18 @@
                 message: `Please wait ${remainingCooldown} seconds before placing another order.`
             };
         }
-        
+
         return { allowed: true };
     }
 
     function recordOrderAttempt() {
         const now = Date.now();
         const rateData = JSON.parse(localStorage.getItem(RATE_LIMIT_STORAGE_KEY) || '{}');
-        
+
         rateData.recentAttempts = (rateData.recentAttempts || []).filter(timestamp => timestamp > (now - 60000));
         rateData.recentAttempts.push(now);
         rateData.lastOrderTime = now;
-        
+
         localStorage.setItem(RATE_LIMIT_STORAGE_KEY, JSON.stringify(rateData));
     }
 
@@ -461,11 +461,11 @@
     /* --- CREATE ORDER IN RTDB --- */
     async function createOrderInRTDB(orderData) {
         console.log('🔥 Creating order in RTDB...', orderData);
-        
+
         // Always generate an Order ID first (even if Firebase fails)
         const orderId = generateOrderId();
         console.log('📝 Generated Order ID:', orderId);
-        
+
         if (!window.firebaseDB) {
             console.error('❌ Firebase not available, using local fallback');
             // Return local order ID even if Firebase fails
@@ -479,7 +479,7 @@
         try {
             const { ref, push, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
             const orderRef = ref(window.firebaseDB, 'orders');
-            
+
             // Create order payload with required schema
             const payload = {
                 orderId: orderId,
@@ -499,17 +499,17 @@
                     total: orderData.total || 0
                 }
             };
-            
+
             console.log('💾 Saving order payload:', payload);
 
             // Save to RTDB with timeout
             const timeoutPromise = new Promise((_, reject) => {
                 setTimeout(() => reject(new Error('Firebase timeout')), 5000);
             });
-            
+
             const result = await Promise.race([push(orderRef, payload), timeoutPromise]);
             console.log('✅ Order saved to Firebase:', result.key);
-            
+
             // Return the orderId and the Firebase key
             return {
                 orderId: orderId,
@@ -562,7 +562,7 @@
             return '';
         }
 
-        const spans = sizes.map(size => 
+        const spans = sizes.map(size =>
             `<span onclick="event.stopPropagation(); selectSize(${p.id}, this)">${size}</span>`
         ).join('');
 
@@ -727,147 +727,147 @@
 
         { id: 44, name: "Running Shorts", price: "720", color: "Black", img: "short1.jpg", category: "Men", subCategory: "Shorts" },
 
-    { id: 32, name: "Winter Hoodie", price: "1850", color: "Charcoal", img: "hoodie1.jpg", category: "Men", subCategory: "Hoodie" },
-    { id: 33, name: "Casual Zip Hoodie", price: "1950", color: "Olive", img: "hoodie2.jpg", category: "Men", subCategory: "Hoodie" },
+        { id: 32, name: "Winter Hoodie", price: "1850", color: "Charcoal", img: "hoodie1.jpg", category: "Men", subCategory: "Hoodie" },
+        { id: 33, name: "Casual Zip Hoodie", price: "1950", color: "Olive", img: "hoodie2.jpg", category: "Men", subCategory: "Hoodie" },
 
-    { id: 34, name: "Women Knit Sweater", price: "1680", color: "Cream", img: "sweater1.jpg", category: "Women", subCategory: "Sweater" },
-    { id: 35, name: "Soft Wool Cardigan", price: "1780", color: "Lavender", img: "sweater2.jpg", category: "Women", subCategory: "Sweater" },
+        { id: 34, name: "Women Knit Sweater", price: "1680", color: "Cream", img: "sweater1.jpg", category: "Women", subCategory: "Sweater" },
+        { id: 35, name: "Soft Wool Cardigan", price: "1780", color: "Lavender", img: "sweater2.jpg", category: "Women", subCategory: "Sweater" },
 
-    { id: 36, name: "Premium Wallet", price: "980", color: "Dark Brown", img: "wallet1.jpg", category: "Collection", subCategory: "Wallet" },
-    { id: 37, name: "Compact Card Holder", price: "620", color: "Black", img: "wallet2.jpg", category: "Collection", subCategory: "Wallet" },
+        { id: 36, name: "Premium Wallet", price: "980", color: "Dark Brown", img: "wallet1.jpg", category: "Collection", subCategory: "Wallet" },
+        { id: 37, name: "Compact Card Holder", price: "620", color: "Black", img: "wallet2.jpg", category: "Collection", subCategory: "Wallet" },
 
-    { id: 38, name: "Travel Duffel Bag", price: "2600", color: "Army Green", img: "bag8.jpg", category: "Men", subCategory: "Bags" },
-    { id: 39, name: "Luxury Party Purse", price: "1450", color: "Rose Gold", img: "bag9.jpg", category: "Women", subCategory: "Bags" },
+        { id: 38, name: "Travel Duffel Bag", price: "2600", color: "Army Green", img: "bag8.jpg", category: "Men", subCategory: "Bags" },
+        { id: 39, name: "Luxury Party Purse", price: "1450", color: "Rose Gold", img: "bag9.jpg", category: "Women", subCategory: "Bags" },
 
-    { id: 40, name: "Classic Polo T-Shirt", price: "920", color: "White", img: "tshirt1.jpg", category: "Men", subCategory: "Tshirt" },
-    { id: 41, name: "Graphic Street Tee", price: "880", color: "Black", img: "tshirt2.jpg", category: "Men", subCategory: "Tshirt" },
+        { id: 40, name: "Classic Polo T-Shirt", price: "920", color: "White", img: "tshirt1.jpg", category: "Men", subCategory: "Tshirt" },
+        { id: 41, name: "Graphic Street Tee", price: "880", color: "Black", img: "tshirt2.jpg", category: "Men", subCategory: "Tshirt" },
 
-    { id: 42, name: "Women Basic Tee", price: "760", color: "Peach", img: "tshirt3.jpg", category: "Women", subCategory: "Tshirt" },
-    { id: 43, name: "Oversized Street Tee", price: "990", color: "Grey", img: "tshirt4.jpg", category: "Women", subCategory: "Tshirt" },
+        { id: 42, name: "Women Basic Tee", price: "760", color: "Peach", img: "tshirt3.jpg", category: "Women", subCategory: "Tshirt" },
+        { id: 43, name: "Oversized Street Tee", price: "990", color: "Grey", img: "tshirt4.jpg", category: "Women", subCategory: "Tshirt" },
 
-    { id: 44, name: "Running Shorts", price: "720", color: "Black", img: "short1.jpg", category: "Men", subCategory: "Shorts" },
-    { id: 45, name: "Casual Cotton Shorts", price: "680", color: "Khaki", img: "short2.jpg", category: "Men", subCategory: "Shorts" },
+        { id: 44, name: "Running Shorts", price: "720", color: "Black", img: "short1.jpg", category: "Men", subCategory: "Shorts" },
+        { id: 45, name: "Casual Cotton Shorts", price: "680", color: "Khaki", img: "short2.jpg", category: "Men", subCategory: "Shorts" },
 
-    { id: 46, name: "Yoga Leggings", price: "1100", color: "Black", img: "legging1.jpg", category: "Women", subCategory: "Leggings" },
-    { id: 47, name: "Active Sports Leggings", price: "1250", color: "Purple", img: "legging2.jpg", category: "Women", subCategory: "Leggings" },
+        { id: 46, name: "Yoga Leggings", price: "1100", color: "Black", img: "legging1.jpg", category: "Women", subCategory: "Leggings" },
+        { id: 47, name: "Active Sports Leggings", price: "1250", color: "Purple", img: "legging2.jpg", category: "Women", subCategory: "Leggings" },
 
-    { id: 48, name: "Winter Scarf", price: "520", color: "Maroon", img: "scarf1.jpg", category: "Collection", subCategory: "Winter" },
-    { id: 49, name: "Knitted Gloves", price: "480", color: "Grey", img: "glove1.jpg", category: "Collection", subCategory: "Winter" },
+        { id: 48, name: "Winter Scarf", price: "520", color: "Maroon", img: "scarf1.jpg", category: "Collection", subCategory: "Winter" },
+        { id: 49, name: "Knitted Gloves", price: "480", color: "Grey", img: "glove1.jpg", category: "Collection", subCategory: "Winter" },
 
-    { id: 50, name: "Premium Travel Suitcase", price: "5400", color: "Black", img: "case1.jpg", category: "Collection", subCategory: "Travel" }
-];
+        { id: 50, name: "Premium Travel Suitcase", price: "5400", color: "Black", img: "case1.jpg", category: "Collection", subCategory: "Travel" }
+    ];
 
-// GLOBAL PRODUCTS ARRAY - CRITICAL FOR ALL FUNCTIONS
-window.allProducts = [...fallbackProducts];
+    // GLOBAL PRODUCTS ARRAY - CRITICAL FOR ALL FUNCTIONS
+    window.allProducts = [...fallbackProducts];
 
-// Default filtered list
-let filteredProducts = [...window.allProducts];
+    // Default filtered list
+    let filteredProducts = [...window.allProducts];
 
-/* --- FIREBASE PRODUCT LOADER --- */
-async function loadProductsFromFirebase() {
-    if (!window.firebaseDB) {
-        console.log('Firebase not available, using fallback products');
-        return false;
-    }
-
-    // Mobile-specific: Add timeout for Firebase loading
-    const isMobile = window.innerWidth <= 768;
-    const timeoutMs = isMobile ? 3000 : 5000; // 3s for mobile, 5s for desktop
-
-    try {
-        console.log('🔍 DEBUG: Loading products from Firestore...');
-        
-        // Use Firestore instead of Realtime Database
-        const productsRef = window.firebaseDB.collection('products');
-        
-        console.log('🔍 DEBUG: Attempting to load products from Firestore...');
-        console.log('🔍 DEBUG: Timeout set to', timeoutMs, 'ms');
-        
-        // Create timeout with proper logging
-        const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => {
-                console.log('⏰ DEBUG: Timeout triggered after', timeoutMs, 'ms');
-                reject(new Error('Firestore timeout'));
-            }, timeoutMs);
-        });
-        
-        // Race between Firestore fetch and timeout with better error handling
-        let snapshot;
-        try {
-            snapshot = await Promise.race([
-                productsRef.get().catch(error => {
-                    console.log('❌ DEBUG: Firestore get() failed:', error);
-                    throw error;
-                }),
-                timeoutPromise
-            ]);
-            console.log('✅ DEBUG: Promise.race completed successfully');
-        } catch (raceError) {
-            console.log('❌ DEBUG: Promise.race failed:', raceError.message);
-            throw raceError;
+    /* --- FIREBASE PRODUCT LOADER --- */
+    async function loadProductsFromFirebase() {
+        if (!window.firebaseDB) {
+            console.log('Firebase not available, using fallback products');
+            return false;
         }
-        
-        if (snapshot && !snapshot.empty) {
-            const firestoreProducts = snapshot.docs;
-            console.log('🔍 DEBUG: Raw Firestore data received, docs count:', firestoreProducts.length);
-            console.log('🔍 DEBUG: Raw Firestore data:', firestoreProducts);
-            
-            // Process Firestore documents
-            const activeProducts = firestoreProducts
-                .map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }))
-                .filter(product => {
-                    console.log('🔍 DEBUG: Filtering product:', product.name, 'isActive:', product.isActive);
-                    return product.isActive !== false; // Only active products
-                });
-            
-            console.log('🔍 DEBUG: Processed products:', activeProducts.length, 'items');
-            console.log('🔍 DEBUG: Processed products:', activeProducts);
-            
-            // Check if there are active products in Firestore first
-            if (activeProducts.length > 0) {
-                window.allProducts = activeProducts;
-                filteredProducts = [...window.allProducts];
-                console.log(`✅ Loaded ${activeProducts.length} products from Firestore`);
-                return true;
+
+        // Mobile-specific: Add timeout for Firebase loading
+        const isMobile = window.innerWidth <= 768;
+        const timeoutMs = isMobile ? 3000 : 5000; // 3s for mobile, 5s for desktop
+
+        try {
+            console.log('🔍 DEBUG: Loading products from Firestore...');
+
+            // Use Firestore instead of Realtime Database
+            const productsRef = window.firebaseDB.collection('products');
+
+            console.log('🔍 DEBUG: Attempting to load products from Firestore...');
+            console.log('🔍 DEBUG: Timeout set to', timeoutMs, 'ms');
+
+            // Create timeout with proper logging
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => {
+                    console.log('⏰ DEBUG: Timeout triggered after', timeoutMs, 'ms');
+                    reject(new Error('Firestore timeout'));
+                }, timeoutMs);
+            });
+
+            // Race between Firestore fetch and timeout with better error handling
+            let snapshot;
+            try {
+                snapshot = await Promise.race([
+                    productsRef.get().catch(error => {
+                        console.log('❌ DEBUG: Firestore get() failed:', error);
+                        throw error;
+                    }),
+                    timeoutPromise
+                ]);
+                console.log('✅ DEBUG: Promise.race completed successfully');
+            } catch (raceError) {
+                console.log('❌ DEBUG: Promise.race failed:', raceError.message);
+                throw raceError;
+            }
+
+            if (snapshot && !snapshot.empty) {
+                const firestoreProducts = snapshot.docs;
+                console.log('🔍 DEBUG: Raw Firestore data received, docs count:', firestoreProducts.length);
+                console.log('🔍 DEBUG: Raw Firestore data:', firestoreProducts);
+
+                // Process Firestore documents
+                const activeProducts = firestoreProducts
+                    .map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }))
+                    .filter(product => {
+                        console.log('🔍 DEBUG: Filtering product:', product.name, 'isActive:', product.isActive);
+                        return product.isActive !== false; // Only active products
+                    });
+
+                console.log('🔍 DEBUG: Processed products:', activeProducts.length, 'items');
+                console.log('🔍 DEBUG: Processed products:', activeProducts);
+
+                // Check if there are active products in Firestore first
+                if (activeProducts.length > 0) {
+                    window.allProducts = activeProducts;
+                    filteredProducts = [...window.allProducts];
+                    console.log(`✅ Loaded ${activeProducts.length} products from Firestore`);
+                    return true;
+                } else {
+                    console.log('⚠️ No active products found in Firestore');
+                    window.allProducts = [...fallbackProducts];
+                    filteredProducts = [...window.allProducts];
+                    console.log('Using fallback hardcoded products');
+                    return false;
+                }
             } else {
-                console.log('⚠️ No active products found in Firestore');
+                console.log('⚠️ No products found in Firestore collection');
+                console.log('🔍 DEBUG: Snapshot empty:', snapshot?.empty);
                 window.allProducts = [...fallbackProducts];
                 filteredProducts = [...window.allProducts];
                 console.log('Using fallback hardcoded products');
                 return false;
             }
-        } else {
-            console.log('⚠️ No products found in Firestore collection');
-            console.log('🔍 DEBUG: Snapshot empty:', snapshot?.empty);
-            window.allProducts = [...fallbackProducts];
-            filteredProducts = [...window.allProducts];
-            console.log('Using fallback hardcoded products');
-            return false;
+        } catch (error) {
+            if (error.message === 'Firestore timeout') {
+                console.warn('⏰ Firestore loading timed out after', timeoutMs, 'ms, using fallback products');
+            } else {
+                console.warn('❌ Failed to load products from Firestore:', error.message);
+                console.warn('❌ Full error:', error);
+            }
         }
-    } catch (error) {
-        if (error.message === 'Firestore timeout') {
-            console.warn('⏰ Firestore loading timed out after', timeoutMs, 'ms, using fallback products');
-        } else {
-            console.warn('❌ Failed to load products from Firestore:', error.message);
-            console.warn('❌ Full error:', error);
-        }
-    }
-    
-    console.log('🔄 DEBUG: Falling back to hardcoded products');
-    return false; // Use fallback
-}
 
-// Initialize products on page load
-document.addEventListener('DOMContentLoaded', async () => {
-        
+        console.log('🔄 DEBUG: Falling back to hardcoded products');
+        return false; // Use fallback
+    }
+
+    // Initialize products on page load
+    document.addEventListener('DOMContentLoaded', async () => {
+
         // Force scroll to top immediately
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
-        
+
         // Mobile-specific: Add a small delay for mobile devices
         const isMobile = window.innerWidth <= 768;
         if (isMobile) {
@@ -880,24 +880,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Small delay for mobile to ensure DOM is fully ready
             await new Promise(resolve => setTimeout(resolve, 100));
         }
-        
+
         // First load products from Firebase or fallback
         console.log('📦 Loading products...');
         const loadedFromFirebase = await loadProductsFromFirebase();
         if (!loadedFromFirebase) {
             console.log('Using fallback hardcoded products');
         }
-        
+
         // Set up real-time listener for automatic updates
         if (window.firebaseDB && !window.productsListener) {
             console.log('🔄 Setting up real-time product listener...');
             // Use Firestore instead of Realtime Database
             const productsRef = window.firebaseDB.collection('products');
-            
+
             window.productsListener = productsRef.onSnapshot((snapshot) => {
                 const firestoreProducts = snapshot.docs;
                 console.log('🔄 Real-time product update received:', firestoreProducts.length, 'products');
-                
+
                 if (firestoreProducts && firestoreProducts.length > 0) {
                     const activeProducts = firestoreProducts
                         .map(doc => ({
@@ -905,7 +905,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             ...doc.data()
                         }))
                         .filter(product => product.isActive !== false);
-                    
+
                     window.allProducts = activeProducts;
                     filteredProducts = [...window.allProducts];
                     console.log(`✅ Real-time update: ${activeProducts.length} active products loaded`);
@@ -915,11 +915,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
         }
-        
+
         // Then render them
         console.log('🎨 Rendering products...');
         updateProductView(); // Use unified system for initial load
-        
+
         // DEBUG: Force show products if not showing after 1 second
         setTimeout(() => {
             const grid = document.getElementById('productGrid');
@@ -930,14 +930,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 displayProducts(1);
             }
         }, 1000);
-        
+
         // Force scroll to top again after products load
         setTimeout(() => {
             window.scrollTo(0, 0);
             document.documentElement.scrollTop = 0;
             document.body.scrollTop = 0;
         }, 100);
-        
+
         // Fallback: if no products are showing after 2 seconds, force render
         setTimeout(() => {
             const grid = document.getElementById('productGrid');
@@ -945,7 +945,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 updateProductView();
             }
         }, isMobile ? 1000 : 2000); // Shorter timeout for better UX
-        
+
         console.log('✅ Script initialization complete');
     });
 
@@ -982,7 +982,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log('Cart overlay not found - cart functionality disabled');
             return;
         }
-        
+
         if (cartOverlay.classList.contains('active')) {
             if (history.state && history.state.overlay) {
                 history.back();
@@ -1002,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function addToCart(id) {
         // Track cart addition
         window.productAnalytics.trackCartAddition(id);
-        
+
         // Safety guard for undefined products
         if (!window.allProducts || window.allProducts.length === 0) {
             console.error('Products not loaded yet');
@@ -1051,7 +1051,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.style.background = "var(--accent-gold)";
             btn.style.color = "var(--background)";
             btn.style.transform = "scale(0.95)";
-            
+
             setTimeout(() => {
                 btn.innerText = oldText;
                 btn.style.background = "";
@@ -1266,12 +1266,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             itemsToShow.forEach(p => {
                 const card = document.createElement('div');
                 card.className = 'product-card';
-                
-                card.onclick = function() { 
-                    openProductDetails(p.id); 
+
+                card.onclick = function () {
+                    openProductDetails(p.id);
                 };
-                
-        card.innerHTML = `
+
+                card.innerHTML = `
         <div class="product-img-holder">
             <img src="${p.img}" alt="${p.name}">
         </div>
@@ -1293,7 +1293,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof setupPagination === 'function') {
             setupPagination(filteredProducts.length, currentLimit);
         }
-        
+
         // Hook B: Products rendered - hide splash if not already hidden
         if (typeof hideSplash === 'function') {
             hideSplash("products-rendered");
@@ -1355,22 +1355,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (loader) {
             loader.style.display = 'none';
         }
-        
+
         // Speed-optimized splash screen logic
         let splashHidden = false;
-        
+
         function hideSplash(reason) {
             if (splashHidden) return; // Idempotent - run once only
             splashHidden = true;
-            
+
             const splash = document.getElementById('splashScreen');
             if (!splash) return;
-            
+
             console.log(`Splash hiding: ${reason}`);
-            
+
             // Add hide class for fade out
             splash.classList.add('hide');
-            
+
             // Remove from layout after transition
             setTimeout(() => {
                 splash.style.display = 'none';
@@ -1380,12 +1380,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.body.classList.remove("no-scroll");
             }, 450);
         }
-        
+
         // Hook A: DOM ready with critical UI
         if (document.getElementById('productGrid') || document.querySelector('.navbar')) {
             hideSplash("dom-ready");
         }
-        
+
         // Hook B: Fallback timeout
         setTimeout(() => hideSplash("fallback-timeout"), 2200);
     });
@@ -1394,7 +1394,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function applyFilters(products, state) {
         console.log('🔍 DEBUG: Filtering products with state:', state);
         console.log('🔍 DEBUG: Total products before filter:', products.length);
-        
+
         const filtered = products.filter(product => {
             // 1. Category filter
             if (state.category && state.category !== 'All') {
@@ -1439,10 +1439,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             return true;
         });
-        
+
         console.log('🔍 DEBUG: Products after filter:', filtered.length);
         console.log('🔍 DEBUG: Filtered products:', filtered);
-        
+
         return filtered;
     }
 
@@ -1451,11 +1451,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const base = window.allProducts || [];
         const filtered = applyFilters(base, filterState);
         filteredProducts = filtered;
-        
+
         // Reset to page 1 for new filter results
         currentPage = 1;
         displayProducts(currentPage);
-        
+
         // Scroll to grid
         const gridDiv = document.getElementById('productGrid');
         if (gridDiv && filtered.length > 0) {
@@ -1514,7 +1514,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function openProductDetails(id) {
         // Track product view
         window.productAnalytics.trackProductView(id);
-        
+
         if (!window.allProducts || window.allProducts.length === 0) {
             console.error('Products not loaded yet');
             return;
@@ -1552,9 +1552,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const thumb = document.createElement('img');
             thumb.src = imgSrc;
             if (index === 0) thumb.classList.add('active'); // make first active
-            
-            thumb.onclick = () => { 
-                document.getElementById('mainDetailImg').src = imgSrc; 
+
+            thumb.onclick = () => {
+                document.getElementById('mainDetailImg').src = imgSrc;
                 // Remove active from all
                 thumbContainer.querySelectorAll('img').forEach(t => t.classList.remove('active'));
                 // Add active to clicked
@@ -1625,12 +1625,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             // FORCE BUTTON ACTIVE
             bBtn.style.width = '100%';
             bBtn.style.opacity = '1';
-            bBtn.style.pointerEvents = 'auto'; 
-            bBtn.removeAttribute('disabled'); 
+            bBtn.style.pointerEvents = 'auto';
+            bBtn.removeAttribute('disabled');
 
             bBtn.onclick = function (e) {
                 e.preventDefault();
-                triggerOrderFlow(p.id); 
+                triggerOrderFlow(p.id);
             };
         }
 
@@ -1802,7 +1802,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <button onclick="closeSocialModal()" style="margin-top:20px; background:none; border:none; color:#555; cursor:pointer; font-size:14px;">Cancel</button>
                 </div>
             </div>`;
-        
+
         document.body.insertAdjacentHTML('beforeend', modalHtml);
     }
 
@@ -1857,7 +1857,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <button onclick="closeSocialModal()" style="margin-top:20px; background:none; border:none; color:#555; cursor:pointer; font-size:14px;">Cancel</button>
                 </div>
             </div>`;
-        
+
         document.body.insertAdjacentHTML('beforeend', modalHtml);
     }
 
@@ -1894,23 +1894,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             // Create order in RTDB first
             const orderData = prepareOrderData('whatsapp');
-            
+
             // Validate and sanitize order data
             const validationErrors = validateOrderPayload(orderData);
             if (validationErrors.length > 0) {
                 alert('Please fix the following issues:\n' + validationErrors.join('\n'));
                 return;
             }
-            
+
             const sanitizedData = sanitizeOrderData(orderData);
-            
+
             // Record order attempt for rate limiting
             recordOrderAttempt();
-            
+
             const orderResult = await createOrderInRTDB(sanitizedData);
-            
+
             console.log('🎯 Order Result:', orderResult);
-            
+
             // Track purchases for analytics
             for (const item of currentOrderContext.items) {
                 await window.productAnalytics.trackPurchase(
@@ -1920,7 +1920,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     parseInt(item.price.toString().replace(/[^0-9.]/g, ''), 10) || 0
                 );
             }
-            
+
             // Show success with orderId
             let successMessage = `Order created! Your Order ID: ${orderResult.orderId}`;
             if (orderResult.fallback) {
@@ -1928,15 +1928,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             console.log('📱 Showing alert:', successMessage);
             alert(`${successMessage}\n\nRedirecting to WhatsApp...`);
-            
+
             // Build WhatsApp message with orderId
             const message = buildOrderMessage(orderResult.orderId, sanitizedData);
             const whatsappUrl = `https://wa.me/${SOCIAL_CONFIG.whatsappNumber}?text=${encodeURIComponent(message)}`;
-            
+
             // Redirect to WhatsApp
             window.open(whatsappUrl, '_blank');
             closeSocialModal();
-            
+
         } catch (error) {
             console.error('Failed to create order:', error);
             // Fallback to old behavior
@@ -1968,21 +1968,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             // Create order in RTDB first
             const orderData = prepareOrderData('messenger');
-            
+
             // Validate and sanitize order data
             const validationErrors = validateOrderPayload(orderData);
             if (validationErrors.length > 0) {
                 alert('Please fix the following issues:\n' + validationErrors.join('\n'));
                 return;
             }
-            
+
             const sanitizedData = sanitizeOrderData(orderData);
-            
+
             // Record order attempt for rate limiting
             recordOrderAttempt();
-            
+
             const orderResult = await createOrderInRTDB(sanitizedData);
-            
+
             // Track purchases for analytics
             for (const item of currentOrderContext.items) {
                 await window.productAnalytics.trackPurchase(
@@ -1992,17 +1992,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     parseInt(item.price.toString().replace(/[^0-9.]/g, ''), 10) || 0
                 );
             }
-            
+
             // Show success with orderId
             let successMessage = `Order created! Your Order ID: ${orderResult.orderId}`;
             if (orderResult.fallback) {
                 successMessage += "\n(Note: Order saved locally due to connection issues)";
             }
             alert(`${successMessage}\n\nRedirecting to Messenger...`);
-            
+
             // Build Messenger message with orderId
             const message = buildOrderMessage(orderResult.orderId, sanitizedData);
-            
+
             // Copy to clipboard and redirect
             navigator.clipboard.writeText(message).then(() => {
                 window.open(SOCIAL_CONFIG.messengerLink, '_blank');
@@ -2012,7 +2012,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.open(SOCIAL_CONFIG.messengerLink, '_blank');
                 closeSocialModal();
             });
-            
+
         } catch (error) {
             console.error('Failed to create order:', error);
             // Fallback to old behavior
@@ -2036,9 +2036,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             selectedSize: it.productSize || 'N/A',
             color: it.color || ''
         }));
-        
+
         const subtotal = ctx.totalPrice;
-        
+
         return {
             channel: channel,
             customerName: '', // Will be filled later if direct order
@@ -2053,7 +2053,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function buildOrderMessage(orderId, orderData) {
         let message = `Hello! I want to place an order.\n\n`;
         message += `Order ID: ${orderId}\n\n`;
-        
+
         if (orderData.items.length === 1) {
             // Single item
             const item = orderData.items[0];
@@ -2073,17 +2073,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 message += ` - TK ${item.price}\n`;
             });
         }
-        
+
         message += `\nTotal: TK ${orderData.total}`;
         message += `\n\nPlease confirm availability and delivery.`;
-        
+
         return message;
     }
 
     function fallbackToWhatsApp() {
         const ctx = currentOrderContext;
         let message = "Hello! I want to order: ";
-        
+
         if (ctx.type === 'cart') {
             const itemLines = ctx.items.map((it, idx) =>
                 `${idx + 1}. ${it.productName} (Size: ${it.productSize || 'N/A'}) - TK ${it.price}`
@@ -2093,7 +2093,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const it = ctx.items[0];
             message += `${it.productName} (Size: ${it.productSize || 'N/A'}) - TK ${it.price}`;
         }
-        
+
         const whatsappUrl = `https://wa.me/${SOCIAL_CONFIG.whatsappNumber}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
         closeSocialModal();
@@ -2102,7 +2102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function fallbackToMessenger() {
         const ctx = currentOrderContext;
         let message = "Hello! I want to order: ";
-        
+
         if (ctx.type === 'cart') {
             const itemLines = ctx.items.map((it, idx) =>
                 `${idx + 1}. ${it.productName} (Size: ${it.productSize || 'N/A'}) - TK ${it.price}`
@@ -2112,7 +2112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const it = ctx.items[0];
             message += `${it.productName} (Size: ${it.productSize || 'N/A'}) - TK ${it.price}`;
         }
-        
+
         navigator.clipboard.writeText(message).then(() => {
             alert('Order details copied! Please paste in Messenger.');
             window.open(SOCIAL_CONFIG.messengerLink, '_blank');
@@ -2167,7 +2167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 subtotal: currentOrderContext.totalPrice,
                 total: currentOrderContext.totalPrice
             };
-            
+
             // Validate and sanitize order data
             const validationErrors = validateOrderPayload(orderData);
             if (validationErrors.length > 0) {
@@ -2177,46 +2177,68 @@ document.addEventListener('DOMContentLoaded', async () => {
                 confirmBtn.disabled = false;
                 return;
             }
-            
+
             const sanitizedData = sanitizeOrderData(orderData);
-            
+
             // Record order attempt for rate limiting
             recordOrderAttempt();
+
+            // Self-contained Firebase connection ensuring it works even if modules fail to load
+            const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+            const { getDatabase, ref, push, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js');
+
+            const firebaseConfig = {
+              apiKey: "AIzaSyCBYvTkVaW2ARhR6Ce5TUJJeyak9ojdWf4",
+              authDomain: "my-1st-site-09.firebaseapp.com",
+              projectId: "my-1st-site-09",
+              storageBucket: "my-1st-site-09.firebasestorage.app",
+              messagingSenderId: "716729465081",
+              appId: "1:716729465081:web:bef18625e664ac13ba4a28"
+            };
+
+            const app = initializeApp(firebaseConfig, "checkout-app-" + Date.now());
+            const db = getDatabase(app);
+            const orderRef = ref(db, 'orders');
             
-            const orderResult = await createOrderInRTDB(sanitizedData);
-            
-            console.log('🎯 Direct Order Result:', orderResult);
-            
+            const newOrderId = generateOrderId();
+
+            const finalOrderData = {
+                orderId: newOrderId,
+                customerName: cName,
+                totalPrice: currentOrderContext.totalPrice,
+                phone: cPhone,
+                address: cAddress,
+                status: 'pending',
+                channel: 'direct',
+                items: sanitizedData.items, // Admin needs the cart context
+                timestamp: serverTimestamp()
+            };
+
+            await push(orderRef, finalOrderData);
+
+            console.log('🎯 Direct Order Result:', finalOrderData);
+
             // Track purchases for analytics
             for (const item of currentOrderContext.items) {
                 await window.productAnalytics.trackPurchase(
                     item.productId,
-                    orderResult.orderId,
+                    newOrderId,
                     item.qty || 1,
                     parseInt(item.price.toString().replace(/[^0-9.]/g, ''), 10) || 0
                 );
             }
-            
-            // SECURITY: Telegram alerts disabled for public site
-            // await sendTelegramAlert(cName, cPhone, cAddress, currentOrderContext, orderResult.orderId);
-            
+
             // Show success with orderId
             let successContent = `
                 <div style="padding:20px;">
                     <h2 style="color:#d4af37; margin-bottom:10px;">Order Placed Successfully!</h2>
                     <p style="color:#fff;">Thank you ${cName}, we received your order.</p>
-                    <p style="color:#d4af37; font-weight:bold; margin:10px 0;">Order ID: ${orderResult.orderId}</p>`;
-            
-            if (orderResult.fallback) {
-                successContent += `<p style="color:#ffa500; font-size:12px;">Note: Order saved locally due to connection issues</p>`;
-            }
-            
-            successContent += `
+                    <p style="color:#d4af37; font-weight:bold; margin:10px 0;">Order ID: ${newOrderId}</p>
                     <p style="color:#aaa; font-size:14px;">We will contact you soon for confirmation.</p>
                     <button onclick="closeSocialModal()" style="margin-top:20px; background:#fff; color:#000; padding:10px 25px; border-radius:8px; border:none; font-weight:bold; cursor:pointer;">Close</button>
                 </div>`;
-            
-            console.log('📱 Showing success modal with Order ID:', orderResult.orderId);
+
+            console.log('📱 Showing success modal with Order ID:', newOrderId);
             document.getElementById('modalContent').innerHTML = successContent;
 
             // Clear cart if it was a cart order
@@ -2229,9 +2251,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
         } catch (error) {
-            console.error("Order Error:", error);
-            alert("Order placed successfully! We'll contact you soon.");
-            closeSocialModal();
+            console.error("EXACT FIREBASE ERROR:", error);
+            alert("Connection error: Failed to save order to Firebase.");
         } finally {
             // Re-enable button
             confirmBtn.innerText = "Confirm Order";
@@ -2247,7 +2268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log('Telegram alerts disabled for public site');
             return;
         }
-        
+
         // If re-enabled in the future, move this logic to admin side or server-side
         console.log('Telegram alert would be sent for Order ID:', orderId);
     }
@@ -2369,239 +2390,239 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 2500); // Must match transition time
     }
 
-// Export new functions
-window.toggleMenu = toggleMenu;
-window.toggleCartDisplay = toggleCartDisplay;
-window.addToCart = addToCart;
-window.openProductDetails = openProductDetails;
-window.handleCategoryClick = handleCategoryClick;
-window.selectSize = selectSize;
-window.removeItem = removeItem;
-window.processCartCheckout = processCartCheckout;
-window.handleSingleBuy = handleSingleBuy;
-window.triggerOrderFlow = triggerOrderFlow;
-window.triggerCartOrderFlow = triggerCartOrderFlow;
-window.showDirectOrderForm = showDirectOrderForm;
-window.hideDirectOrderForm = hideDirectOrderForm;
-window.submitDirectOrder = submitDirectOrder;
-window.closeSocialModal = closeSocialModal;
-window.handleMessengerOrder = handleMessengerOrder;
-window.handleAddToCartFromDetails = handleAddToCartFromDetails;
-window.handleDirectBuy = handleDirectBuy;
-window.closeProductDetails = closeProductDetails;
-window.filterByCategory = filterByCategory;
-window.filterBySubCategory = filterBySubCategory;
-window.updatePriceLabel = updatePriceLabel;
-window.toggleSub = toggleSub;
-window.filterProducts = filterProducts;
-window.scrollToSection = scrollToSection;
-window.openPage = openPage;
-window.handleWhatsAppOrder = handleWhatsAppOrder;
-window.resetRateLimit = resetRateLimit;
-window.spinForRandomProduct = spinForRandomProduct;
+    // Export new functions
+    window.toggleMenu = toggleMenu;
+    window.toggleCartDisplay = toggleCartDisplay;
+    window.addToCart = addToCart;
+    window.openProductDetails = openProductDetails;
+    window.handleCategoryClick = handleCategoryClick;
+    window.selectSize = selectSize;
+    window.removeItem = removeItem;
+    window.processCartCheckout = processCartCheckout;
+    window.handleSingleBuy = handleSingleBuy;
+    window.triggerOrderFlow = triggerOrderFlow;
+    window.triggerCartOrderFlow = triggerCartOrderFlow;
+    window.showDirectOrderForm = showDirectOrderForm;
+    window.hideDirectOrderForm = hideDirectOrderForm;
+    window.submitDirectOrder = submitDirectOrder;
+    window.closeSocialModal = closeSocialModal;
+    window.handleMessengerOrder = handleMessengerOrder;
+    window.handleAddToCartFromDetails = handleAddToCartFromDetails;
+    window.handleDirectBuy = handleDirectBuy;
+    window.closeProductDetails = closeProductDetails;
+    window.filterByCategory = filterByCategory;
+    window.filterBySubCategory = filterBySubCategory;
+    window.updatePriceLabel = updatePriceLabel;
+    window.toggleSub = toggleSub;
+    window.filterProducts = filterProducts;
+    window.scrollToSection = scrollToSection;
+    window.openPage = openPage;
+    window.handleWhatsAppOrder = handleWhatsAppOrder;
+    window.resetRateLimit = resetRateLimit;
+    window.spinForRandomProduct = spinForRandomProduct;
 
-// Handle suggestion clicks - global function
-function handleSuggestionClick(id) {
-    console.log('🔍 handleSuggestionClick called with ID:', id);
-    
-    // Close both panels
-    const desktopPanel = document.getElementById('suggestionPanel');
-    const mobilePanel = document.getElementById('mobileSuggestionPanel');
-    if (desktopPanel) desktopPanel.classList.remove('open');
-    if (mobilePanel) mobilePanel.classList.remove('open');
-    
-    // Clear both search inputs
-    const desktopInput = document.getElementById('searchInput');
-    const mobileInput = document.getElementById('mobileSearchInput');
-    if (desktopInput) desktopInput.value = '';
-    if (mobileInput) mobileInput.value = '';
+    // Handle suggestion clicks - global function
+    function handleSuggestionClick(id) {
+        console.log('🔍 handleSuggestionClick called with ID:', id);
 
-    if      (typeof openProductDetails  === 'function') {
-        console.log('✅ Calling openProductDetails with ID:', id);
-        openProductDetails(id);
-    }
-    else if (typeof showProductDetail   === 'function') {
-        console.log('✅ Calling showProductDetail with ID:', id);
-        showProductDetail(id);
-    }
-    else if (typeof viewProduct         === 'function') {
-        console.log('✅ Calling viewProduct with ID:', id);
-        viewProduct(id);
-    }
-    else if (typeof openProduct         === 'function') {
-        console.log('✅ Calling openProduct with ID:', id);
-        openProduct(id);
-    }
-    else console.warn('❌ No product open function found. ID:', id);
-}
+        // Close both panels
+        const desktopPanel = document.getElementById('suggestionPanel');
+        const mobilePanel = document.getElementById('mobileSuggestionPanel');
+        if (desktopPanel) desktopPanel.classList.remove('open');
+        if (mobilePanel) mobilePanel.classList.remove('open');
 
-window.handleSuggestionClick = handleSuggestionClick;
+        // Clear both search inputs
+        const desktopInput = document.getElementById('searchInput');
+        const mobileInput = document.getElementById('mobileSearchInput');
+        if (desktopInput) desktopInput.value = '';
+        if (mobileInput) mobileInput.value = '';
 
-// CONSOLE LOG TO VERIFY PHASE 5 FEATURES
-console.log('✅ PHASE 5 SCRIPT LOADED WITH ALL FEATURES:');
-console.log('  📝 Order ID Generation: generateOrderId()');
-
-/* ═══════════════════════════════
-   SEARCH SUGGESTIONS FRESH SYSTEM
-════════════════════════════════ */
-(function () {
-
-    function startSearch() {
-      // Handle both desktop and mobile search inputs
-      const inputs = [
-        document.getElementById('searchInput'),
-        document.getElementById('mobileSearchInput')
-      ].filter(Boolean);
-      
-      const panels = [
-        document.getElementById('suggestionPanel'),
-        document.getElementById('mobileSuggestionPanel')
-      ].filter(Boolean);
-
-      if (inputs.length === 0 || panels.length === 0) {
-        console.warn('❌ Search: inputs or panels missing');
-        return;
-      }
-
-      console.log('✅ Search suggestions ready');
-
-      // Setup each input
-      inputs.forEach((input, index) => {
-        const panel = panels[index];
-        let timer;
-
-        // Typing handler
-        input.addEventListener('input', function () {
-          clearTimeout(timer);
-
-          // IMPORTANT: do NOT add any class to navbar here
-          const query = input.value.trim();
-
-          if (query.length < 2) {
-            closePanel(panel);
-            return;
-          }
-
-          timer = setTimeout(function () {
-            showResults(query, panel);
-          }, 250);
-        });
-
-        // Close on outside click
-        document.addEventListener('click', function (e) {
-          if (!panel.contains(e.target) && e.target !== input) {
-            closePanel(panel);
-          }
-        });
-
-        // Close on Escape key
-        input.addEventListener('keydown', function (e) {
-          if (e.key === 'Escape') {
-            closePanel(panel);
-            input.blur();
-          }
-        });
-      });
+        if (typeof openProductDetails === 'function') {
+            console.log('✅ Calling openProductDetails with ID:', id);
+            openProductDetails(id);
+        }
+        else if (typeof showProductDetail === 'function') {
+            console.log('✅ Calling showProductDetail with ID:', id);
+            showProductDetail(id);
+        }
+        else if (typeof viewProduct === 'function') {
+            console.log('✅ Calling viewProduct with ID:', id);
+            viewProduct(id);
+        }
+        else if (typeof openProduct === 'function') {
+            console.log('✅ Calling openProduct with ID:', id);
+            openProduct(id);
+        }
+        else console.warn('❌ No product open function found. ID:', id);
     }
 
-    function showResults(query, panel) {
-      const products = window.allProducts || [];
-      const term     = query.toLowerCase();
+    window.handleSuggestionClick = handleSuggestionClick;
 
-      const matches = products.filter(function (p) {
-        const name = (p.name || p.title || '').toLowerCase();
-        return name.includes(term);
-      }).slice(0, 7);
+    // CONSOLE LOG TO VERIFY PHASE 5 FEATURES
+    console.log('✅ PHASE 5 SCRIPT LOADED WITH ALL FEATURES:');
+    console.log('  📝 Order ID Generation: generateOrderId()');
 
-      console.log('🔍 Search matches found:', matches.length, 'for query:', query);
+    /* ═══════════════════════════════
+       SEARCH SUGGESTIONS FRESH SYSTEM
+    ════════════════════════════════ */
+    (function () {
 
-      if (matches.length === 0) {
-        panel.innerHTML =
-          '<div class="sg-empty">No products found for "' + query + '"</div>';
-      } else {
-        panel.innerHTML = matches.map(function (p) {
-          const name = p.name  || p.title     || 'Product';
-          const img  = p.image || p.img       || p.thumbnail || '';
-          // Fix: Use the correct ID field - products have numeric 'id' field
-          const id   = p.id !== undefined ? p.id : (p.productId || '');
-          
-          console.log('🔍 Building suggestion for:', name, 'with ID:', id);
-          
-          return (
-            '<div class="sg-row" data-id="' + id + '" onclick="handleSuggestionClick(' + id + ')">' +
-              '<img class="sg-img" src="' + img + '" alt="' + name + '" ' +
-                'onerror="this.src=\'images/placeholder.png\'">' +
-              '<span class="sg-name">' + name + '</span>' +
-            '</div>'
-          );
-        }).join('');
+        function startSearch() {
+            // Handle both desktop and mobile search inputs
+            const inputs = [
+                document.getElementById('searchInput'),
+                document.getElementById('mobileSearchInput')
+            ].filter(Boolean);
 
-        // Click → open product modal
-        const suggestionRows = panel.querySelectorAll('.sg-row');
-        console.log('🔍 Found suggestion rows:', suggestionRows.length);
-        suggestionRows.forEach(function (row, index) {
-          console.log('🔍 Attaching click event to row', index, 'with data-id:', row.getAttribute('data-id'));
-          
-          row.addEventListener('click', function (e) {
-            console.log('🔍 Click event fired on suggestion row!', e);
-            const id = row.getAttribute('data-id');
-            console.log('🔍 Suggestion clicked, product ID:', id);
-            
-            // Make sure we have a valid ID
-            if (!id || id === '') {
-              console.error('❌ No valid product ID found');
-              return;
+            const panels = [
+                document.getElementById('suggestionPanel'),
+                document.getElementById('mobileSuggestionPanel')
+            ].filter(Boolean);
+
+            if (inputs.length === 0 || panels.length === 0) {
+                console.warn('❌ Search: inputs or panels missing');
+                return;
             }
-            
-            closePanel(panel);
-            
-            // Clear both search inputs
-            const desktopInput = document.getElementById('searchInput');
-            const mobileInput = document.getElementById('mobileSearchInput');
-            if (desktopInput) desktopInput.value = '';
-            if (mobileInput) mobileInput.value = '';
 
-            if      (typeof openProductDetails  === 'function') {
-              console.log('✅ Calling openProductDetails with ID:', id);
-              openProductDetails(id);
+            console.log('✅ Search suggestions ready');
+
+            // Setup each input
+            inputs.forEach((input, index) => {
+                const panel = panels[index];
+                let timer;
+
+                // Typing handler
+                input.addEventListener('input', function () {
+                    clearTimeout(timer);
+
+                    // IMPORTANT: do NOT add any class to navbar here
+                    const query = input.value.trim();
+
+                    if (query.length < 2) {
+                        closePanel(panel);
+                        return;
+                    }
+
+                    timer = setTimeout(function () {
+                        showResults(query, panel);
+                    }, 250);
+                });
+
+                // Close on outside click
+                document.addEventListener('click', function (e) {
+                    if (!panel.contains(e.target) && e.target !== input) {
+                        closePanel(panel);
+                    }
+                });
+
+                // Close on Escape key
+                input.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape') {
+                        closePanel(panel);
+                        input.blur();
+                    }
+                });
+            });
+        }
+
+        function showResults(query, panel) {
+            const products = window.allProducts || [];
+            const term = query.toLowerCase();
+
+            const matches = products.filter(function (p) {
+                const name = (p.name || p.title || '').toLowerCase();
+                return name.includes(term);
+            }).slice(0, 7);
+
+            console.log('🔍 Search matches found:', matches.length, 'for query:', query);
+
+            if (matches.length === 0) {
+                panel.innerHTML =
+                    '<div class="sg-empty">No products found for "' + query + '"</div>';
+            } else {
+                panel.innerHTML = matches.map(function (p) {
+                    const name = p.name || p.title || 'Product';
+                    const img = p.image || p.img || p.thumbnail || '';
+                    // Fix: Use the correct ID field - products have numeric 'id' field
+                    const id = p.id !== undefined ? p.id : (p.productId || '');
+
+                    console.log('🔍 Building suggestion for:', name, 'with ID:', id);
+
+                    return (
+                        '<div class="sg-row" data-id="' + id + '" onclick="handleSuggestionClick(' + id + ')">' +
+                        '<img class="sg-img" src="' + img + '" alt="' + name + '" ' +
+                        'onerror="this.src=\'images/placeholder.png\'">' +
+                        '<span class="sg-name">' + name + '</span>' +
+                        '</div>'
+                    );
+                }).join('');
+
+                // Click → open product modal
+                const suggestionRows = panel.querySelectorAll('.sg-row');
+                console.log('🔍 Found suggestion rows:', suggestionRows.length);
+                suggestionRows.forEach(function (row, index) {
+                    console.log('🔍 Attaching click event to row', index, 'with data-id:', row.getAttribute('data-id'));
+
+                    row.addEventListener('click', function (e) {
+                        console.log('🔍 Click event fired on suggestion row!', e);
+                        const id = row.getAttribute('data-id');
+                        console.log('🔍 Suggestion clicked, product ID:', id);
+
+                        // Make sure we have a valid ID
+                        if (!id || id === '') {
+                            console.error('❌ No valid product ID found');
+                            return;
+                        }
+
+                        closePanel(panel);
+
+                        // Clear both search inputs
+                        const desktopInput = document.getElementById('searchInput');
+                        const mobileInput = document.getElementById('mobileSearchInput');
+                        if (desktopInput) desktopInput.value = '';
+                        if (mobileInput) mobileInput.value = '';
+
+                        if (typeof openProductDetails === 'function') {
+                            console.log('✅ Calling openProductDetails with ID:', id);
+                            openProductDetails(id);
+                        }
+                        else if (typeof showProductDetail === 'function') {
+                            console.log('✅ Calling showProductDetail with ID:', id);
+                            showProductDetail(id);
+                        }
+                        else if (typeof viewProduct === 'function') {
+                            console.log('✅ Calling viewProduct with ID:', id);
+                            viewProduct(id);
+                        }
+                        else if (typeof openProduct === 'function') {
+                            console.log('✅ Calling openProduct with ID:', id);
+                            openProduct(id);
+                        }
+                        else console.warn('❌ No product open function found. ID:', id);
+                    });
+
+                    // Also add pointer debugging
+                    row.style.cursor = 'pointer';
+                    row.addEventListener('mouseenter', function () {
+                        console.log('🔍 Mouse entered suggestion row:', row.textContent.trim());
+                    });
+                });
             }
-            else if (typeof showProductDetail   === 'function') {
-              console.log('✅ Calling showProductDetail with ID:', id);
-              showProductDetail(id);
-            }
-            else if (typeof viewProduct         === 'function') {
-              console.log('✅ Calling viewProduct with ID:', id);
-              viewProduct(id);
-            }
-            else if (typeof openProduct         === 'function') {
-              console.log('✅ Calling openProduct with ID:', id);
-              openProduct(id);
-            }
-            else console.warn('❌ No product open function found. ID:', id);
-          });
-          
-          // Also add pointer debugging
-          row.style.cursor = 'pointer';
-          row.addEventListener('mouseenter', function() {
-            console.log('🔍 Mouse entered suggestion row:', row.textContent.trim());
-          });
-        });
-      }
 
-      panel.classList.add('open');
-    }
+            panel.classList.add('open');
+        }
 
-    function closePanel(panel) {
-      if (panel) panel.classList.remove('open');
-    }
+        function closePanel(panel) {
+            if (panel) panel.classList.remove('open');
+        }
 
-    // Safe init
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', startSearch);
-    } else {
-      startSearch();
-    }
+        // Safe init
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startSearch);
+        } else {
+            startSearch();
+        }
 
-  })(); // Added missing closing bracket here
+    })(); // Added missing closing bracket here
 
 })();

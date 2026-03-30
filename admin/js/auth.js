@@ -1,13 +1,19 @@
-// admin/js/auth.js - Production-ready authentication system
+// admin/js/auth.js - Production-ready modular authentication system
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// Firebase settings import
-import { auth } from '../../firebase-config.js'; 
+// Standardize config for the whole admin suite
+const firebaseConfig = {
+    apiKey: "AIzaSyCBYvTkVaW2ARhR6Ce5TUJJeyak9ojdWf4",
+    authDomain: "my-1st-site-09.firebaseapp.com",
+    projectId: "my-1st-site-09",
+    storageBucket: "my-1st-site-09.firebasestorage.app",
+    messagingSenderId: "716729465081",
+    appId: "1:716729465081:web:bef18625e664ac13ba4a28"
+};
 
-// Firebase authentication functions
-import { 
-    signInWithEmailAndPassword,
-    signOut
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const auth = getAuth(app);
 
 // Form validation and security utilities
 class FormValidator {
@@ -201,7 +207,7 @@ async function handleLogin(email, password) {
         
         // Redirect to dashboard after a short delay
         setTimeout(() => {
-            window.location.href = "dashboard.html";
+            window.location.href = "dashboard-new.html";
         }, 1500);
         
         return true;
